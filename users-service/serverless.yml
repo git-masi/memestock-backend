@@ -1,0 +1,25 @@
+service: users-service
+
+plugins:
+  - serverless-bundle
+  - serverless-pseudo-parameters
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 256
+  apiGateway:
+    shouldStartNameWithService: true
+  stage: ${opt:stage, 'dev'}
+  # Uncomment and add file path for IAM roles
+  # iamRoleStatements:
+  #   - ${file(--filePathGoesHere--)}
+
+resources: ${file(resources/resources.yml)}
+
+functions: ${file(functions.yml)}
+
+custom:
+  serverless-offline:
+    httpPort: 4321
