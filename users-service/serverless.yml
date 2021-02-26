@@ -4,6 +4,7 @@ plugins:
   - serverless-bundle
   - serverless-pseudo-parameters
   - serverless-offline
+  - serverless-cloudside-plugin
 
 provider:
   name: aws
@@ -14,6 +15,8 @@ provider:
   stage: ${opt:stage, 'dev'}
   iamRoleStatements:
     - ${file(iam/UsersTableIAM.yml):UsersTableIAM}
+  environment:
+    USERS_TABLE_NAME: !Ref UsersTable
 
 resources: ${file(resources/resources.yml)}
 
