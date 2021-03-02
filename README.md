@@ -7,3 +7,7 @@
 ## Install all service dependencies
 
 `npm run install:services`
+
+## Install all dependencies
+
+`npm run install:all`
