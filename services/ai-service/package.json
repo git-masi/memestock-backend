@@ -25,6 +25,6 @@
     "http-errors": "^1.8.0"
   },
   "scripts": {
-    "start": "sls offline"
+    "start": "sls offline start"
   }
 }
