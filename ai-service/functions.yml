@@ -1,6 +1,6 @@
-hello:
-  handler: src/handlers/hello.handler
+addAiProfile:
+  handler: src/handlers/createAiProfile.handler
   events:
     - http:
-        method: GET
-        path: /hello
+        method: POST
+        path: /ai
