@@ -1,0 +1,5 @@
+Resources:
+  # Need this for custom authorizers/CORS
+  # See this doc for more details:
+  #     https://www.serverless.com/blog/cors-api-gateway-survival-guide
+  GatewayResponseDefault4XX: ${file(resources/apiGateway/customAuthorizerResponse.yml):GatewayResponseDefault4XX}
