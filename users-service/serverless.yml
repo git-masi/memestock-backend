@@ -4,6 +4,7 @@ plugins:
   - serverless-bundle
   - serverless-pseudo-parameters
   - serverless-offline
+  - serverless-cloudside-plugin
 
 provider:
   name: aws
@@ -12,9 +13,10 @@ provider:
   apiGateway:
     shouldStartNameWithService: true
   stage: ${opt:stage, 'dev'}
-  # Uncomment and add file path for IAM roles
-  # iamRoleStatements:
-  #   - ${file(--filePathGoesHere--)}
+  iamRoleStatements:
+    - ${file(iam/UsersTableIAM.yml):UsersTableIAM}
+  environment:
+    USERS_TABLE_NAME: !Ref UsersTable
 
 resources: ${file(resources/resources.yml)}
 

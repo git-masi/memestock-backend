@@ -1,0 +1,11 @@
+UsersTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Scan
+    - dynamodb:Query
+    - dynamodb:PutItem
+    - dynamodb:GetItem
+    - dynamodb:UpdateItem
+  Resource:
+    - !GetAtt UsersTable.Arn
+    - !Join ['/', [!GetAtt UsersTable.Arn, 'index', '*']]

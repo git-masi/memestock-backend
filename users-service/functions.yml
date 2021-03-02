@@ -4,3 +4,10 @@ createUser:
     - http:
         method: POST
         path: /users/create
+
+getAllUsers:
+  handler: src/handlers/getAllUsers.handler
+  events:
+    - http:
+        method: GET
+        path: /users
