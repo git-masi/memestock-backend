@@ -1,5 +1,5 @@
-import { commonMiddleware } from '../../../libs/commonMiddleware';
-import { successResponse } from '../../../libs/successResponse';
+import { commonMiddleware } from '../../../../libs/commonMiddleware';
+import { successResponse } from '../../../../libs/successResponse';
 
 async function createAiProfile(event, context) {
   try {
