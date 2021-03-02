@@ -4,7 +4,8 @@
   "description": "* Go to the root folder of the project * Run the following command in your terminal `serverless create --template-path ./services/template-service --path NEW_SERVICE_NAME_HERE --name NEW_SERVICE_NAME_HERE` * Navigate to your new service folder and run `npm i`",
   "main": "index.js",
   "scripts": {
-    "install:services": "npm-recursive-install --rootDir=services"
+    "install:services": "npm-recursive-install --rootDir=services",
+    "install:all": "npm-recursive-install"
   },
   "repository": {
     "type": "git",
