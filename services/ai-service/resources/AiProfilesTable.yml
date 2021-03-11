@@ -10,8 +10,8 @@ AiProfilesTable:
         AttributeType: S
       - AttributeName: lastActionTime
         AttributeType: S
-      - AttributeName: nextAi
-        AttributeType: S
+      # - AttributeName: nextAi
+      #   AttributeType: S
     KeySchema:
       - AttributeName: id
         KeyType: HASH
