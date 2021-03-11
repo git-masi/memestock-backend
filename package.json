@@ -1,0 +1,25 @@
+{
+  "name": "memestock-backend",
+  "version": "1.0.0",
+  "description": "* Go to the root folder of the project * Run the following command in your terminal `serverless create --template-path ./services/template-service --path NEW_SERVICE_NAME_HERE --name NEW_SERVICE_NAME_HERE` * Navigate to your new service folder and run `npm i`",
+  "main": "index.js",
+  "scripts": {
+    "install:services": "npm-recursive-install --rootDir=services",
+    "install:all": "npm-recursive-install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/git-masi/memestock-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/git-masi/memestock-backend/issues"
+  },
+  "homepage": "https://github.com/git-masi/memestock-backend#readme",
+  "devDependencies": {
+    "serverless-bundle": "^4.2.2",
+    "recursive-install": "^1.4.0"
+  }
+}

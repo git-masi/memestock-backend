@@ -1,0 +1,25 @@
+service: ai-service
+
+plugins:
+  - serverless-bundle
+  - serverless-pseudo-parameters
+  - serverless-offline
+  - serverless-cloudside-plugin
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 256
+  apiGateway:
+    shouldStartNameWithService: true
+  stage: ${opt:stage, 'dev'}
+  iamRoleStatements:
+    - ${file(iam/AiProfilesTableIAM.yml):AiProfilesTableIAM}
+
+resources: ${file(resources/resources.yml)}
+
+functions: ${file(functions.yml)}
+
+custom:
+  serverless-offline:
+    httpPort: 4321

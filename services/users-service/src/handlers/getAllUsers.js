@@ -1,7 +1,6 @@
 //get all the users from the database
 
-import { commonMiddleware } from '../lib/commonMiddleware';
-import { successResponse } from '../lib/successResponse';
+import { commonMiddleware, successResponse } from 'libs';
 
 async function getAllUsers(event, context) {
   try {
