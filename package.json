@@ -19,7 +19,6 @@
   },
   "homepage": "https://github.com/git-masi/memestock-backend#readme",
   "devDependencies": {
-    "serverless-bundle": "^4.2.2",
     "recursive-install": "^1.4.0"
   }
 }
