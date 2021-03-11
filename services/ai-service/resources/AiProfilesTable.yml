@@ -1,0 +1,28 @@
+AiProfilesTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: AiProfilesTable-${self:provider.stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: created
+        AttributeType: S
+      - AttributeName: lastActionTime
+        AttributeType: S
+      - AttributeName: nextAi
+        AttributeType: S
+    KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: created
+        KeyType: RANGE
+    LocalSecondaryIndexes:
+      - IndexName: idAndLastActionTime
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: lastActionTime
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL

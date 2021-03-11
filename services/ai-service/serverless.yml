@@ -13,9 +13,8 @@ provider:
   apiGateway:
     shouldStartNameWithService: true
   stage: ${opt:stage, 'dev'}
-  # Uncomment and add file path for IAM roles
-  # iamRoleStatements:
-  #   - ${file(--filePathGoesHere--)}
+  iamRoleStatements:
+    - ${file(iam/AiProfilesTableIAM.yml):AiProfilesTableIAM}
 
 resources: ${file(resources/resources.yml)}
 

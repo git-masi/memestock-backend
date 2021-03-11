@@ -1,0 +1,11 @@
+AiProfilesTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Scan
+    - dynamodb:Query
+    - dynamodb:PutItem
+    - dynamodb:GetItem
+    - dynamodb:UpdateItem
+  Resource:
+    - !GetAtt AiProfilesTable.Arn
+    - !Join ['/', [!GetAtt AiProfilesTable.Arn, 'index', '*']]
