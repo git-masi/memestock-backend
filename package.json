@@ -18,10 +18,8 @@
     "url": "https://github.com/git-masi/memestock-backend/issues"
   },
   "homepage": "https://github.com/git-masi/memestock-backend#readme",
-  "dependencies": {
-    "recursive-install": "^1.4.0"
-  },
   "devDependencies": {
-    "serverless-bundle": "^4.2.2"
+    "serverless-bundle": "^4.2.2",
+    "recursive-install": "^1.4.0"
   }
 }
