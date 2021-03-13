@@ -15,6 +15,8 @@ provider:
   stage: ${opt:stage, 'dev'}
   iamRoleStatements:
     - ${file(iam/AiProfilesTableIAM.yml):AiProfilesTableIAM}
+  environment:
+    AI_PROFILES_TABLE_NAME: !Ref AiProfilesTable
 
 resources: ${file(resources/resources.yml)}
 
