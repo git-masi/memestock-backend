@@ -22,6 +22,6 @@
     "libs": "file:../../libs"
   },
   "scripts": {
-    "start": "sls offline"
+    "start": "sls offline cloudside"
   }
 }
