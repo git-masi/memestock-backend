@@ -1,5 +1,5 @@
 {
-  "name": "users-service",
+  "name": "template-service",
   "version": "1.0.0",
   "description": "template service for memestock",
   "author": "",
@@ -17,13 +17,9 @@
     "webpack": "^4.35.2"
   },
   "dependencies": {
-    "@middy/core": "^1.5.2",
-    "@middy/http-error-handler": "^1.5.2",
-    "@middy/http-event-normalizer": "^1.5.2",
-    "@middy/http-json-body-parser": "^1.5.2",
     "aws-sdk": "^2.639.0",
     "http-errors": "^1.8.0",
-    "uuid": "^8.3.2"
+    "libs": "file:../../libs"
   },
   "scripts": {
     "start": "sls offline cloudside"

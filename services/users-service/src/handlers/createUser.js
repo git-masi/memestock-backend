@@ -11,8 +11,7 @@
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuid } from 'uuid';
 
-import { commonMiddleware } from '../lib/commonMiddleware';
-import { successResponse } from '../lib/successResponse';
+import { commonMiddleware, successResponse } from 'libs';
 
 const dynamoDB = new DynamoDB.DocumentClient();
 

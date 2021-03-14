@@ -1,0 +1,6 @@
+addAiProfile:
+  handler: src/handlers/createAiProfile.handler
+  events:
+    - http:
+        method: POST
+        path: /ai
