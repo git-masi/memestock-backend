@@ -1,0 +1,11 @@
+AiActionsTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Scan
+    - dynamodb:Query
+    - dynamodb:PutItem
+    - dynamodb:GetItem
+    - dynamodb:UpdateItem
+  Resource:
+    - !GetAtt AiActionsTable.Arn
+    - !Join ['/', [!GetAtt AiActionsTable.Arn, 'index', '*']]

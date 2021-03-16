@@ -1,3 +1,7 @@
 export { commonMiddleware } from './commonMiddleware';
-export { generateRandomBoolean } from './generateRandomBoolean';
 export { successResponse, successResponseCors } from './successResponse';
+export {
+  getRandomIntZeroToX,
+  getRandomValueFromArray,
+  generateRandomBoolean,
+} from './randomValueUtils';
