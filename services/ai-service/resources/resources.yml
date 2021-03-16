@@ -4,3 +4,4 @@ Resources:
   #     https://www.serverless.com/blog/cors-api-gateway-survival-guide
   GatewayResponseDefault4XX: ${file(resources/customAuthorizerResponse.yml):GatewayResponseDefault4XX}
   AiProfilesTable: ${file(resources/AiProfilesTable.yml):AiProfilesTable}
+  AiActionsTable: ${file(resources/AiActionsTable.yml):AiActionsTable}
