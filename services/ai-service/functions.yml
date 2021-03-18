@@ -1,6 +1,11 @@
-addAiProfile:
+createAiProfile:
   handler: src/handlers/createAiProfile.handler
   events:
     - http:
         method: POST
         path: /ai
+
+triggerAiAction:
+  handler: src/handlers/triggerAiAction.handler
+  # events:
+  #   - schedule: rate(30 seconds)

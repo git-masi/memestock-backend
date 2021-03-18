@@ -8,8 +8,19 @@ AiActionsTable:
         AttributeType: S
       - AttributeName: created
         AttributeType: S
+      - AttributeName: yearHashKey
+        AttributeType: S
     KeySchema:
       - AttributeName: id
         KeyType: HASH
-      - AttributeName: created
-        KeyType: RANGE
+      # - AttributeName: created
+      #   KeyType: RANGE
+    GlobalSecondaryIndexes:
+      - IndexName: created
+        KeySchema:
+          - AttributeName: yearHashKey
+            KeyType: HASH
+          - AttributeName: created
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
