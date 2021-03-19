@@ -13,8 +13,6 @@ AiActionsTable:
     KeySchema:
       - AttributeName: id
         KeyType: HASH
-      - AttributeName: created
-        KeyType: RANGE
     GlobalSecondaryIndexes:
       - IndexName: statusAndCreated
         KeySchema:
