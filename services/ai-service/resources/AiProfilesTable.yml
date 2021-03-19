@@ -6,10 +6,10 @@ AiProfilesTable:
     AttributeDefinitions:
       - AttributeName: id
         AttributeType: S
+      - AttributeName: status
+        AttributeType: S
       - AttributeName: created
         AttributeType: S
-      # - AttributeName: lastActionTime
-      #   AttributeType: S
       # - AttributeName: nextAi
       #   AttributeType: S
     KeySchema:
@@ -17,12 +17,12 @@ AiProfilesTable:
         KeyType: HASH
       - AttributeName: created
         KeyType: RANGE
-    # LocalSecondaryIndexes:
-    #   - IndexName: idAndLastActionTime
-    #     KeySchema:
-    #       - AttributeName: id
-    #         KeyType: HASH
-    #       - AttributeName: lastActionTime
-    #         KeyType: RANGE
-    #     Projection:
-    #       ProjectionType: ALL
+    GlobalSecondaryIndexes:
+      - IndexName: statusAndCreated
+        KeySchema:
+          - AttributeName: status
+            KeyType: HASH
+          - AttributeName: created
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
