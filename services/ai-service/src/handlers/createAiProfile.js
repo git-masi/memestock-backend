@@ -1,5 +1,4 @@
 import { DynamoDB } from 'aws-sdk';
-import { v4 as uuid } from 'uuid';
 import {
   commonMiddleware,
   successResponse,
@@ -7,30 +6,25 @@ import {
   getRandomValueFromArray,
 } from 'libs';
 import { baseAiProfiles } from '../utils/baseAiProfiles';
+import { createCommonAttributes } from '../utils/createCommonAttributes';
+import { getMostRecentItem } from '../utils/getMostRecentItem';
 
+const { AI_PROFILES_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 async function createAiProfile(event, context) {
   try {
-    const baseProfile = getRandomValueFromArray(baseAiProfiles);
-    const profileWithRandomPoints = addRandomPointsToProfile(baseProfile);
-    const now = new Date().toISOString();
-
-    const aiProfile = {
-      ...profileWithRandomPoints,
-      id: uuid(),
-      created: now,
-    };
-
-    const params = {
-      TableName: process.env.AI_PROFILES_TABLE_NAME,
-      Item: aiProfile,
+    const newAiProfile = createNewAiProfile();
+    const newAiParams = {
+      TableName: AI_PROFILES_TABLE_NAME,
+      Item: newAiProfile,
     };
 
     // todo: Add new user. Use the returned ID of the new user in the ai profile
-    await dynamoDb.put(params).promise();
+    await updatePrevAiProfile(newAiProfile);
+    await dynamoDb.put(newAiParams).promise();
 
-    return successResponse(aiProfile);
+    return successResponse(newAiProfile);
   } catch (error) {
     console.log(error);
     throw error;
@@ -39,6 +33,16 @@ async function createAiProfile(event, context) {
 
 export const handler = commonMiddleware(createAiProfile);
 
+function createNewAiProfile() {
+  const baseProfile = getRandomValueFromArray(baseAiProfiles);
+  const profileWithRandomPoints = addRandomPointsToProfile(baseProfile);
+
+  return {
+    ...profileWithRandomPoints,
+    ...createCommonAttributes(),
+  };
+}
+
 function addRandomPointsToProfile(baseProfile) {
   const copy = { ...baseProfile };
   const keys = Object.keys(baseProfile);
@@ -46,4 +50,29 @@ function addRandomPointsToProfile(baseProfile) {
     copy[key] = copy[key] + getRandomIntZeroToX(10);
   }
   return copy;
+}
+
+async function updatePrevAiProfile(newAiProfile) {
+  const { Items } = await getMostRecentItem(AI_PROFILES_TABLE_NAME);
+  console.log({ Items });
+
+  if (Items[0]) {
+    console.log(Items[0]);
+    console.log({ newAiId: newAiProfile?.id });
+
+    const { id } = Items[0];
+    console.log({ id });
+
+    await dynamoDb
+      .update({
+        TableName: AI_PROFILES_TABLE_NAME,
+        Key: { id },
+        UpdateExpression: 'SET #nextAiId = :newAiId',
+        ExpressionAttributeNames: { '#nextAiId': 'nextAiId' },
+        ExpressionAttributeValues: {
+          ':newAiId': newAiProfile?.id,
+        },
+      })
+      .promise();
+  }
 }

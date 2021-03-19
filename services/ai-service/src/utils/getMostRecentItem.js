@@ -14,7 +14,7 @@ export function getMostRecentItem(tableName) {
       '#created': 'created',
     },
     ExpressionAttributeValues: {
-      ':status': statuses.completed,
+      ':status': statuses.created,
       ':now': new Date().toISOString(),
     },
     Limit: 1,
