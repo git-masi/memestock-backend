@@ -7,14 +7,17 @@ import {
 } from 'libs';
 import { baseAiProfiles } from '../utils/baseAiProfiles';
 import { createCommonAttributes } from '../utils/createCommonAttributes';
-import { getMostRecentItem } from '../utils/getMostRecentItem';
+import {
+  getFirstItemCreated,
+  getMostRecentItem,
+} from '../utils/getMostRecentItem';
 
 const { AI_PROFILES_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 async function createAiProfile(event, context) {
   try {
-    const newAiProfile = createNewAiProfile();
+    const newAiProfile = await createNewAiProfile();
     const newAiParams = {
       TableName: AI_PROFILES_TABLE_NAME,
       Item: newAiProfile,
@@ -33,13 +36,17 @@ async function createAiProfile(event, context) {
 
 export const handler = commonMiddleware(createAiProfile);
 
-function createNewAiProfile() {
+async function createNewAiProfile() {
   const baseProfile = getRandomValueFromArray(baseAiProfiles);
   const profileWithRandomPoints = addRandomPointsToProfile(baseProfile);
+  const commonAttributes = createCommonAttributes();
+  const { Items } = await getFirstItemCreated(AI_PROFILES_TABLE_NAME);
+  const firstItemId = Items[0]?.id;
 
   return {
     ...profileWithRandomPoints,
-    ...createCommonAttributes(),
+    ...commonAttributes,
+    nextAiId: firstItemId ?? commonAttributes.id,
   };
 }
 
