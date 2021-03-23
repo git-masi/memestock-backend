@@ -20,16 +20,16 @@ async function createUser(event, context) {
     const cashOnHand = calcCashOnHand(stocks);
 
     // FROM VIDEO: NECESSARY FOR ACCESSING/HANDLING USERNAME?
-    // reqBody = JSON.parse(event.body);
+    const reqBody = JSON.parse(event.body);
 
     const user = {
       id: uuid(),
       created: now,
+      displayName: reqBody.displayName,
       assets: {
         cashOnHand: cashOnHand,
         stocks: stocks
       }
-      // displayName = reqBody.displayName,
     };
 
     const params = {
@@ -39,7 +39,9 @@ async function createUser(event, context) {
 
     await dynamoDB.put(params).promise();
 
-    return successResponse({ message: 'User created!' });
+    //OLD
+    // return successResponse({ message: 'User created!' });
+    return successResponse(user);
   } catch (error) {
     console.log(error);
     throw error;
@@ -52,6 +54,7 @@ function getStocks(numSelection, companies) {
   const copy = {...companies};
   for (let i = 0; i < numSelection; i++) {
     let stockByCompany = getRandomValueDestructively(copy);
+
     // unsure what the limit on stocks should be
     stockByCompany.numStocks = getRandomIntZeroToX(20);
     stocks.push(stockByCompany);
