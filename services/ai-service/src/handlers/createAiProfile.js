@@ -54,14 +54,9 @@ function addRandomPointsToProfile(baseProfile) {
 
 async function updatePrevAiProfile(newAiProfile) {
   const { Items } = await getMostRecentItem(AI_PROFILES_TABLE_NAME);
-  console.log({ Items });
 
   if (Items[0]) {
-    console.log(Items[0]);
-    console.log({ newAiId: newAiProfile?.id });
-
     const { id } = Items[0];
-    console.log({ id });
 
     await dynamoDb
       .update({
