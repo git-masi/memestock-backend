@@ -24,6 +24,8 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "start": "sls offline cloudside"
+    "start": "sls offline cloudside",
+    "start:practice": "export AWS_PROFILE=practice && sls offline cloudside",
+    "deploy:practice": "export AWS_PROFILE=practice && sls deploy -v"
   }
 }
