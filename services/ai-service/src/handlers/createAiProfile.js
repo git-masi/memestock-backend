@@ -10,7 +10,7 @@ import { createCommonAttributes } from '../utils/createCommonAttributes';
 import {
   getFirstItemCreated,
   getMostRecentItem,
-} from '../utils/getMostRecentItem';
+} from '../utils/queryItemsByStatusAndCreatedGSI';
 
 const { AI_PROFILES_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
