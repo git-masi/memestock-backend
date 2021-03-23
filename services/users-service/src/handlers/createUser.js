@@ -1,28 +1,34 @@
-// CREATE
-// There should be a route to create a user
-// The route should accept a unique displayName (there should be a reasonable limit to the length)
-// A user should be saved in the Users table
-// A new UUID should be generated
-// A created time should be added as an ISO string
-// A randomly generated amount of starting cash should be added (there should be a reasonable min/max)
-// A randomly generated number of starting stocks should be added (there should be a reasonable min/max)
-
-// Modules
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuid } from 'uuid';
-
-import { commonMiddleware, successResponse } from 'libs';
+import {
+  commonMiddleware,
+  successResponse,
+  getRandomIntZeroToX,
+  getRandomValueFromArray,
+} from 'libs';
+import { companies } from '../utils/companies';
 
 const dynamoDB = new DynamoDB.DocumentClient();
 
 async function createUser(event, context) {
   console.log(process.env.USERS_TABLE_NAME);
   try {
-    const now = new Date();
+    const now = new Date().toISOString();
+    const numSelection = getRandomIntZeroToX(companies.length);
+    const stocks = getStocks(numSelection, companies);
+    // const cashOnHand = 50000 - (total value of owned stocks)
+
+    // FROM VIDEO: NECESSARY FOR ACCESSING/HANDLING USERNAME?
+    // reqBody = JSON.parse(event.body);
 
     const user = {
       id: uuid(),
-      created: now.toISOString(),
+      created: now,
+      assets: {
+        cashOnHand: cashOnHand,
+        stocks: stocks
+      }
+      // displayName = reqBody.displayName,
     };
 
     const params = {
@@ -40,3 +46,7 @@ async function createUser(event, context) {
 }
 
 export const handler = commonMiddleware(createUser);
+
+function getStocks(numSelection, companies) {
+  
+}
