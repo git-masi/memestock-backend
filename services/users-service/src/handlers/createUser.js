@@ -5,6 +5,7 @@ import {
   successResponse,
   getRandomIntZeroToX,
   getRandomValueFromArray,
+  getRandomValueDestructively,
 } from 'libs';
 import { companies } from '../utils/companies';
 
@@ -16,7 +17,7 @@ async function createUser(event, context) {
     const now = new Date().toISOString();
     const numSelection = getRandomIntZeroToX(companies.length);
     const stocks = getStocks(numSelection, companies);
-    // const cashOnHand = 50000 - (total value of owned stocks)
+    const cashOnHand = calcCashOnHand(stocks);
 
     // FROM VIDEO: NECESSARY FOR ACCESSING/HANDLING USERNAME?
     // reqBody = JSON.parse(event.body);
@@ -48,5 +49,20 @@ async function createUser(event, context) {
 export const handler = commonMiddleware(createUser);
 
 function getStocks(numSelection, companies) {
-  
+  const copy = {...companies};
+  for (let i = 0; i < numSelection; i++) {
+    let stockByCompany = getRandomValueDestructively(copy);
+    // unsure what the limit on stocks should be
+    stockByCompany.numStocks = getRandomIntZeroToX(20);
+    stocks.push(stockByCompany);
+  }
+}
+
+function calcCashOnHand(stocks) {
+  let total = 0;
+  for (let stock of stocks) {
+    total += (stock.numStocks * stock.pricePerShare)
+  }
+  let cashOnHand = (500000 - total) ? (500000 - total) : 0;
+  return cashOnHand
 }
