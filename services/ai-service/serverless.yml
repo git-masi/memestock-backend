@@ -19,6 +19,7 @@ provider:
   environment:
     AI_PROFILES_TABLE_NAME: !Ref AiProfilesTable
     AI_ACTIONS_TABLE_NAME: !Ref AiActionsTable
+    GSI_STATUS_AND_CREATED: 'statusAndCreated'
 
 resources: ${file(resources/resources.yml)}
 

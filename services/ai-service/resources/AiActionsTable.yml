@@ -6,10 +6,19 @@ AiActionsTable:
     AttributeDefinitions:
       - AttributeName: id
         AttributeType: S
+      - AttributeName: status
+        AttributeType: S
       - AttributeName: created
         AttributeType: S
     KeySchema:
       - AttributeName: id
         KeyType: HASH
-      - AttributeName: created
-        KeyType: RANGE
+    GlobalSecondaryIndexes:
+      - IndexName: statusAndCreated
+        KeySchema:
+          - AttributeName: status
+            KeyType: HASH
+          - AttributeName: created
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
