@@ -19,7 +19,8 @@
   "dependencies": {
     "aws-sdk": "^2.639.0",
     "http-errors": "^1.8.0",
-    "libs": "file:../../libs"
+    "libs": "file:../../libs",
+    "uuid": "^8.3.2"
   },
   "scripts": {
     "start": "sls offline cloudside"
