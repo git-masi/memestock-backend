@@ -1,9 +1,8 @@
 // Modules
 // import { DynamoDB } from 'aws-sdk';
-import validator from '@middy/validator';
 
 // Libs
-import { commonMiddleware, successResponse } from 'libs';
+import { commonMiddlewareWithValidator, successResponse } from 'libs';
 
 // const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -34,6 +33,8 @@ const requestSchema = {
   },
 };
 
+const validationOptions = { inputSchema: requestSchema };
+
 // Example
 // name: 'Other, LLC',
 // tickerSymbol: 'OTHR',
@@ -49,6 +50,10 @@ async function createCompany(event) {
   }
 }
 
-export const handler = commonMiddleware(createCompany).use(
-  validator({ inputSchema: requestSchema })
+// export const handler = commonMiddleware(createCompany).use(
+//   validator({ inputSchema: requestSchema })
+// );
+export const handler = commonMiddlewareWithValidator(
+  createCompany,
+  validationOptions
 );

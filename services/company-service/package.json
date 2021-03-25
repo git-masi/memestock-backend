@@ -17,8 +17,6 @@
     "webpack": "^4.35.2"
   },
   "dependencies": {
-    "@middy/core": "^1.5.2",
-    "@middy/validator": "^1.5.2",
     "aws-sdk": "^2.639.0",
     "http-errors": "^1.8.0",
     "libs": "file:../../libs"
