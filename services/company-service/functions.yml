@@ -1,6 +1,6 @@
-hello:
-  handler: src/handlers/hello.handler
+createCompany:
+  handler: src/handlers/createCompany.handler
   events:
     - http:
-        method: GET
-        path: /hello
+        method: POST
+        path: /company
