@@ -6,10 +6,6 @@ UsersTable:
     AttributeDefinitions:
       - AttributeName: id
         AttributeType: S
-      - AttributeName: created
-        AttributeType: S
     KeySchema:
       - AttributeName: id
         KeyType: HASH
-      - AttributeName: created
-        KeyType: RANGE
