@@ -14,10 +14,9 @@ import {
 
 const { USERS_TABLE_NAME, COMPANY_SERVICE_URL } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
-console.log(typeof dynamoDb);
 const getAllCompaniesPath = `${COMPANY_SERVICE_URL}/company/all`;
-const minDollarAmountInCents = 10000;
-const maxDollarAmountInCents = 500000;
+const minDollarAmountInCents = 10000; // cents
+const maxDollarAmountInCents = 500000; // cents
 const requestSchema = {
   properties: {
     body: {
@@ -26,7 +25,7 @@ const requestSchema = {
         displayName: {
           type: 'string',
           minLength: 5,
-          maxLength: 24,
+          maxLength: 36,
           pattern: '^\\S*$',
         },
         email: {
@@ -44,8 +43,8 @@ async function createUser(event, context) {
   try {
     const { body } = event;
     const params = await createUserAttributes(body);
-    // await dynamoDB.transactWriteItems(params).promise();
-    return successResponse(params.TransactItems[0]);
+    await dynamoDb.transactWrite(params).promise();
+    return successResponse(params.TransactItems[0].Put.Item);
   } catch (error) {
     console.log(error);
     throw error;
