@@ -1,0 +1,6 @@
+createCompany:
+  handler: src/handlers/createCompany.handler
+  events:
+    - http:
+        method: POST
+        path: /company

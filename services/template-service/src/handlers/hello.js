@@ -5,8 +5,7 @@
 // import { generateRandomBoolean } from '../utils/generateRandom';
 
 // Libs
-import { commonMiddleware } from '../lib/commonMiddleware';
-import { successResponse } from '../lib/successResponse';
+import { commonMiddleware, successResponse } from 'libs';
 
 // function throwError() {
 //   throw new createHttpError.BadRequest('Oops you made a mistake');
