@@ -8,4 +8,4 @@ UsersTable:
         AttributeType: S
     KeySchema:
       - AttributeName: pk
-        AttributeType: S
+        KeyType: HASH
