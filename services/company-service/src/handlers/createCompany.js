@@ -38,42 +38,7 @@ const validationOptions = { inputSchema: requestSchema };
 async function createCompany(event) {
   try {
     const { body } = event;
-    const { name, tickerSymbol, description, pricePerShare } = body;
-    const params = {
-      TransactItems: [
-        {
-          Put: {
-            TableName: COMPANIES_TABLE_NAME,
-            ConditionExpression: 'attribute_not_exists(pk)',
-            Item: {
-              pk: uuid(),
-              name,
-              tickerSymbol,
-              description,
-              pricePerShare,
-            },
-          },
-        },
-        {
-          Put: {
-            TableName: COMPANIES_TABLE_NAME,
-            ConditionExpression: 'attribute_not_exists(pk)',
-            Item: {
-              pk: `companyName#${name}`,
-            },
-          },
-        },
-        {
-          Put: {
-            TableName: COMPANIES_TABLE_NAME,
-            ConditionExpression: 'attribute_not_exists(pk)',
-            Item: {
-              pk: `tickerSymbol#${name}`,
-            },
-          },
-        },
-      ],
-    };
+    const params = createCompanyParams(body);
     await dynamoDb.transactWrite(params).promise();
     return successResponse(body);
   } catch (error) {
@@ -86,3 +51,42 @@ export const handler = commonMiddlewareWithValidator(
   createCompany,
   validationOptions
 );
+
+function createCompanyParams(body) {
+  const { name, tickerSymbol, description, pricePerShare } = body;
+  return {
+    TransactItems: [
+      {
+        Put: {
+          TableName: COMPANIES_TABLE_NAME,
+          ConditionExpression: 'attribute_not_exists(pk)',
+          Item: {
+            pk: uuid(),
+            name,
+            tickerSymbol,
+            description,
+            pricePerShare,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: COMPANIES_TABLE_NAME,
+          ConditionExpression: 'attribute_not_exists(pk)',
+          Item: {
+            pk: `companyName#${name}`,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: COMPANIES_TABLE_NAME,
+          ConditionExpression: 'attribute_not_exists(pk)',
+          Item: {
+            pk: `tickerSymbol#${name}`,
+          },
+        },
+      },
+    ],
+  };
+}
