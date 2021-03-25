@@ -5,6 +5,9 @@ import { v4 as uuid } from 'uuid';
 // Libs
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 
+// Utils
+import { documentTypes } from '../utils/documentTypes';
+
 const { COMPANIES_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 const requestSchema = {
@@ -66,6 +69,7 @@ function createCompanyParams(body) {
             tickerSymbol,
             description,
             pricePerShare,
+            documentType: documentTypes.record,
           },
         },
       },
@@ -75,6 +79,7 @@ function createCompanyParams(body) {
           ConditionExpression: 'attribute_not_exists(pk)',
           Item: {
             pk: `companyName#${name}`,
+            documentType: documentTypes.validation,
           },
         },
       },
@@ -84,6 +89,7 @@ function createCompanyParams(body) {
           ConditionExpression: 'attribute_not_exists(pk)',
           Item: {
             pk: `tickerSymbol#${name}`,
+            documentType: documentTypes.validation,
           },
         },
       },
