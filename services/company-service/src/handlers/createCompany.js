@@ -1,17 +1,45 @@
 // Modules
 // import { DynamoDB } from 'aws-sdk';
+import validator from '@middy/validator';
 
 // Libs
 import { commonMiddleware, successResponse } from 'libs';
 
 // const dynamoDb = new DynamoDB.DocumentClient();
 
+const requestSchema = {
+  properties: {
+    body: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 1,
+        },
+        tickerSymbol: {
+          type: 'string',
+          minLength: 1,
+        },
+        description: {
+          type: 'string',
+          minLength: 1,
+        },
+        pricePerShare: {
+          type: 'integer',
+          minimum: 1,
+        },
+      },
+    },
+    required: { body: true },
+  },
+};
+
 // Example
 // name: 'Other, LLC',
 // tickerSymbol: 'OTHR',
 // description: 'Offering a wide variety of services, this organization suffers from a lack of key branding. They are acclimating to the diminishing horizons engendered by mediocrity.',
 // pricePerShare: 5156
-async function createCompany(event, context) {
+async function createCompany(event) {
   try {
     const { body } = event;
     return successResponse(body);
@@ -21,4 +49,6 @@ async function createCompany(event, context) {
   }
 }
 
-export const handler = commonMiddleware(createCompany);
+export const handler = commonMiddleware(createCompany).use(
+  validator({ inputSchema: requestSchema })
+);
