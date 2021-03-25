@@ -5,7 +5,6 @@
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 
 // const dynamoDb = new DynamoDB.DocumentClient();
-
 const requestSchema = {
   properties: {
     body: {
@@ -32,14 +31,8 @@ const requestSchema = {
     required: { body: true },
   },
 };
-
 const validationOptions = { inputSchema: requestSchema };
 
-// Example
-// name: 'Other, LLC',
-// tickerSymbol: 'OTHR',
-// description: 'Offering a wide variety of services, this organization suffers from a lack of key branding. They are acclimating to the diminishing horizons engendered by mediocrity.',
-// pricePerShare: 5156
 async function createCompany(event) {
   try {
     const { body } = event;
@@ -50,9 +43,6 @@ async function createCompany(event) {
   }
 }
 
-// export const handler = commonMiddleware(createCompany).use(
-//   validator({ inputSchema: requestSchema })
-// );
 export const handler = commonMiddlewareWithValidator(
   createCompany,
   validationOptions
