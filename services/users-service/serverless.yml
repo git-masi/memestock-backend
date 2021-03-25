@@ -17,6 +17,7 @@ provider:
     - ${file(iam/UsersTableIAM.yml):UsersTableIAM}
   environment:
     USERS_TABLE_NAME: !Ref UsersTable
+    COMPANY_SERVICE_URL: 'https://a8sxo3zyr8.execute-api.us-east-1.amazonaws.com/dev'
 
 resources: ${file(resources/resources.yml)}
 
