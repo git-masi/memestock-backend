@@ -6,6 +6,15 @@ CompaniesTable:
     AttributeDefinitions:
       - AttributeName: pk
         AttributeType: S
+      - AttributeName: documentType
+        AttributeType: S
     KeySchema:
       - AttributeName: pk
         KeyType: HASH
+    GlobalSecondaryIndexes:
+      - IndexName: documentType
+        KeySchema:
+          - AttributeName: documentType
+            KeyType: HASH
+        Projection:
+          ProjectionType: ALL

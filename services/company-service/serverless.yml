@@ -17,6 +17,7 @@ provider:
     - ${file(iam/CompaniesTableIAM.yml):CompaniesTableIAM}
   environment:
     COMPANIES_TABLE_NAME: !Ref CompaniesTable
+    GSI_DOCUMENT_TYPE: 'documentType'
 
 resources: ${file(resources/resources.yml)}
 
