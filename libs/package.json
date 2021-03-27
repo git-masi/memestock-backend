@@ -16,6 +16,7 @@
     "@middy/http-json-body-parser": "^1.5.2",
     "@middy/validator": "^1.5.2",
     "d3-random": "^2.2.2",
-    "recursive-install": "^1.4.0"
+    "recursive-install": "^1.4.0",
+    "uuid": "^8.3.2"
   }
 }

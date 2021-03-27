@@ -3,7 +3,7 @@ createAiProfile:
   events:
     - http:
         method: POST
-        path: /ai
+        path: /ai/create
 
 executeAiAction:
   handler: src/handlers/executeAiAction.handler

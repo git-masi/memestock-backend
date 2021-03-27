@@ -3,7 +3,7 @@ createCompany:
   events:
     - http:
         method: POST
-        path: /company
+        path: /company/create
 
 getAllCompanies:
   handler: src/handlers/getAllCompanies.handler

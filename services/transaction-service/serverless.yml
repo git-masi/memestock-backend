@@ -1,0 +1,28 @@
+service: transaction-service
+
+plugins:
+  - serverless-bundle
+  - serverless-pseudo-parameters
+  - serverless-offline
+  - serverless-cloudside-plugin
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 256
+  apiGateway:
+    shouldStartNameWithService: true
+  stage: ${opt:stage, 'dev'}
+  iamRoleStatements:
+    - ${file(iam/TransactionsTableIAM.yml):TransactionsTableIAM}
+  environment:
+    TRANSACTIONS_TABLE_NAME: !Ref TransactionsTable
+    GSI_STATUS_AND_CREATED: 'statusAndCreated'
+
+resources: ${file(resources/resources.yml)}
+
+functions: ${file(functions.yml)}
+
+custom:
+  serverless-offline:
+    httpPort: 4321
