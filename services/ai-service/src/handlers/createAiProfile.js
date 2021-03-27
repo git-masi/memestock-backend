@@ -6,9 +6,9 @@ import {
   successResponse,
   getRandomIntZeroToX,
   getRandomValueFromArray,
+  createAttributesForStatusAndCreatedQuery,
 } from 'libs';
 import { baseAiProfiles } from '../utils/baseAiProfiles';
-import { createCommonAttributes } from '../utils/createCommonAttributes';
 import {
   getFirstItemCreated,
   getMostRecentItem,
@@ -55,7 +55,7 @@ async function createNewUser() {
 async function createNewAiProfile() {
   const baseProfile = getRandomValueFromArray(baseAiProfiles);
   const profileWithRandomPoints = addRandomPointsToProfile(baseProfile);
-  const commonAttributes = createCommonAttributes();
+  const commonAttributes = createAttributesForStatusAndCreatedQuery();
   const { Items } = await getFirstItemCreated(AI_PROFILES_TABLE_NAME);
   const firstItemId = Items[0]?.id;
 
