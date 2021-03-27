@@ -21,7 +21,7 @@ const requestSchema = {
           type: 'integer',
           min: 1,
         },
-        stockObj: {
+        stock: {
           type: 'object',
         },
         quantity: {
@@ -39,6 +39,7 @@ const requestSchema = {
           type: 'object',
         },
       },
+      required: ['total', 'stock', 'quantity', 'message', 'buyer', 'seller'],
     },
     required: { body: true },
   },
