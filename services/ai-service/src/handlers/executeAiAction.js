@@ -1,5 +1,5 @@
 import { DynamoDB } from 'aws-sdk';
-import { createCommonAttributes } from '../utils/createCommonAttributes';
+import { createAttributesForStatusAndCreatedQuery } from 'libs';
 import {
   getFirstItemCreated,
   getMostRecentItem,
@@ -16,7 +16,7 @@ export const handler = async function executeAiAction(event, context) {
     const params = {
       TableName: AI_ACTIONS_TABLE_NAME,
       Item: {
-        ...createCommonAttributes(),
+        ...createAttributesForStatusAndCreatedQuery(),
         aiProfileId: aiProfile.id,
         nextAiId: aiProfile.nextAiId,
       },
