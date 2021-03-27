@@ -1,6 +1,6 @@
 hello:
-  handler: src/handlers/hello.handler
+  handler: src/handlers/createTransaction.handler
   events:
     - http:
-        method: GET
-        path: /hello
+        method: POST
+        path: /transaction
