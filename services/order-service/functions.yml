@@ -1,6 +1,6 @@
-hello:
-  handler: src/handlers/hello.handler
+createOrder:
+  handler: src/handlers/createOrder.handler
   events:
     - http:
-        method: GET
-        path: /hello
+        method: POST
+        path: /order/create
