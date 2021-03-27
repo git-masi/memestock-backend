@@ -1,6 +1,6 @@
-hello:
+createTransaction:
   handler: src/handlers/createTransaction.handler
   events:
     - http:
         method: POST
-        path: /transaction
+        path: /transaction/create
