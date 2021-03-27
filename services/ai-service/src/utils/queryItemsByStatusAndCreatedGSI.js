@@ -1,5 +1,5 @@
 import { DynamoDB } from 'aws-sdk';
-import { statuses } from './statuses';
+import { statuses } from 'libs';
 
 const { GSI_STATUS_AND_CREATED } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
