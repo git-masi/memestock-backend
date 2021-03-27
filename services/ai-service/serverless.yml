@@ -20,6 +20,7 @@ provider:
     AI_PROFILES_TABLE_NAME: !Ref AiProfilesTable
     AI_ACTIONS_TABLE_NAME: !Ref AiActionsTable
     GSI_STATUS_AND_CREATED: 'statusAndCreated'
+    USER_SERVICE_URL: 'https://omijfe4bic.execute-api.us-east-1.amazonaws.com/dev'
 
 resources: ${file(resources/resources.yml)}
 
