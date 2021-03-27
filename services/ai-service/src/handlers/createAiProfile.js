@@ -1,4 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
+import axios from 'axios';
+import { internet } from 'faker';
 import {
   commonMiddleware,
   successResponse,
@@ -12,22 +14,28 @@ import {
   getMostRecentItem,
 } from '../utils/queryItemsByStatusAndCreatedGSI';
 
-const { AI_PROFILES_TABLE_NAME } = process.env;
+const { AI_PROFILES_TABLE_NAME, USER_SERVICE_URL } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
+const createUserPath = `${USER_SERVICE_URL}/users/create`;
 
 async function createAiProfile(event, context) {
   try {
-    const newAiProfile = await createNewAiProfile();
+    const [newAiProfile, newUser] = await Promise.all([
+      createNewAiProfile(),
+      createNewUser(),
+    ]);
+    const putItem = { ...newAiProfile, userId: newUser.pk };
     const newAiParams = {
       TableName: AI_PROFILES_TABLE_NAME,
-      Item: newAiProfile,
+      Item: putItem,
     };
 
-    // todo: Add new user. Use the returned ID of the new user in the ai profile
-    await updatePrevAiProfile(newAiProfile);
-    await dynamoDb.put(newAiParams).promise();
+    await Promise.all([
+      updatePrevAiProfile(newAiProfile),
+      dynamoDb.put(newAiParams).promise(),
+    ]);
 
-    return successResponse(newAiProfile);
+    return successResponse(putItem);
   } catch (error) {
     console.log(error);
     throw error;
@@ -35,6 +43,14 @@ async function createAiProfile(event, context) {
 }
 
 export const handler = commonMiddleware(createAiProfile);
+
+async function createNewUser() {
+  const { data: item } = await axios.post(createUserPath, {
+    displayName: internet.userName(),
+    email: internet.email(),
+  });
+  return item;
+}
 
 async function createNewAiProfile() {
   const baseProfile = getRandomValueFromArray(baseAiProfiles);
