@@ -13,9 +13,11 @@ provider:
   apiGateway:
     shouldStartNameWithService: true
   stage: ${opt:stage, 'dev'}
-  # Uncomment and add file path for IAM roles
-  # iamRoleStatements:
-  #   - ${file(--filePathGoesHere--)}
+  iamRoleStatements:
+    - ${file(iam/TransactionsTableIAM.yml):TransactionsTableIAM}
+  environment:
+    TRANSACTIONS_TABLE_NAME: !Ref TransactionsTable
+    GSI_STATUS_AND_CREATED: 'statusAndCreated'
 
 resources: ${file(resources/resources.yml)}
 
