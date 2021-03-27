@@ -18,7 +18,9 @@
   },
   "dependencies": {
     "aws-sdk": "^2.639.0",
+    "axios": "^0.21.1",
     "d3-random": "^2.2.2",
+    "faker": "^5.5.1",
     "http-errors": "^1.8.0",
     "libs": "file:../../libs",
     "uuid": "^8.3.2"
