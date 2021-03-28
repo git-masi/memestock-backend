@@ -5,8 +5,8 @@ createUser:
         method: POST
         path: /user/create
 
-getAllUsers:
-  handler: src/handlers/getAllUsers.handler
+getUser:
+  handler: src/handlers/getUser.handler
   events:
     - http:
         method: GET
