@@ -15,6 +15,13 @@ Example for NEW_SERVICE_NAME_HERE: company-service
 
 `npm run install:all`
 
+## Deploy any service
+
+- Go to the root folder of the project
+- Run the following command `node deployService.js SERVICE_NAME AWS_NAMED_PROFILE DEPLOYMENT_ENV`
+
+Note that the named profile and the deployment env are optional. You probably won't use the env in this project.
+
 ## Redeploy a lambda in any service
 
 - Go to the root folder of the project
