@@ -1,17 +1,24 @@
 import { DynamoDB } from 'aws-sdk';
+import axios from 'axios';
 import { createAttributesForStatusAndCreatedQuery } from 'libs';
 import {
   getFirstItemCreated,
   getMostRecentItem,
 } from '../utils/queryItemsByStatusAndCreatedGSI';
 
-const { AI_ACTIONS_TABLE_NAME, AI_PROFILES_TABLE_NAME } = process.env;
+const {
+  AI_ACTIONS_TABLE_NAME,
+  AI_PROFILES_TABLE_NAME,
+  USER_SERVICE_URL,
+} = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export const handler = async function executeAiAction(event, context) {
   try {
     const res = await getNextAiProfile();
     const aiProfile = getItemFromResult(res);
+    const user = getUser(aiProfile);
+    console.log(user);
     // todo: take action based on aiProfile
     const params = {
       TableName: AI_ACTIONS_TABLE_NAME,
@@ -50,4 +57,10 @@ async function getNextAiProfile() {
 
 function getItemFromResult(res) {
   return res.Item ? res.Item : res.Items ? res.Items[0] : null;
+}
+
+async function getUser(aiProfile) {
+  const { userId } = aiProfile;
+  const user = axios.get(`${USER_SERVICE_URL}/user?userId=${userId}`);
+  return user;
 }
