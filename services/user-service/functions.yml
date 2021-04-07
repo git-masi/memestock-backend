@@ -11,3 +11,10 @@ getUser:
     - http:
         method: GET
         path: /user
+
+signup:
+  handler: src/handlers/signup.handler
+  events:
+    - http:
+        method: POST
+        path: /user/signup
