@@ -27,32 +27,11 @@ const validationOptions = { inputSchema: schema };
 async function signup(event, context) {
   try {
     const { body } = event;
-    const { email, username } = body;
+    const { email } = body;
 
-    const params = {
-      UserPoolId: COGNITO_GENERIC_USER_POOL_ID,
-      Username: uuid(),
-      TemporaryPassword: 'NewpasS!23',
-      UserAttributes: [
-        { Name: 'preferred_username', Value: username },
-        { Name: 'email', Value: email },
-        {
-          // This is probably not the best practice in the real world
-          // By doing this we are assuming the email is valid and that
-          // the new user has access to the email address
-          Name: 'email_verified',
-          Value: 'true',
-        },
-        {
-          Name: 'custom:userId',
-          Value: 'test-123', // id from create fn call
-        },
-      ],
-      DesiredDeliveryMediums: ['EMAIL'],
-      MessageAction: 'SUPPRESS',
-    };
-
-    const createUserRes = await cognito.adminCreateUser(params).promise();
+    const createUserRes = await cognito
+      .adminCreateUser(createCognitoUserParams(body))
+      .promise();
 
     // Do not send all data to frontend
     return successResponse({
@@ -66,3 +45,28 @@ async function signup(event, context) {
 }
 
 export const handler = commonMiddlewareWithValidator(signup, validationOptions);
+
+function createCognitoUserParams(data) {
+  return {
+    UserPoolId: COGNITO_GENERIC_USER_POOL_ID,
+    Username: uuid(),
+    TemporaryPassword: 'NewpasS!23',
+    UserAttributes: [
+      { Name: 'preferred_username', Value: data.username },
+      { Name: 'email', Value: data.email },
+      {
+        // This is probably not the best practice in the real world
+        // By doing this we are assuming the email is valid and that
+        // the new user has access to the email address
+        Name: 'email_verified',
+        Value: 'true',
+      },
+      {
+        Name: 'custom:userId',
+        Value: 'test-123', // id from create fn call
+      },
+    ],
+    DesiredDeliveryMediums: ['EMAIL'],
+    MessageAction: 'SUPPRESS',
+  };
+}
