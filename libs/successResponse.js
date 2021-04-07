@@ -1,16 +1,30 @@
-export function successResponse(body) {
+export function successResponse(data) {
+  const body =
+    data instanceof Object
+      ? JSON.stringify(data)
+      : typeof data === 'string'
+      ? data
+      : '';
+
   return {
     statusCode: 200,
-    body: JSON.stringify(body),
+    body,
   };
 }
 
-export function successResponseCors(body) {
+export function successResponseCors(data) {
+  const body =
+    data instanceof Object
+      ? JSON.stringify(data)
+      : typeof data === 'string'
+      ? data
+      : '';
+
   return {
     statusCode: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
-    body: JSON.stringify(body),
+    body,
   };
 }

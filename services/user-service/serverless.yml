@@ -18,6 +18,8 @@ provider:
   environment:
     USERS_TABLE_NAME: !Ref UsersTable
     COMPANY_SERVICE_URL: 'https://a8sxo3zyr8.execute-api.us-east-1.amazonaws.com/dev'
+    COGNITO_GENERIC_USER_POOL_ID: !Ref GenericUserPool
+    COGNITO_GENERIC_USER_CLIENT_ID: !Ref GenericUserClient
 
 resources: ${file(resources/resources.yml)}
 

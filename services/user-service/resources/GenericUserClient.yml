@@ -1,0 +1,7 @@
+GenericUserClient:
+  Type: 'AWS::Cognito::UserPoolClient'
+  Properties:
+    ClientName: memestock-generic-user-client
+    GenerateSecret: False
+    UserPoolId:
+      Ref: GenericUserPool

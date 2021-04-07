@@ -1,22 +1,10 @@
-// Modules
-import { DynamoDB } from 'aws-sdk';
-import { v4 as uuid } from 'uuid';
-import axios from 'axios';
-
 import {
   commonMiddlewareWithValidator,
-  emailRegex,
+  emailPattern,
   successResponse,
-  getRandomValueFromArray,
-  getRandomIntZeroToX,
-  getRandomIntMinToMax,
 } from 'libs';
+import { addNewUserToDynamo } from '../utils/usersTableUtils';
 
-const { USERS_TABLE_NAME, COMPANY_SERVICE_URL } = process.env;
-const dynamoDb = new DynamoDB.DocumentClient();
-const getAllCompaniesPath = `${COMPANY_SERVICE_URL}/company/all`;
-const minDollarAmountInCents = 10000; // cents
-const maxDollarAmountInCents = 500000; // cents
 const requestSchema = {
   properties: {
     body: {
@@ -30,9 +18,10 @@ const requestSchema = {
         },
         email: {
           type: 'string',
-          pattern: emailRegex.toString().replace(/\//g, ''),
+          pattern: emailPattern,
         },
       },
+      required: ['displayName', 'email'],
     },
     required: { body: true },
   },
@@ -42,9 +31,8 @@ const validationOptions = { inputSchema: requestSchema };
 async function createUser(event, context) {
   try {
     const { body } = event;
-    const params = await createUserAttributes(body);
-    await dynamoDb.transactWrite(params).promise();
-    return successResponse(params.TransactItems[0].Put.Item);
+    const result = await addNewUserToDynamo(body);
+    return successResponse(result);
   } catch (error) {
     console.log(error);
     throw error;
@@ -55,78 +43,3 @@ export const handler = commonMiddlewareWithValidator(
   createUser,
   validationOptions
 );
-
-async function createUserAttributes(body) {
-  const { displayName, email } = body;
-  const startingCash = getRandomIntMinToMax(
-    minDollarAmountInCents,
-    maxDollarAmountInCents
-  );
-  return {
-    TransactItems: [
-      {
-        Put: {
-          TableName: USERS_TABLE_NAME,
-          ConditionExpression: 'attribute_not_exists(pk)',
-          Item: {
-            pk: uuid(),
-            created: new Date().toISOString(),
-            displayName,
-            email,
-            stocks: await createStartingStocks(),
-            totalCash: startingCash,
-            cashOnHand: startingCash,
-          },
-        },
-      },
-      {
-        Put: {
-          TableName: USERS_TABLE_NAME,
-          ConditionExpression: 'attribute_not_exists(pk)',
-          Item: {
-            pk: `displayName#${displayName}`,
-          },
-        },
-      },
-      {
-        Put: {
-          TableName: USERS_TABLE_NAME,
-          ConditionExpression: 'attribute_not_exists(pk)',
-          Item: {
-            pk: `email#${email}`,
-          },
-        },
-      },
-    ],
-  };
-}
-
-async function createStartingStocks() {
-  const { data: companies } = await axios.get(getAllCompaniesPath);
-  const numStocks = getRandomIntMinToMax(1, companies.length);
-  const stocks = {};
-  let totalStockValue = getRandomIntMinToMax(
-    minDollarAmountInCents,
-    maxDollarAmountInCents
-  );
-
-  for (let i = 0; i < numStocks; i++) {
-    const { tickerSymbol, pk, pricePerShare } = getRandomValueFromArray(
-      companies
-    );
-    const valueHeld =
-      i === numStocks - 1
-        ? totalStockValue
-        : getRandomIntZeroToX(totalStockValue);
-    const amountHeld = Math.floor(valueHeld / pricePerShare);
-    const quantityHeld = amountHeld > 0 ? amountHeld : 1;
-
-    stocks[tickerSymbol] = {
-      id: pk,
-      quantityHeld,
-      quantityOnHand: quantityHeld,
-    };
-  }
-
-  return stocks;
-}
