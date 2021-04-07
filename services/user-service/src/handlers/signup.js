@@ -37,6 +37,9 @@ async function signup(event, context) {
         { Name: 'preferred_username', Value: username },
         { Name: 'email', Value: email },
         {
+          // This is probably not the best practice in the real world
+          // By doing this we are assuming the email is valid and that
+          // the new user has access to the email address
           Name: 'email_verified',
           Value: 'true',
         },
