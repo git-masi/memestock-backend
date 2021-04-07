@@ -2,6 +2,7 @@ import { CognitoIdentityServiceProvider } from 'aws-sdk';
 // import createHttpError from 'http-errors';
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 import { v4 as uuid } from 'uuid';
+import { emailPattern } from 'libs/regexUtils';
 
 const { COGNITO_GENERIC_USER_POOL_ID } = process.env;
 const cognito = new CognitoIdentityServiceProvider();
@@ -12,9 +13,13 @@ const schema = {
       properties: {
         email: {
           type: 'string',
+          pattern: emailPattern,
         },
         username: {
           type: 'string',
+          minLength: 5,
+          maxLength: 36,
+          pattern: '^\\S*$',
         },
       },
       required: ['email', 'username'],
