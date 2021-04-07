@@ -25,8 +25,9 @@ const requestSchema = {
           pattern: emailPattern,
         },
       },
+      required: ['displayName', 'email'],
     },
-    required: { body: true },
+    required: ['body'],
   },
 };
 const validationOptions = { inputSchema: requestSchema };
