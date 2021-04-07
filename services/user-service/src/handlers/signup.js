@@ -49,9 +49,13 @@ async function signup(event, context) {
       MessageAction: 'SUPPRESS',
     };
 
-    const res = await cognito.adminCreateUser(params).promise();
+    const createUserRes = await cognito.adminCreateUser(params).promise();
 
-    return successResponse(res);
+    // Do not send all data to frontend
+    return successResponse({
+      accountStatus: createUserRes?.User?.UserStatus,
+      email,
+    });
   } catch (error) {
     console.log(error);
     throw error;
