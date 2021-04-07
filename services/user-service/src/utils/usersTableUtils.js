@@ -15,6 +15,9 @@ const getAllCompaniesPath = `${COMPANY_SERVICE_URL}/company/all`;
 const minDollarAmountInCents = 10000; // cents
 const maxDollarAmountInCents = 500000; // cents
 
+// data:
+//    displayName <string>
+//    email <string>
 export async function addNewUserToDynamo(data) {
   const params = await createUserAttributes(data);
   await dynamoDb.transactWrite(params).promise();
