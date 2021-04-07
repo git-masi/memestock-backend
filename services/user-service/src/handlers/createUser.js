@@ -23,7 +23,7 @@ const requestSchema = {
       },
       required: ['displayName', 'email'],
     },
-    required: ['body'],
+    required: { body: true },
   },
 };
 const validationOptions = { inputSchema: requestSchema };
@@ -31,7 +31,7 @@ const validationOptions = { inputSchema: requestSchema };
 async function createUser(event, context) {
   try {
     const { body } = event;
-    const result = addNewUserToDynamo(body);
+    const result = await addNewUserToDynamo(body);
     return successResponse(result);
   } catch (error) {
     console.log(error);
