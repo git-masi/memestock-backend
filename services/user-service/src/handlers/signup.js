@@ -17,10 +17,10 @@ const schema = {
           type: 'string',
         },
       },
-      require: ['email', 'username'],
+      required: ['email', 'username'],
     },
   },
-  require: ['body'],
+  required: ['body'],
 };
 const validationOptions = { inputSchema: schema };
 
