@@ -1,7 +1,7 @@
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 
-// const { COGNITO_GENERIC_USER_POOL_ID } = process.env;
+const { COGNITO_GENERIC_USER_CLIENT_ID } = process.env;
 const cognito = new CognitoIdentityServiceProvider();
 const schema = {
   properties: {
@@ -28,7 +28,6 @@ const validationOptions = { inputSchema: schema };
 async function login(event, context) {
   try {
     const { body } = event;
-    console.log('do stuff');
 
     const initAuthRes = await cognito
       .initiateAuth(createInitAuthParams(body))
@@ -55,7 +54,7 @@ export const handler = commonMiddlewareWithValidator(login, validationOptions);
 function createInitAuthParams(data) {
   return {
     AuthFlow: 'USER_PASSWORD_AUTH',
-    ClientId: 'napreks02amb2nai1801sn9v4',
+    ClientId: COGNITO_GENERIC_USER_CLIENT_ID,
     AuthParameters: {
       USERNAME: data?.username,
       PASSWORD: data?.password,
@@ -69,7 +68,7 @@ function setNewPassword(args) {
     .respondToAuthChallenge({
       ChallengeName,
       Session,
-      ClientId: 'napreks02amb2nai1801sn9v4',
+      ClientId: COGNITO_GENERIC_USER_CLIENT_ID,
       ChallengeResponses: {
         NEW_PASSWORD: newPassword,
         USERNAME: username,
