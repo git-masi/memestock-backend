@@ -3,7 +3,7 @@ import { DynamoDB } from 'aws-sdk';
 
 import {
   commonMiddlewareWithValidator,
-  emailRegex,
+  emailPattern,
   successResponse,
 } from 'libs';
 
@@ -22,7 +22,7 @@ const requestSchema = {
         },
         email: {
           type: 'string',
-          pattern: emailRegex.toString().replace(/\//g, ''),
+          pattern: emailPattern,
         },
       },
     },
