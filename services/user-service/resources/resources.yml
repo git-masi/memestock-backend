@@ -4,3 +4,6 @@ Resources:
   #     https://www.serverless.com/blog/cors-api-gateway-survival-guide
   GatewayResponseDefault4XX: ${file(resources/customAuthorizerResponse.yml):GatewayResponseDefault4XX}
   UsersTable: ${file(resources/UsersTable.yml):UsersTable}
+  GenericUserPool: ${file(resources/GenericUserPool.yml):GenericUserPool}
+  GenericUserClient: ${file(resources/GenericUserClient.yml):GenericUserClient}
+  GenericUserAuthorizer: ${file(resources/GenericUserAuthorizer.yml):GenericUserAuthorizer}
