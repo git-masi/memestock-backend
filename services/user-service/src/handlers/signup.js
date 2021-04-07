@@ -3,6 +3,7 @@ import { CognitoIdentityServiceProvider } from 'aws-sdk';
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 import { v4 as uuid } from 'uuid';
 import { emailPattern } from 'libs/regexUtils';
+import { addNewUserToDynamo } from '../utils/usersTableUtils';
 
 const { COGNITO_GENERIC_USER_POOL_ID } = process.env;
 const cognito = new CognitoIdentityServiceProvider();
@@ -32,10 +33,12 @@ const validationOptions = { inputSchema: schema };
 async function signup(event, context) {
   try {
     const { body } = event;
-    const { email } = body;
+    const { email, username } = body;
+
+    const newUser = await addNewUserToDynamo({ email, displayName: username });
 
     const createUserRes = await cognito
-      .adminCreateUser(createCognitoUserParams(body))
+      .adminCreateUser(createCognitoUserParams({ ...body, id: newUser.pk }))
       .promise();
 
     // Do not send all data to frontend
@@ -68,7 +71,7 @@ function createCognitoUserParams(data) {
       },
       {
         Name: 'custom:userId',
-        Value: 'test-123', // id from create fn call
+        Value: data.id, // id from create fn call
       },
     ],
     DesiredDeliveryMediums: ['EMAIL'],
