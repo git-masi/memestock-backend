@@ -1,13 +1,9 @@
-// Modules
-import { DynamoDB } from 'aws-sdk';
-
 import {
   commonMiddlewareWithValidator,
   emailPattern,
   successResponse,
 } from 'libs';
-
-const dynamoDb = new DynamoDB.DocumentClient();
+import { addNewUserToDynamo } from '../utils/usersTableUtils';
 
 const requestSchema = {
   properties: {
@@ -35,9 +31,8 @@ const validationOptions = { inputSchema: requestSchema };
 async function createUser(event, context) {
   try {
     const { body } = event;
-    const params = await createUserAttributes(body);
-    await dynamoDb.transactWrite(params).promise();
-    return successResponse(params.TransactItems[0].Put.Item);
+    const result = addNewUserToDynamo(body);
+    return successResponse(result);
   } catch (error) {
     console.log(error);
     throw error;

@@ -1,3 +1,5 @@
+// Modules
+import { DynamoDB } from 'aws-sdk';
 import { v4 as uuid } from 'uuid';
 import axios from 'axios';
 
@@ -8,9 +10,16 @@ import {
 } from 'libs';
 
 const { USERS_TABLE_NAME, COMPANY_SERVICE_URL } = process.env;
+const dynamoDb = new DynamoDB.DocumentClient();
 const getAllCompaniesPath = `${COMPANY_SERVICE_URL}/company/all`;
 const minDollarAmountInCents = 10000; // cents
 const maxDollarAmountInCents = 500000; // cents
+
+export async function addNewUserToDynamo(data) {
+  const params = await createUserAttributes(data);
+  await dynamoDb.transactWrite(params).promise();
+  return params.TransactItems[0].Put.Item;
+}
 
 export async function createUserAttributes(data) {
   const { displayName, email } = data;
