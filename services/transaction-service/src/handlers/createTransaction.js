@@ -49,6 +49,7 @@ const validationOptions = { inputSchema: requestSchema };
 async function createTransaction(event, context) {
   try {
     const { body } = event;
+    // todo: close corresponding order
     const transaction = createTransactionAttributes(body);
     const params = {
       TableName: TRANSACTIONS_TABLE_NAME,

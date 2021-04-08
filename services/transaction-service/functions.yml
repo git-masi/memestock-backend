@@ -4,3 +4,10 @@ createTransaction:
     - http:
         method: POST
         path: /transaction/create
+
+getTransactions:
+  handler: src/handlers/getTransactions.handler
+  events:
+    - http:
+        method: GET
+        path: /transaction/many
