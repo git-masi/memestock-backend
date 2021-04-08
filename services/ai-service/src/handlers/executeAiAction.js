@@ -10,17 +10,19 @@ const {
   AI_ACTIONS_TABLE_NAME,
   AI_PROFILES_TABLE_NAME,
   USER_SERVICE_URL,
+  TRANSACTION_SERVICE_URL,
+  ORDER_SERVICE_URL,
 } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
+const numOrdersToFetch = 20;
+const numTransactionsToFetch = 20;
 
 const test = true;
 
 export const handler = async function executeAiAction(event, context) {
   try {
-    const res = await getNextAiProfile();
-    const aiProfile = getItemFromResult(res);
-    const user = await getUser(aiProfile);
-    const utilityScores = await getUtilityScores({ aiProfile, user });
+    const data = await getDataForUtilityScores();
+    const utilityScores = await getUtilityScores(data);
     // todo: take action based on aiProfile
     console.log(utilityScores);
 
@@ -30,8 +32,8 @@ export const handler = async function executeAiAction(event, context) {
       TableName: AI_ACTIONS_TABLE_NAME,
       Item: {
         ...createAttributesForStatusAndCreatedQuery(),
-        currentAiId: aiProfile.id,
-        nextAiId: aiProfile.nextAiId,
+        currentAiId: data.aiProfile.id,
+        nextAiId: data.aiProfile.nextAiId,
       },
     };
 
@@ -41,6 +43,20 @@ export const handler = async function executeAiAction(event, context) {
     throw error;
   }
 };
+
+async function getDataForUtilityScores() {
+  const res = await getNextAiProfile();
+  const aiProfile = getItemFromResult(res);
+  const user = await getUser(aiProfile);
+  const orders = await getOrders();
+  const transactions = await getTransactions();
+  return {
+    aiProfile,
+    user,
+    orders: orders ?? [],
+    transactions: transactions ?? [],
+  };
+}
 
 async function getNextAiProfile() {
   const { Items } = await getMostRecentItem(AI_ACTIONS_TABLE_NAME);
@@ -68,6 +84,20 @@ function getItemFromResult(res) {
 async function getUser(aiProfile) {
   const { userId } = aiProfile;
   const { data } = await axios.get(`${USER_SERVICE_URL}/user?userId=${userId}`);
+  return data;
+}
+
+async function getOrders() {
+  const { data } = await axios.get(
+    `${ORDER_SERVICE_URL}/order/open?limit=${numOrdersToFetch}&orderAsc=false`
+  );
+  return data;
+}
+
+async function getTransactions() {
+  const { data } = await axios.get(
+    `${TRANSACTION_SERVICE_URL}/transaction/many?limit=${numTransactionsToFetch}&orderAsc=false`
+  );
   return data;
 }
 

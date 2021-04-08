@@ -1,3 +1,5 @@
+import { convertStringBoolean } from './convertStringBoolean';
+
 const commonIndexNames = Object.freeze({
   statusAndCreated: 'statusAndCreated',
 });
@@ -25,7 +27,8 @@ export function createStatusAndCreatedIndexParams(args) {
       ':now': compareTime,
     },
     Limit: limit,
-    ScanIndexForward: orderAsc,
+    ScanIndexForward:
+      typeof orderAsc === 'string' ? convertStringBoolean(orderAsc) : orderAsc,
   };
 
   return params;

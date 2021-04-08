@@ -21,6 +21,8 @@ provider:
     AI_ACTIONS_TABLE_NAME: !Ref AiActionsTable
     GSI_STATUS_AND_CREATED: 'statusAndCreated'
     USER_SERVICE_URL: 'https://741a1l025i.execute-api.us-east-1.amazonaws.com/dev'
+    TRANSACTION_SERVICE_URL: 'https://727yqlfk78.execute-api.us-east-1.amazonaws.com/dev'
+    ORDER_SERVICE_URL: 'https://l1yt6vi8dg.execute-api.us-east-1.amazonaws.com/dev'
 
 resources: ${file(resources/resources.yml)}
 
