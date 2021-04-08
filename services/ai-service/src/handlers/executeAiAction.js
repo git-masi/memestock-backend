@@ -24,7 +24,7 @@ export const handler = async function executeAiAction(event, context) {
       TableName: AI_ACTIONS_TABLE_NAME,
       Item: {
         ...createAttributesForStatusAndCreatedQuery(),
-        aiProfileId: aiProfile.id,
+        currentAiId: aiProfile.id,
         nextAiId: aiProfile.nextAiId,
       },
     };
