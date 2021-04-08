@@ -4,3 +4,10 @@ createOrder:
     - http:
         method: POST
         path: /order/create
+
+getOrdersByStatus:
+  handler: src/handlers/getOrdersByStatus.handler
+  events:
+    - http:
+        method: GET
+        path: /order/{status}
