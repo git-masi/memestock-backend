@@ -13,13 +13,19 @@ const {
 } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
+const test = true;
+
 export const handler = async function executeAiAction(event, context) {
   try {
     const res = await getNextAiProfile();
     const aiProfile = getItemFromResult(res);
-    const user = getUser(aiProfile);
-    console.log(user);
+    const user = await getUser(aiProfile);
+    const utilityScores = await getUtilityScores({ aiProfile, user });
     // todo: take action based on aiProfile
+    console.log(utilityScores);
+
+    if (test) return;
+
     const params = {
       TableName: AI_ACTIONS_TABLE_NAME,
       Item: {
@@ -61,6 +67,11 @@ function getItemFromResult(res) {
 
 async function getUser(aiProfile) {
   const { userId } = aiProfile;
-  const user = axios.get(`${USER_SERVICE_URL}/user?userId=${userId}`);
-  return user;
+  const { data } = await axios.get(`${USER_SERVICE_URL}/user?userId=${userId}`);
+  return data;
+}
+
+async function getUtilityScores(data) {
+  console.log(data);
+  // const { aiProfile, user } = data;
 }
