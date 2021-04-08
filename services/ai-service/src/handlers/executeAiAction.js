@@ -45,17 +45,36 @@ export const handler = async function executeAiAction(event, context) {
 };
 
 async function getDataForUtilityScores() {
-  const res = await getNextAiProfile();
-  const aiProfile = getItemFromResult(res);
-  const user = await getUser(aiProfile);
-  const orders = await getOrders();
-  const transactions = await getTransactions();
-  return {
-    aiProfile,
-    user,
-    orders: orders ?? [],
-    transactions: transactions ?? [],
-  };
+  const nextAiProfile = await getNextAiProfile();
+  const aiProfile = getItemFromResult(nextAiProfile);
+  const results = await Promise.allSettled([
+    getUser(aiProfile),
+    getOrders(),
+    getTransactions(),
+  ]);
+  console.log(results);
+
+  if (results.some((r) => r.status === 'rejected'))
+    throw new Error('Failed to get data for ai action');
+
+  const keyNames = ['user', 'orders', 'transactions'];
+
+  return results.reduce(
+    (acc, res, i) => {
+      acc[keyNames[i]] = res.value;
+    },
+    { aiProfile }
+  );
+
+  // const user = await getUser(aiProfile);
+  // const orders = await getOrders();
+  // const transactions = await getTransactions();
+  // return {
+  //   aiProfile,
+  //   user,
+  //   orders: orders ?? [],
+  //   transactions: transactions ?? [],
+  // };
 }
 
 async function getNextAiProfile() {
