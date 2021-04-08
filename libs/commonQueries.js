@@ -1,3 +1,7 @@
+const commonIndexNames = Object.freeze({
+  statusAndCreated: 'statusAndCreated',
+});
+
 export function createStatusAndCreatedIndexParams(args) {
   const {
     tableName,
@@ -10,7 +14,7 @@ export function createStatusAndCreatedIndexParams(args) {
 
   const params = {
     TableName: tableName,
-    IndexName: 'statusAndCreated',
+    IndexName: commonIndexNames.statusAndCreated,
     KeyConditionExpression: `#status = :status AND #created ${compareTimeOperator} :now`,
     ExpressionAttributeNames: {
       '#status': 'status',
