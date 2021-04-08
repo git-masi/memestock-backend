@@ -24,7 +24,7 @@ export const handler = async function executeAiAction(event, context) {
     const data = await getDataForUtilityScores();
     const utilityScores = await getUtilityScores(data);
     // todo: take action based on aiProfile
-    console.log(utilityScores);
+    console.log({ utilityScores });
 
     if (test) return;
 
@@ -62,6 +62,7 @@ async function getDataForUtilityScores() {
   return results.reduce(
     (acc, res, i) => {
       acc[keyNames[i]] = res.value;
+      return acc;
     },
     { aiProfile }
   );
@@ -121,6 +122,6 @@ async function getTransactions() {
 }
 
 async function getUtilityScores(data) {
-  console.log(data);
+  console.log({ data });
   // const { aiProfile, user } = data;
 }
