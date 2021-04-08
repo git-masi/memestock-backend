@@ -12,3 +12,4 @@ export {
 export { emailRegex } from './regexUtils';
 export { createAttributesForStatusAndCreatedQuery } from './createAttributesForStatusAndCreatedQuery';
 export { statuses } from './statuses';
+export { createStatusAndCreatedIndexParams } from './commonQueries';
