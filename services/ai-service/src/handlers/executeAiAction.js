@@ -53,6 +53,7 @@ async function getDataForUtilityScores() {
     getUser(aiProfile),
     getOrders(),
     getTransactions(),
+    getCompanies(),
   ]);
   console.log(results);
 
@@ -113,6 +114,11 @@ async function getTransactions() {
   return data;
 }
 
+async function getCompanies() {
+  const { data } = await axios.get(`${COMPANY_SERVICE_URL}/company/all`);
+  return data;
+}
+
 // {
 //   "description": "This is an online gaming platform designed for competitive Twitter battles for most likes and shares.",
 //   "documentType": "record",
@@ -152,9 +158,18 @@ const possibleActions = {
   cancelSellOrder: 'cancelSellOrder',
 };
 
+const baseUtilityScores = {
+  [possibleActions.buyOrder]: 20,
+  [possibleActions.sellOrder]: 20,
+  [possibleActions.newBuyOrder]: 20,
+  [possibleActions.newSellOrder]: 20,
+  [possibleActions.cancelBuyOrder]: 20,
+  [possibleActions.cancelSellOrder]: 20,
+};
+
 async function getUtilityScores(data) {
   console.log({ data });
-  const { aiProfile, user, orders, transactions } = data;
+  const { aiProfile, user, orders, transactions, companies } = data;
 
   console.log(
     'log to shut the compiler up',
@@ -163,8 +178,6 @@ async function getUtilityScores(data) {
     !!orders,
     !!transactions
   );
-
-  const companies = await getCompanies();
 
   // console.log('companies', JSON.stringify(companies));
   console.log(companies);
@@ -183,12 +196,7 @@ async function getUtilityScores(data) {
     totalStockValue
   );
 
-  const baseUtilityScores = getBaseUtilityScores({
-    highCashBoost,
-    lowCashBoost,
-  });
-
-  console.log({ baseUtilityScores });
+  console.log({ lowCashBoost, highCashBoost });
 
   // if (test) return;
 
@@ -212,11 +220,6 @@ async function getUtilityScores(data) {
     mostFrequentSellOrders,
     pricePressure
   );
-}
-
-async function getCompanies() {
-  const { data } = await axios.get(`${COMPANY_SERVICE_URL}/company/all`);
-  return data;
 }
 
 function getUserStockValues(user, companies) {
@@ -249,18 +252,6 @@ function getBaseScoreBoosts(data, totalStockValue) {
     : 0;
 
   return { lowCashBoost, highCashBoost };
-}
-
-function getBaseUtilityScores(args) {
-  const { highCashBoost, lowCashBoost } = args;
-  return {
-    [possibleActions.buyOrder]: 20 + highCashBoost,
-    [possibleActions.sellOrder]: 20 + lowCashBoost,
-    [possibleActions.newBuyOrder]: 20 + highCashBoost,
-    [possibleActions.newSellOrder]: 20 + lowCashBoost,
-    [possibleActions.cancelBuyOrder]: 20,
-    [possibleActions.cancelSellOrder]: 20,
-  };
 }
 
 function calculateBoostForMostFrequentOrders(args) {
