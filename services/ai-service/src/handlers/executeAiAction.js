@@ -1,3 +1,9 @@
+/**
+ *
+ * This is some grade A spaghetti code 😅
+ *
+ */
+
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
 import {
@@ -206,13 +212,7 @@ async function getUtilityScores(data) {
 
   // if (test) return;
 
-  const actionArgs = {
-    data,
-    possibleActions,
-    baseUtilityScores,
-  };
-
-  const mostFreqBoosts = calculateBoostForMostFrequentOrders(actionArgs);
+  const mostFreqBoosts = calculateBoostForMostFrequentOrders(data);
 
   console.log({ mostFreqBoosts });
 
@@ -220,7 +220,15 @@ async function getUtilityScores(data) {
 
   // boosts calculated per stock percentage change
 
-  const actions = getAllPossibleActions(data);
+  const actions = getAllPossibleActions({
+    data,
+    mostFreqBoosts,
+    lowCashBoost,
+    highCashBoost,
+    userStockValues,
+    totalStockValue,
+    changeInPricePerShare,
+  });
 
   console.log({ actions });
 
@@ -260,10 +268,8 @@ function getHighLowCashBoosts(data, totalStockValue) {
   return { lowCashBoost, highCashBoost };
 }
 
-function calculateBoostForMostFrequentOrders(args) {
-  const {
-    data: { orders, aiProfile },
-  } = args;
+function calculateBoostForMostFrequentOrders(data) {
+  const { orders, aiProfile } = data;
 
   const buyOrders = filterByOrderType(orders, 'buy');
   const sellOrders = filterByOrderType(orders, 'sell');
@@ -354,13 +360,23 @@ function calculateSharePriceChange(changes, data) {
 }
 
 function getAllPossibleActions(data) {
-  const orderActions = getAllPossibleOrderActions(data);
+  const orderActions = getAllPossibleExistingOrderActions(data);
 
   return [...orderActions];
 }
 
-function getAllPossibleOrderActions(data) {
-  const { orders, user } = data;
+function getAllPossibleExistingOrderActions(args) {
+  const {
+    data,
+    mostFreqBoosts,
+    lowCashBoost,
+    highCashBoost,
+    // userStockValues,
+    // totalStockValue,
+    changeInPricePerShare,
+  } = args;
+  const { orders, user, aiProfile } = data;
+
   const notOwnOrders = orders.filter((o) => o.userId !== user.pk);
   const buyOrders = filterByOrderType(notOwnOrders, 'buy');
   const sellOrders = filterByOrderType(notOwnOrders, 'sell');
@@ -373,21 +389,65 @@ function getAllPossibleOrderActions(data) {
     return hasQuantity;
   });
 
-  console.log({ notOwnOrders, fillableBuyOrders, fillableSellOrders });
+  // console.log({ notOwnOrders, fillableBuyOrders, fillableSellOrders });
 
   const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
+    const { tickerSymbol } = o.stock;
+    const freqBoost =
+      tickerSymbol in mostFreqBoosts?.mostFreqBuy
+        ? mostFreqBoosts.mostFreqBuy.boost
+        : 0;
+
+    const changeInPPS = changeInPricePerShare.find(
+      (obj) => obj.tickerSymbol === tickerSymbol
+    );
+
+    const pricePressureBoost =
+      changeInPPS && changeInPPS > 0
+        ? Math.ceil(
+            changeInPPS.percentChange *
+              ((aiProfile.fomo + aiProfile.wildcard) / 2)
+          )
+        : 0;
+
     return {
       action: possibleActions.buyOrder,
       data: o,
-      score: baseUtilityScores.buyOrder,
+      utilityScore:
+        baseUtilityScores.buyOrder +
+        freqBoost +
+        pricePressureBoost +
+        highCashBoost,
     };
   });
 
   const possibleSellOrderActions = fillableSellOrders.map((o) => {
+    const { tickerSymbol } = o.stock;
+    const freqBoost =
+      tickerSymbol in mostFreqBoosts?.mostFreqSell
+        ? mostFreqBoosts.mostFreqSell.boost
+        : 0;
+
+    const changeInPPS = changeInPricePerShare.find(
+      (obj) => obj.tickerSymbol === tickerSymbol
+    );
+
+    const pricePressureBoost =
+      changeInPPS && changeInPPS < 0
+        ? Math.ceil(
+            changeInPPS.percentChange *
+              ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+          )
+        : 0;
+
     return {
       action: possibleActions.sellOrder,
       data: o,
-      score: baseUtilityScores.sellOrder,
+      utilityScore:
+        baseUtilityScores.sellOrder +
+        freqBoost +
+        pricePressureBoost +
+        lowCashBoost,
     };
   });
 
