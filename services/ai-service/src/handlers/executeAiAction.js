@@ -176,11 +176,11 @@ async function getUtilityScores(data) {
     !!aiProfile,
     !!user,
     !!orders,
-    !!transactions
+    !!transactions,
+    !!companies
   );
 
-  // console.log('companies', JSON.stringify(companies));
-  console.log(companies);
+  // console.log(companies);
 
   // array of tuples ['TEST', {...userStockData}]
   const userStockValues = getUserStockValues(data);
@@ -216,6 +216,8 @@ async function getUtilityScores(data) {
   const priceChangeAcrossTransactions = calculatePriceChange(
     transactionsSortedByStock
   );
+
+  console.log(priceChangeAcrossTransactions);
 
   // % as decimal
   const changeInPricePerShare = calculateSharePriceChange(
