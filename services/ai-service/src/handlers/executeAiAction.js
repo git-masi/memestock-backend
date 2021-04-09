@@ -183,7 +183,7 @@ async function getUtilityScores(data) {
   console.log(companies);
 
   // array of tuples ['TEST', {...userStockData}]
-  const userStockValues = getUserStockValues(data.user, companies);
+  const userStockValues = getUserStockValues(data);
 
   console.log(JSON.stringify(userStockValues));
 
@@ -222,7 +222,8 @@ async function getUtilityScores(data) {
   );
 }
 
-function getUserStockValues(user, companies) {
+function getUserStockValues(data) {
+  const { user, companies } = data;
   return Object.entries(user?.stocks).map((entry) => {
     const [tickerSymbol, data] = entry;
     const { pricePerShare } = companies.find(
