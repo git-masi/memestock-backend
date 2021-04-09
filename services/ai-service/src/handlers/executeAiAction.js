@@ -220,44 +220,7 @@ async function getUtilityScores(data) {
 
   // boosts calculated per stock percentage change
 
-  function getAllPossibleActions() {
-    const { orders, user } = data;
-    const notOwnOrders = orders.filter((o) => o.userId !== user.pk);
-    const buyOrders = filterByOrderType(notOwnOrders, 'buy');
-    const sellOrders = filterByOrderType(notOwnOrders, 'sell');
-    const fillableBuyOrders = buyOrders.filter(
-      (o) => o.total <= user.cashOnHand
-    );
-    const fillableSellOrders = sellOrders.filter((o) => {
-      const { tickerSymbol, quantity } = o.stock;
-      const hasStock = `${tickerSymbol}` in user.stocks;
-      if (!hasStock) return false;
-      const hasQuantity = user.stocks[tickerSymbol].quantityOnHand <= quantity;
-      return hasQuantity;
-    });
-
-    console.log({ notOwnOrders, fillableBuyOrders, fillableSellOrders });
-
-    const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
-      return {
-        action: possibleActions.buyOrder,
-        data: o,
-        score: baseUtilityScores.buyOrder,
-      };
-    });
-
-    const possibleSellOrderActions = fillableSellOrders.map((o) => {
-      return {
-        action: possibleActions.sellOrder,
-        data: o,
-        score: baseUtilityScores.sellOrder,
-      };
-    });
-
-    return [...possibleBuyOrderActions, ...possibleSellOrderActions];
-  }
-
-  const actions = getAllPossibleActions();
+  const actions = getAllPossibleActions(data);
 
   console.log({ actions });
 
@@ -388,4 +351,45 @@ function calculateSharePriceChange(changes, data) {
     const company = companies.find((c) => c.tickerSymbol === tickerSymbol);
     return { tickerSymbol, percentChange: change / company.pricePerShare };
   });
+}
+
+function getAllPossibleActions(data) {
+  const orderActions = getAllPossibleOrderActions(data);
+
+  return [...orderActions];
+}
+
+function getAllPossibleOrderActions(data) {
+  const { orders, user } = data;
+  const notOwnOrders = orders.filter((o) => o.userId !== user.pk);
+  const buyOrders = filterByOrderType(notOwnOrders, 'buy');
+  const sellOrders = filterByOrderType(notOwnOrders, 'sell');
+  const fillableBuyOrders = buyOrders.filter((o) => o.total <= user.cashOnHand);
+  const fillableSellOrders = sellOrders.filter((o) => {
+    const { tickerSymbol, quantity } = o.stock;
+    const hasStock = `${tickerSymbol}` in user.stocks;
+    if (!hasStock) return false;
+    const hasQuantity = user.stocks[tickerSymbol].quantityOnHand <= quantity;
+    return hasQuantity;
+  });
+
+  console.log({ notOwnOrders, fillableBuyOrders, fillableSellOrders });
+
+  const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
+    return {
+      action: possibleActions.buyOrder,
+      data: o,
+      score: baseUtilityScores.buyOrder,
+    };
+  });
+
+  const possibleSellOrderActions = fillableSellOrders.map((o) => {
+    return {
+      action: possibleActions.sellOrder,
+      data: o,
+      score: baseUtilityScores.sellOrder,
+    };
+  });
+
+  return [...possibleBuyOrderActions, ...possibleSellOrderActions];
 }
