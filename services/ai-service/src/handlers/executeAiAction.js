@@ -1,9 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
-import {
-  createAttributesForStatusAndCreatedQuery,
-  getRandomValueFromArray,
-} from 'libs';
+import { createAttributesForStatusAndCreatedQuery } from 'libs';
 import {
   getFirstItemCreated,
   getMostRecentItem,
@@ -169,6 +166,9 @@ async function getUtilityScores(data) {
 
   const companies = await getCompanies();
 
+  // console.log('companies', JSON.stringify(companies));
+  console.log(companies);
+
   // array of tuples ['TEST', {...userStockData}]
   const userStockValues = getUserStockValues(data.user, companies);
 
@@ -190,7 +190,7 @@ async function getUtilityScores(data) {
 
   console.log({ baseUtilityScores });
 
-  if (test) return;
+  // if (test) return;
 
   const actionArgs = {
     data,
@@ -198,12 +198,20 @@ async function getUtilityScores(data) {
     baseUtilityScores,
   };
 
-  const orderActions = getOrderActions(actionArgs);
+  const [
+    mostFrequentBuyOrders,
+    mostFrequentSellOrders,
+  ] = calculateBoostForMostFrequentOrders(actionArgs);
 
   const transactionsSortedByStock = sortByStock(transactions);
   const pricePressure = calculatePricePressure(transactionsSortedByStock);
 
-  console.log('log to shut the compiler up', !!orderActions, !!pricePressure);
+  console.log(
+    'log to shut the compiler up',
+    mostFrequentBuyOrders,
+    mostFrequentSellOrders,
+    pricePressure
+  );
 }
 
 async function getCompanies() {
@@ -255,38 +263,22 @@ function getBaseUtilityScores(args) {
   };
 }
 
-function getOrderActions(args) {
+function calculateBoostForMostFrequentOrders(args) {
   const {
     data: { orders, aiProfile },
-    possibleActions,
-    baseUtilityScores,
   } = args;
-  const orderActions = [];
 
   const buyOrders = filterByOrderType(orders, 'buy');
   const sellOrders = filterByOrderType(orders, 'sell');
   const buyOrdersSorted = sortByStock(buyOrders);
   const sellOrdersSorted = sortByStock(sellOrders);
-  const mostFrequentBuyOrders = getMostFrequentStock(buyOrdersSorted);
-  const mostFrequentSellOrders = getMostFrequentStock(sellOrdersSorted);
+  const [mostFreqBuy] = getMostFrequentStock(buyOrdersSorted);
+  const [mostFreqSell] = getMostFrequentStock(sellOrdersSorted);
 
-  if (mostFrequentBuyOrders.length > 0) {
-    orderActions.push({
-      action: possibleActions.buyOrder,
-      order: getRandomValueFromArray(mostFrequentBuyOrders[1]),
-      score: baseUtilityScores.buyOrder + aiProfile.fomo,
-    });
-  }
-
-  if (mostFrequentSellOrders.length > 0) {
-    orderActions.push({
-      action: possibleActions.sellOrder,
-      order: getRandomValueFromArray(mostFrequentSellOrders[1]),
-      score: baseUtilityScores.sellOrder + aiProfile.lossAversion,
-    });
-  }
-
-  return orderActions;
+  return [
+    { mostFreq: mostFreqBuy ?? '', boost: aiProfile.fomo },
+    { mostFreq: mostFreqSell ?? '', boost: aiProfile.lossAversion },
+  ];
 }
 
 function filterByOrderType(orders, type) {
