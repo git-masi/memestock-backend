@@ -212,13 +212,24 @@ async function getUtilityScores(data) {
   ] = calculateBoostForMostFrequentOrders(actionArgs);
 
   const transactionsSortedByStock = sortByStock(transactions);
-  const pricePressure = calculatePricePressure(transactionsSortedByStock);
+
+  const priceChangeAcrossTransactions = calculatePriceChange(
+    transactionsSortedByStock
+  );
+
+  // % as decimal
+  const changeInPricePerShare = calculateSharePriceChange(
+    priceChangeAcrossTransactions,
+    data
+  );
+
+  // boosts calculated per stock percentage change
 
   console.log(
     'log to shut the compiler up',
     mostFrequentBuyOrders,
     mostFrequentSellOrders,
-    pricePressure
+    changeInPricePerShare
   );
 }
 
@@ -298,7 +309,7 @@ function getMostFrequentStock(obj) {
   });
 }
 
-function calculatePricePressure(sortedTransactions) {
+function calculatePriceChange(sortedTransactions) {
   const entries = Object.entries(sortedTransactions);
   if (entries.length === 0) return {};
 
@@ -309,7 +320,16 @@ function calculatePricePressure(sortedTransactions) {
       i === 0 ? 0 : total - pricePerShare[i - 1]
     );
     const change = priceChanges.reduce((sum, priceChange) => sum + priceChange);
-    acc[tickerSymbol] = change;
+    acc[tickerSymbol] = +change.toFixed(2).replace('.', ''); // cents
     return acc;
   }, {});
+}
+
+function calculateSharePriceChange(changes, data) {
+  const { companies } = data;
+  return Object.entries(changes).map((entry) => {
+    const [tickerSymbol, change] = entry;
+    const company = companies.find((c) => c.tickerSymbol === tickerSymbol);
+    return { tickerSymbol, percentChange: change / company.pricePerShare };
+  });
 }
