@@ -228,9 +228,13 @@ async function getUtilityScores(data) {
     const fillableBuyOrders = buyOrders.filter(
       (o) => o.total <= user.cashOnHand
     );
-    const fillableSellOrders = sellOrders.filter(
-      (o) => o.total <= user.cashOnHand
-    );
+    const fillableSellOrders = sellOrders.filter((o) => {
+      const { tickerSymbol, quantity } = o.stock;
+      const hasStock = `${tickerSymbol}` in user.stocks;
+      if (!hasStock) return false;
+      const hasQuantity = user.stocks[tickerSymbol].quantityOnHand <= quantity;
+      return hasQuantity;
+    });
 
     console.log({ notOwnOrders, fillableBuyOrders, fillableSellOrders });
 
