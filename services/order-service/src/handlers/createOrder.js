@@ -12,6 +12,10 @@ const requestSchema = {
     body: {
       type: 'object',
       properties: {
+        orderType: {
+          type: 'string',
+          pattern: '^(buy|sell)$',
+        },
         total: {
           type: 'integer',
           min: 1,
