@@ -1,6 +1,9 @@
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
-import { createAttributesForStatusAndCreatedQuery } from 'libs';
+import {
+  createAttributesForStatusAndCreatedQuery,
+  successResponse,
+} from 'libs';
 import {
   getFirstItemCreated,
   getMostRecentItem,
@@ -40,6 +43,9 @@ export const handler = async function executeAiAction(event, context) {
     };
 
     await dynamoDb.put(params).promise();
+
+    // todo: delete later along with http event
+    return successResponse('success');
   } catch (error) {
     console.log(error);
     throw error;
@@ -176,7 +182,7 @@ async function getUtilityScores(data) {
     !!aiProfile,
     !!user,
     !!orders,
-    !!transactions,
+    transactions,
     !!companies
   );
 
@@ -316,13 +322,16 @@ function calculatePriceChange(sortedTransactions) {
   if (entries.length === 0) return {};
 
   return entries.reduce((acc, entry) => {
+    // transactions in asc order by created date
     const [tickerSymbol, transactions] = entry;
     const pricePerShare = transactions.map((t) => t.total / t.quantity);
-    const priceChanges = pricePerShare.map((total, i) =>
-      i === 0 ? 0 : total - pricePerShare[i - 1]
+    const priceChanges = pricePerShare.map((price, i) =>
+      i === pricePerShare.length - 1 ? 0 : price - pricePerShare[i + 1]
     );
+    console.log({ priceChanges });
     const change = priceChanges.reduce((sum, priceChange) => sum + priceChange);
-    acc[tickerSymbol] = +change.toFixed(2).replace('.', ''); // cents
+    console.log({ change });
+    acc[tickerSymbol] = change; // cents
     return acc;
   }, {});
 }
