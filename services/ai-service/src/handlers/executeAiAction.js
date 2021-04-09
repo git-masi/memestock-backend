@@ -139,6 +139,9 @@ async function getUtilityScores(data) {
   };
 
   const orderActions = getOrderActions(actionArgs);
+
+  const transactionsSortedByStock = sortByStock(transactions);
+  const pricePressure = calculatePricePressure(transactionsSortedByStock);
 }
 
 function getOrderActions(args) {
@@ -179,8 +182,8 @@ function filterByOrderType(orders, type) {
   return orders.filter((order) => order?.orderType === type);
 }
 
-function sortByStock(orders) {
-  return orders.reduce((acc, order) => {
+function sortByStock(arr) {
+  return arr.reduce((acc, order) => {
     const symbol = order?.stock?.tickerSymbol;
     if (!acc[symbol]) acc[symbol] = [];
     acc[symbol].push(order);
@@ -188,12 +191,30 @@ function sortByStock(orders) {
   }, {});
 }
 
-function getMostFrequentStock(orders) {
-  const entries = Object.entries(orders);
+function getMostFrequentStock(obj) {
+  const entries = Object.entries(obj);
   if (entries.length === 0) return [];
 
   return entries.reduce((mostFrequent, entry) => {
-    if (entry[1].length > mostFrequent[1].length) return entry;
+    const numOrdersCurrentStock = entry[1].length;
+    const numOrdersMax = mostFrequent[1].length;
+    if (numOrdersCurrentStock > numOrdersMax) return entry;
     return mostFrequent;
   });
+}
+
+function calculatePricePressure(sortedTransactions) {
+  const entries = Object.entries(sortedTransactions);
+  if (entries.length === 0) return {};
+
+  return entries.reduce((acc, entry) => {
+    const [tickerSymbol, transactions] = entry;
+    const pricePerShare = transactions.map((t) => t.total / t.quantity);
+    const priceChanges = pricePerShare.map((total, i) =>
+      i === 0 ? 0 : total - pricePerShare[i - 1]
+    );
+    const change = priceChanges.reduce((sum, priceChange) => sum + priceChange);
+    acc[tickerSymbol] = change;
+    return acc;
+  }, {});
 }
