@@ -146,6 +146,15 @@ async function getTransactions() {
 //   "totalCash": 112267
 // }
 
+const possibleActions = {
+  buyOrder: 'buyOrder',
+  sellOrder: 'sellOrder',
+  newBuyOrder: 'newBuyOrder',
+  newSellOrder: 'newSellOrder',
+  cancelBuyOrder: 'cancelBuyOrder',
+  cancelSellOrder: 'cancelSellOrder',
+};
+
 async function getUtilityScores(data) {
   console.log({ data });
   const { aiProfile, user, orders, transactions } = data;
@@ -158,60 +167,36 @@ async function getUtilityScores(data) {
     !!transactions
   );
 
-  const possibleActions = {
-    buyOrder: 'buyOrder',
-    sellOrder: 'sellOrder',
-    newBuyOrder: 'newBuyOrder',
-    newSellOrder: 'newSellOrder',
-    cancelBuyOrder: 'cancelBuyOrder',
-    cancelSellOrder: 'cancelSellOrder',
-  };
-
   const companies = await getCompanies();
 
-  const userStocksWithValues = Object.entries(user?.stocks).map((entry) => {
-    const [tickerSymbol, data] = entry;
-    const { pricePerShare } = companies.find(
-      (c) => c.tickerSymbol === tickerSymbol
-    );
-    return [tickerSymbol, { ...data, pricePerShare }];
-  });
+  // array of tuples ['TEST', {...userStockData}]
+  const userStockValues = getUserStockValues(data.user, companies);
 
-  console.log(JSON.stringify(userStocksWithValues));
+  console.log(JSON.stringify(userStockValues));
 
-  const totalStockValue = userStocksWithValues.reduce((sum, stock) => {
-    const data = stock[1];
-    return sum + data.quantityHeld * data.pricePerShare;
-  }, 0);
+  const totalStockValue = getTotalStockValue(userStockValues);
 
   console.log(totalStockValue);
 
-  const wealthInCashVsStocks = user.totalCash / totalStockValue; // Infinity is all cash, 0 is all stocks
-  const cashIsLow = wealthInCashVsStocks <= 0.08; // if true boost desire to sell: Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
-  const cashIsHigh = wealthInCashVsStocks >= 0.2; // if true boost desire to buy: Math.ceil(aiProfile.collector * wealthInCashVsStocks)
-  const lowCashBoost = cashIsLow
-    ? Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
-    : 0;
-  const highCashBoost = cashIsHigh
-    ? Math.ceil(aiProfile.collector * wealthInCashVsStocks)
-    : 0;
+  const { lowCashBoost, highCashBoost } = getBaseScoreBoosts(
+    data,
+    totalStockValue
+  );
 
-  const baseUtilityScores = {
-    [possibleActions.buyOrder]: 20 + highCashBoost,
-    [possibleActions.sellOrder]: 20 + lowCashBoost,
-    [possibleActions.newBuyOrder]: 20 + highCashBoost,
-    [possibleActions.newSellOrder]: 20 + lowCashBoost,
-    [possibleActions.cancelBuyOrder]: 20,
-    [possibleActions.cancelSellOrder]: 20,
-  };
+  const baseUtilityScores = getBaseUtilityScores({
+    highCashBoost,
+    lowCashBoost,
+  });
+
+  console.log({ baseUtilityScores });
+
+  if (test) return;
 
   const actionArgs = {
     data,
     possibleActions,
     baseUtilityScores,
   };
-
-  if (test) return;
 
   const orderActions = getOrderActions(actionArgs);
 
@@ -224,6 +209,50 @@ async function getUtilityScores(data) {
 async function getCompanies() {
   const { data } = await axios.get(`${COMPANY_SERVICE_URL}/company/all`);
   return data;
+}
+
+function getUserStockValues(user, companies) {
+  return Object.entries(user?.stocks).map((entry) => {
+    const [tickerSymbol, data] = entry;
+    const { pricePerShare } = companies.find(
+      (c) => c.tickerSymbol === tickerSymbol
+    );
+    return [tickerSymbol, { ...data, pricePerShare }];
+  });
+}
+
+function getTotalStockValue(stockValuesArr) {
+  return stockValuesArr.reduce((sum, stock) => {
+    const data = stock[1];
+    return sum + data.quantityHeld * data.pricePerShare;
+  }, 0);
+}
+
+function getBaseScoreBoosts(data, totalStockValue) {
+  const { user, aiProfile } = data;
+  const wealthInCashVsStocks = user.totalCash / totalStockValue; // Infinity is all cash, 0 is all stocks
+  const cashIsLow = wealthInCashVsStocks <= 0.08; // if true boost desire to sell: Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
+  const cashIsHigh = wealthInCashVsStocks >= 0.2; // if true boost desire to buy: Math.ceil(aiProfile.collector * wealthInCashVsStocks)
+  const lowCashBoost = cashIsLow
+    ? Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
+    : 0;
+  const highCashBoost = cashIsHigh
+    ? Math.ceil(aiProfile.collector * wealthInCashVsStocks)
+    : 0;
+
+  return { lowCashBoost, highCashBoost };
+}
+
+function getBaseUtilityScores(args) {
+  const { highCashBoost, lowCashBoost } = args;
+  return {
+    [possibleActions.buyOrder]: 20 + highCashBoost,
+    [possibleActions.sellOrder]: 20 + lowCashBoost,
+    [possibleActions.newBuyOrder]: 20 + highCashBoost,
+    [possibleActions.newSellOrder]: 20 + lowCashBoost,
+    [possibleActions.cancelBuyOrder]: 20,
+    [possibleActions.cancelSellOrder]: 20,
+  };
 }
 
 function getOrderActions(args) {
