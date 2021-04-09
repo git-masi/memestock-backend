@@ -220,6 +220,43 @@ async function getUtilityScores(data) {
 
   // boosts calculated per stock percentage change
 
+  function getAllPossibleActions() {
+    const { orders, user } = data;
+    const notOwnOrders = orders.filter((o) => o.userId !== user.pk);
+    const buyOrders = filterByOrderType(notOwnOrders, 'buy');
+    const sellOrders = filterByOrderType(notOwnOrders, 'sell');
+    const fillableBuyOrders = buyOrders.filter(
+      (o) => o.total <= user.cashOnHand
+    );
+    const fillableSellOrders = sellOrders.filter(
+      (o) => o.total <= user.cashOnHand
+    );
+
+    console.log({ notOwnOrders, fillableBuyOrders, fillableSellOrders });
+
+    const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
+      return {
+        action: possibleActions.buyOrder,
+        data: o,
+        score: baseUtilityScores.buyOrder,
+      };
+    });
+
+    const possibleSellOrderActions = fillableSellOrders.map((o) => {
+      return {
+        action: possibleActions.sellOrder,
+        data: o,
+        score: baseUtilityScores.sellOrder,
+      };
+    });
+
+    return [...possibleBuyOrderActions, ...possibleSellOrderActions];
+  }
+
+  const actions = getAllPossibleActions();
+
+  console.log({ actions });
+
   console.log('log to shut the compiler up', changeInPricePerShare);
 }
 
