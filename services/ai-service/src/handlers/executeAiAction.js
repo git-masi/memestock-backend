@@ -1,6 +1,9 @@
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
-import { createAttributesForStatusAndCreatedQuery } from 'libs';
+import {
+  createAttributesForStatusAndCreatedQuery,
+  getRandomValueFromArray,
+} from 'libs';
 import {
   getFirstItemCreated,
   getMostRecentItem,
@@ -66,16 +69,6 @@ async function getDataForUtilityScores() {
     },
     { aiProfile }
   );
-
-  // const user = await getUser(aiProfile);
-  // const orders = await getOrders();
-  // const transactions = await getTransactions();
-  // return {
-  //   aiProfile,
-  //   user,
-  //   orders: orders ?? [],
-  //   transactions: transactions ?? [],
-  // };
 }
 
 async function getNextAiProfile() {
@@ -123,5 +116,84 @@ async function getTransactions() {
 
 async function getUtilityScores(data) {
   console.log({ data });
-  // const { aiProfile, user } = data;
+  const { aiProfile, user, orders, transactions } = data;
+
+  const possibleActions = {
+    buyOrder: 'buyOrder',
+    sellOrder: 'sellOrder',
+    newBuyOrder: 'newBuyOrder',
+    newSellOrder: 'newSellOrder',
+    cancelBuyOrder: 'cancelBuyOrder',
+    cancelSellOrder: 'cancelSellOrder',
+  };
+
+  const baseUtilityScores = {
+    [possibleActions.buyOrder]: 20,
+    [possibleActions.sellOrder]: 20,
+  };
+
+  const actionArgs = {
+    data,
+    possibleActions,
+    baseUtilityScores,
+  };
+
+  const orderActions = getOrderActions(actionArgs);
+}
+
+function getOrderActions(args) {
+  const {
+    data: { orders, aiProfile },
+    possibleActions,
+    baseUtilityScores,
+  } = args;
+  const orderActions = [];
+
+  const buyOrders = filterByOrderType(orders, 'buy');
+  const sellOrders = filterByOrderType(orders, 'sell');
+  const buyOrdersSorted = sortByStock(buyOrders);
+  const sellOrdersSorted = sortByStock(sellOrders);
+  const mostFrequentBuyOrders = getMostFrequentStock(buyOrdersSorted);
+  const mostFrequentSellOrders = getMostFrequentStock(sellOrdersSorted);
+
+  if (mostFrequentBuyOrders.length > 0) {
+    orderActions.push({
+      action: possibleActions.buyOrder,
+      order: getRandomValueFromArray(mostFrequentBuyOrders[1]),
+      score: baseUtilityScores.buyOrder + aiProfile.fomo,
+    });
+  }
+
+  if (mostFrequentSellOrders.length > 0) {
+    orderActions.push({
+      action: possibleActions.sellOrder,
+      order: getRandomValueFromArray(mostFrequentSellOrders[1]),
+      score: baseUtilityScores.sellOrder + aiProfile.lossAversion,
+    });
+  }
+
+  return orderActions;
+}
+
+function filterByOrderType(orders, type) {
+  return orders.filter((order) => order?.orderType === type);
+}
+
+function sortByStock(orders) {
+  return orders.reduce((acc, order) => {
+    const symbol = order?.stock?.tickerSymbol;
+    if (!acc[symbol]) acc[symbol] = [];
+    acc[symbol].push(order);
+    return acc;
+  }, {});
+}
+
+function getMostFrequentStock(orders) {
+  const entries = Object.entries(orders);
+  if (entries.length === 0) return [];
+
+  return entries.reduce((mostFrequent, entry) => {
+    if (entry[1].length > mostFrequent[1].length) return entry;
+    return mostFrequent;
+  });
 }
