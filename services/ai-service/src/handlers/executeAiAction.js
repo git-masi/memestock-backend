@@ -191,7 +191,7 @@ async function getUtilityScores(data) {
 
   console.log(totalStockValue);
 
-  const { lowCashBoost, highCashBoost } = getBaseScoreBoosts(
+  const { lowCashBoost, highCashBoost } = getHighLowCashBoosts(
     data,
     totalStockValue
   );
@@ -240,7 +240,7 @@ function getTotalStockValue(stockValuesArr) {
   }, 0);
 }
 
-function getBaseScoreBoosts(data, totalStockValue) {
+function getHighLowCashBoosts(data, totalStockValue) {
   const { user, aiProfile } = data;
   const wealthInCashVsStocks = user.totalCash / totalStockValue; // Infinity is all cash, 0 is all stocks
   const cashIsLow = wealthInCashVsStocks <= 0.08; // if true boost desire to sell: Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
