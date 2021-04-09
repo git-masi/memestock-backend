@@ -216,19 +216,7 @@ async function getUtilityScores(data) {
 
   console.log({ mostFreqBoosts });
 
-  const transactionsSortedByStock = sortByStock(transactions);
-
-  const priceChangeAcrossTransactions = calculatePriceChange(
-    transactionsSortedByStock
-  );
-
-  console.log(priceChangeAcrossTransactions);
-
-  // % change as decimal
-  const changeInPricePerShare = calculateSharePriceChange(
-    priceChangeAcrossTransactions,
-    data
-  );
+  const changeInPricePerShare = calculateChangeInPricePerShare(data);
 
   // boosts calculated per stock percentage change
 
@@ -317,6 +305,20 @@ function getMostFrequentStock(obj) {
     if (numOrdersCurrentStock > numOrdersMax) return entry;
     return mostFrequent;
   });
+}
+
+function calculateChangeInPricePerShare(data) {
+  const { transactions } = data;
+  const transactionsSortedByStock = sortByStock(transactions);
+
+  const priceChangeAcrossTransactions = calculatePriceChange(
+    transactionsSortedByStock
+  );
+
+  console.log(priceChangeAcrossTransactions);
+
+  // % change as decimal
+  return calculateSharePriceChange(priceChangeAcrossTransactions, data);
 }
 
 function calculatePriceChange(sortedTransactions) {
