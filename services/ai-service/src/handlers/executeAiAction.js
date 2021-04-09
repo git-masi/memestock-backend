@@ -212,10 +212,9 @@ async function getUtilityScores(data) {
     baseUtilityScores,
   };
 
-  const [
-    mostFrequentBuyOrders,
-    mostFrequentSellOrders,
-  ] = calculateBoostForMostFrequentOrders(actionArgs);
+  const mostFreqBoosts = calculateBoostForMostFrequentOrders(actionArgs);
+
+  console.log({ mostFreqBoosts });
 
   const transactionsSortedByStock = sortByStock(transactions);
 
@@ -225,7 +224,7 @@ async function getUtilityScores(data) {
 
   console.log(priceChangeAcrossTransactions);
 
-  // % as decimal
+  // % change as decimal
   const changeInPricePerShare = calculateSharePriceChange(
     priceChangeAcrossTransactions,
     data
@@ -233,12 +232,7 @@ async function getUtilityScores(data) {
 
   // boosts calculated per stock percentage change
 
-  console.log(
-    'log to shut the compiler up',
-    mostFrequentBuyOrders,
-    mostFrequentSellOrders,
-    changeInPricePerShare
-  );
+  console.log('log to shut the compiler up', changeInPricePerShare);
 }
 
 function getUserStockValues(data) {
@@ -286,10 +280,18 @@ function calculateBoostForMostFrequentOrders(args) {
   const [mostFreqBuy] = getMostFrequentStock(buyOrdersSorted);
   const [mostFreqSell] = getMostFrequentStock(sellOrdersSorted);
 
-  return [
-    { mostFreq: mostFreqBuy ?? '', boost: aiProfile.fomo },
-    { mostFreq: mostFreqSell ?? '', boost: aiProfile.lossAversion },
-  ];
+  const boosts = {};
+
+  if (mostFreqBuy)
+    boosts.mostFreqBuy = { tickerSymbol: mostFreqBuy, boost: aiProfile.fomo };
+
+  if (mostFreqSell)
+    boosts.mostFreqSell = {
+      tickerSymbol: mostFreqSell,
+      boost: aiProfile.lossAversion,
+    };
+
+  return boosts;
 }
 
 function filterByOrderType(orders, type) {
