@@ -15,11 +15,13 @@ const {
   USER_SERVICE_URL,
   TRANSACTION_SERVICE_URL,
   ORDER_SERVICE_URL,
+  COMPANY_SERVICE_URL,
 } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 const numOrdersToFetch = 20;
 const numTransactionsToFetch = 20;
 
+// todo: delete after testing
 const test = true;
 
 export const handler = async function executeAiAction(event, context) {
@@ -114,9 +116,47 @@ async function getTransactions() {
   return data;
 }
 
+// {
+//   "description": "This is an online gaming platform designed for competitive Twitter battles for most likes and shares.",
+//   "documentType": "record",
+//   "name": "GameStonk",
+//   "pk": "32dac7e1-4dc7-4315-91d5-ec8c9394da33",
+//   "pricePerShare": 18784,
+//   "tickerSymbol": "GMS"
+// }
+
+// {
+//   "cashOnHand": 112267,
+//   "created": "2021-04-08T19:17:37.949Z",
+//   "displayName": "Gregg.Runolfsson",
+//   "email": "Diana.Champlin@yahoo.com",
+//   "pk": "3a4eb03f-3b8d-4563-9751-d055505798fc",
+//   "stocks": {
+//     "GMS": {
+//       "id": "32dac7e1-4dc7-4315-91d5-ec8c9394da33",
+//       "quantityHeld": 15,
+//       "quantityOnHand": 15
+//     },
+//     "OTHR": {
+//       "id": "7bbdaca6-4834-4177-924a-6c13c19101e5",
+//       "quantityHeld": 1,
+//       "quantityOnHand": 1
+//     }
+//   },
+//   "totalCash": 112267
+// }
+
 async function getUtilityScores(data) {
   console.log({ data });
   const { aiProfile, user, orders, transactions } = data;
+
+  console.log(
+    'log to shut the compiler up',
+    !!aiProfile,
+    !!user,
+    !!orders,
+    !!transactions
+  );
 
   const possibleActions = {
     buyOrder: 'buyOrder',
@@ -127,9 +167,42 @@ async function getUtilityScores(data) {
     cancelSellOrder: 'cancelSellOrder',
   };
 
+  const companies = await getCompanies();
+
+  const userStocksWithValues = Object.entries(user?.stocks).map((entry) => {
+    const [tickerSymbol, data] = entry;
+    const { pricePerShare } = companies.find(
+      (c) => c.tickerSymbol === tickerSymbol
+    );
+    return [tickerSymbol, { ...data, pricePerShare }];
+  });
+
+  console.log(JSON.stringify(userStocksWithValues));
+
+  const totalStockValue = userStocksWithValues.reduce((sum, stock) => {
+    const data = stock[1];
+    return sum + data.quantityHeld * data.pricePerShare;
+  }, 0);
+
+  console.log(totalStockValue);
+
+  const wealthInCashVsStocks = user.totalCash / totalStockValue; // Infinity is all cash, 0 is all stocks
+  const cashIsLow = wealthInCashVsStocks <= 0.08; // if true boost desire to sell: Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
+  const cashIsHigh = wealthInCashVsStocks >= 0.2; // if true boost desire to buy: Math.ceil(aiProfile.collector * wealthInCashVsStocks)
+  const lowCashBoost = cashIsLow
+    ? Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
+    : 0;
+  const highCashBoost = cashIsHigh
+    ? Math.ceil(aiProfile.collector * wealthInCashVsStocks)
+    : 0;
+
   const baseUtilityScores = {
-    [possibleActions.buyOrder]: 20,
-    [possibleActions.sellOrder]: 20,
+    [possibleActions.buyOrder]: 20 + highCashBoost,
+    [possibleActions.sellOrder]: 20 + lowCashBoost,
+    [possibleActions.newBuyOrder]: 20 + highCashBoost,
+    [possibleActions.newSellOrder]: 20 + lowCashBoost,
+    [possibleActions.cancelBuyOrder]: 20,
+    [possibleActions.cancelSellOrder]: 20,
   };
 
   const actionArgs = {
@@ -138,10 +211,19 @@ async function getUtilityScores(data) {
     baseUtilityScores,
   };
 
+  if (test) return;
+
   const orderActions = getOrderActions(actionArgs);
 
   const transactionsSortedByStock = sortByStock(transactions);
   const pricePressure = calculatePricePressure(transactionsSortedByStock);
+
+  console.log('log to shut the compiler up', !!orderActions, !!pricePressure);
+}
+
+async function getCompanies() {
+  const { data } = await axios.get(`${COMPANY_SERVICE_URL}/company/all`);
+  return data;
 }
 
 function getOrderActions(args) {
