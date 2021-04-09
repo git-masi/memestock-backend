@@ -60,7 +60,7 @@ async function getDataForUtilityScores() {
   if (results.some((r) => r.status === 'rejected'))
     throw new Error('Failed to get data for ai action');
 
-  const keyNames = ['user', 'orders', 'transactions'];
+  const keyNames = ['user', 'orders', 'transactions', 'companies'];
 
   return results.reduce(
     (acc, res, i) => {
