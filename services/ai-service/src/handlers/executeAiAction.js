@@ -359,10 +359,12 @@ function calculateSharePriceChange(changes, data) {
   });
 }
 
-function getAllPossibleActions(data) {
-  const orderActions = getAllPossibleExistingOrderActions(data);
+function getAllPossibleActions(args) {
+  const existingOrderActions = getAllPossibleExistingOrderActions(args);
 
-  return [...orderActions];
+  const newOrderActions = getNewOrderActions(args);
+
+  return [...existingOrderActions, ...newOrderActions];
 }
 
 function getAllPossibleExistingOrderActions(args) {
@@ -452,4 +454,41 @@ function getAllPossibleExistingOrderActions(args) {
   });
 
   return [...possibleBuyOrderActions, ...possibleSellOrderActions];
+}
+
+function getNewOrderActions(args) {
+  const { data } = args;
+  const { user, companies } = data;
+  const { stocks: userStocks } = user;
+
+  const possibleBuyOrderActions = companies.map((c) => {
+    const { tickerSymbol, pricePerShare } = c;
+
+    // const freqBoost =
+    //   tickerSymbol in mostFreqBoosts?.mostFreqBuy
+    //     ? mostFreqBoosts.mostFreqBuy.boost
+    //     : 0;
+
+    // const changeInPPS = changeInPricePerShare.find(
+    //   (obj) => obj.tickerSymbol === tickerSymbol
+    // );
+
+    // const pricePressureBoost =
+    //   changeInPPS && changeInPPS > 0
+    //     ? Math.ceil(
+    //         changeInPPS.percentChange *
+    //           ((aiProfile.fomo + aiProfile.wildcard) / 2)
+    //       )
+    //     : 0;
+
+    // return {
+    //   action: possibleActions.newBuyOrder,
+    //   data: o,
+    //   utilityScore:
+    //     baseUtilityScores.newBuyOrder +
+    //     freqBoost +
+    //     pricePressureBoost +
+    //     highCashBoost,
+    // };
+  });
 }
