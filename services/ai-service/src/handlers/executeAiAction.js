@@ -64,7 +64,7 @@ async function getDataForUtilityScores() {
   const aiProfile = getItemFromResult(nextAiProfile);
   const results = await Promise.allSettled([
     getUser(aiProfile),
-    getOrders(),
+    getRecentOrders(),
     getTransactions(),
     getCompanies(),
   ]);
@@ -75,13 +75,19 @@ async function getDataForUtilityScores() {
 
   const keyNames = ['user', 'orders', 'transactions', 'companies'];
 
-  return results.reduce(
+  const data = results.reduce(
     (acc, res, i) => {
       acc[keyNames[i]] = res.value;
       return acc;
     },
     { aiProfile }
   );
+
+  const userOrders = await getUserOrders(data.user.pk);
+
+  console.log({ userOrders });
+
+  return { ...data, userOrders };
 }
 
 async function getNextAiProfile() {
@@ -113,9 +119,19 @@ async function getUser(aiProfile) {
   return data;
 }
 
-async function getOrders() {
+async function getRecentOrders() {
   const { data } = await axios.get(
     `${ORDER_SERVICE_URL}/order/status/open?limit=${numOrdersToFetch}&orderAsc=false`
+  );
+  return data;
+}
+
+async function getUserOrders(userId) {
+  const { data } = await axios.get(
+    `${ORDER_SERVICE_URL}/order/userId/${userId}?status=open&orderAsc=false`
+  );
+  console.log(
+    `${ORDER_SERVICE_URL}/order/userId/${userId}?status=open&orderAsc=false`
   );
   return data;
 }
@@ -220,8 +236,6 @@ async function getUtilityScores(data) {
   console.log({ mostFreqBoosts });
 
   const changeInPricePerShare = calculateChangeInPricePerShare(data);
-
-  // boosts calculated per stock percentage change
 
   const actions = getAllPossibleActions({
     data,
@@ -582,5 +596,8 @@ function getNewOrderActions(args) {
 }
 
 function getCancelOrderActions(args) {
+  // const { data } = args;
+  // const { userOrders } = data;
+
   return [];
 }
