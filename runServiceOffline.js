@@ -11,7 +11,7 @@ let serviceIsValid = false;
 
 readDir(directory);
 
-if (serviceIsValid) runService(directory + serviceName);
+if (serviceIsValid) runServiceOffline(directory + serviceName);
 
 function readDir(directory) {
   fs.readdirSync(directory).forEach((file) => {
@@ -23,10 +23,10 @@ function readDir(directory) {
   });
 }
 
-function runService(dir) {
+function runServiceOffline(dir) {
   const awsProfile = profile ? `export AWS_PROFILE=${profile} &&` : '';
   console.log(process.cwd());
-  const deployScript = `${awsProfile} npm --prefix ${dir} run start`;
+  const deployScript = `${awsProfile} npm --prefix ${dir} run start`; // sls offline cloudside
 
   execSync(deployScript, { stdio: [0, 1, 2] });
 }
