@@ -596,8 +596,77 @@ function getNewOrderActions(args) {
 }
 
 function getCancelOrderActions(args) {
-  // const { data } = args;
-  // const { userOrders } = data;
+  const { data, highCashBoost, lowCashBoost, changeInPricePerShare } = args;
+  const { userOrders, aiProfile } = data;
 
-  return [];
+  const buyOrders = filterByOrderType(userOrders, 'buy');
+  const sellOrders = filterByOrderType(userOrders, 'sell');
+
+  const buyOrderActions = buyOrders.map((o) => {
+    const { tickerSymbol } = o.stock;
+
+    const changeInPPS = changeInPricePerShare.find(
+      (obj) => obj.tickerSymbol === tickerSymbol
+    );
+
+    // price is falling
+    const pricePressureDownBoost =
+      changeInPPS && changeInPPS < 0
+        ? Math.ceil(
+            changeInPPS.percentChange *
+              ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+          )
+        : 0;
+
+    // price is rising
+    const pricePressureUpBoost =
+      changeInPPS && changeInPPS > 0
+        ? Math.ceil(changeInPPS.percentChange * aiProfile.wildcard)
+        : 0;
+
+    return {
+      action: possibleActions.cancelBuyOrder,
+      data: o,
+      utilityScore:
+        baseUtilityScores.cancelBuyOrder +
+        pricePressureDownBoost -
+        pricePressureUpBoost +
+        lowCashBoost,
+    };
+  });
+
+  const sellOrderActions = sellOrders.map((o) => {
+    const { tickerSymbol } = o.stock;
+
+    const changeInPPS = changeInPricePerShare.find(
+      (obj) => obj.tickerSymbol === tickerSymbol
+    );
+
+    // price is falling
+    const pricePressureDownBoost =
+      changeInPPS && changeInPPS < 0
+        ? Math.ceil(
+            changeInPPS.percentChange *
+              ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+          )
+        : 0;
+
+    // price is rising
+    const pricePressureUpBoost =
+      changeInPPS && changeInPPS > 0
+        ? Math.ceil(changeInPPS.percentChange * aiProfile.wildcard)
+        : 0;
+
+    return {
+      action: possibleActions.cancelSellOrder,
+      data: o,
+      utilityScore:
+        baseUtilityScores.cancelSellOrder -
+        pricePressureDownBoost +
+        pricePressureUpBoost +
+        highCashBoost,
+    };
+  });
+
+  return [...buyOrderActions, ...sellOrderActions];
 }
