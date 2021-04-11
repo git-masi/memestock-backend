@@ -43,7 +43,7 @@ const requestSchema = {
 };
 const validationOptions = { inputSchema: requestSchema };
 
-export async function getOrdersByStatus(event) {
+async function getOrdersByStatus(event) {
   const { pathParameters, queryStringParameters } = event;
   console.log({ pathParameters, queryStringParameters });
 
