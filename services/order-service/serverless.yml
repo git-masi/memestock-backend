@@ -18,6 +18,7 @@ provider:
   environment:
     ORDERS_TABLE_NAME: !Ref OrdersTable
     GSI_STATUS_AND_CREATED: 'statusAndCreated'
+    GSI_USER_ID_AND_CREATED: 'userIdAndCreated'
 
 resources: ${file(resources/resources.yml)}
 
