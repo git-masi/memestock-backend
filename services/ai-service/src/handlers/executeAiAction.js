@@ -482,13 +482,16 @@ function getNewOrderActions(args) {
     lowCashBoost,
   } = args;
   const {
-    user: { stocks },
+    user: { stocks, cashOnHand },
     aiProfile,
     companies,
   } = data;
 
+  // todo: refactor to use reduce instead of map
   const possibleBuyOrderActions = companies.map((c) => {
-    const { tickerSymbol } = c;
+    const { tickerSymbol, pricePerShare } = c;
+    // if stock price too high return
+    if (pricePerShare * 0.8 > cashOnHand) return;
 
     const freqBoost =
       tickerSymbol in mostFreqBoosts?.mostFreqBuy
@@ -524,8 +527,12 @@ function getNewOrderActions(args) {
     };
   });
 
+  // todo: refactor to use reduce instead of map
   const possibleSellOrderActions = companies.map((c) => {
     const { tickerSymbol } = c;
+    // if user does not own stock return
+    if (!(tickerSymbol in stocks)) return;
+
     const freqBoost =
       tickerSymbol in mostFreqBoosts?.mostFreqSell
         ? mostFreqBoosts.mostFreqSell.boost
@@ -564,9 +571,14 @@ function getNewOrderActions(args) {
     };
   });
 
-  return [...possibleBuyOrderActions, ...possibleSellOrderActions];
+  // filter out undefined values
+  // todo: remove filter fns when above todo refactors are done
+  return [
+    ...possibleBuyOrderActions.filter((o) => o),
+    ...possibleSellOrderActions.filter((o) => o),
+  ];
 }
 
 function getCancelOrderActions(args) {
-  //
+  return [];
 }
