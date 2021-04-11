@@ -27,6 +27,25 @@ const {
 const dynamoDb = new DynamoDB.DocumentClient();
 const numOrdersToFetch = 20;
 const numTransactionsToFetch = 20;
+const possibleActions = {
+  buyOrder: 'buyOrder',
+  sellOrder: 'sellOrder',
+  newBuyOrder: 'newBuyOrder',
+  newSellOrder: 'newSellOrder',
+  cancelBuyOrder: 'cancelBuyOrder',
+  cancelSellOrder: 'cancelSellOrder',
+  doNothing: 'doNothing',
+};
+
+const baseUtilityScores = {
+  [possibleActions.buyOrder]: 20,
+  [possibleActions.sellOrder]: 20,
+  [possibleActions.newBuyOrder]: 20,
+  [possibleActions.newSellOrder]: 20,
+  [possibleActions.cancelBuyOrder]: 20,
+  [possibleActions.cancelSellOrder]: 20,
+  [possibleActions.doNothing]: 10,
+};
 
 // todo: delete after testing
 const test = true;
@@ -36,8 +55,7 @@ export const handler = async function executeAiAction(event, context) {
     const data = await getDataForUtilityScores();
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
-
-    console.log(aiAction);
+    const actionTaken = takeAction(aiAction);
 
     if (test) return;
 
@@ -45,6 +63,7 @@ export const handler = async function executeAiAction(event, context) {
       TableName: AI_ACTIONS_TABLE_NAME,
       Item: {
         ...createAttributesForStatusAndCreatedQuery(),
+        actionTaken,
         currentAiId: data.aiProfile.id,
         nextAiId: data.aiProfile.nextAiId,
       },
@@ -144,26 +163,6 @@ async function getCompanies() {
   const { data } = await axios.get(`${COMPANY_SERVICE_URL}/company/all`);
   return data;
 }
-
-const possibleActions = {
-  buyOrder: 'buyOrder',
-  sellOrder: 'sellOrder',
-  newBuyOrder: 'newBuyOrder',
-  newSellOrder: 'newSellOrder',
-  cancelBuyOrder: 'cancelBuyOrder',
-  cancelSellOrder: 'cancelSellOrder',
-  doNothing: 'doNothing',
-};
-
-const baseUtilityScores = {
-  [possibleActions.buyOrder]: 20,
-  [possibleActions.sellOrder]: 20,
-  [possibleActions.newBuyOrder]: 20,
-  [possibleActions.newSellOrder]: 20,
-  [possibleActions.cancelBuyOrder]: 20,
-  [possibleActions.cancelSellOrder]: 20,
-  [possibleActions.doNothing]: 10,
-};
 
 async function getUtilityScores(data) {
   const userStockValues = getUserStockValues(data);
@@ -620,5 +619,23 @@ function getOneAction(actions) {
     topActions = [...topActions, ...sortedByScore[key]];
   }
 
-  return getRandomValueFromArray(topActions);
+  const action = getRandomValueFromArray(topActions);
+  console.log(action);
+  return action;
 }
+
+async function takeAction(action) {
+  const { action: type } = action;
+
+  switch (type) {
+    case possibleActions.newBuyOrder:
+      return createNewBuyOrder(action);
+
+    default:
+      throw new Error(
+        `Could not take action, ${type} is not a valid action type.`
+      );
+  }
+}
+
+async function createNewBuyOrder(action) {}
