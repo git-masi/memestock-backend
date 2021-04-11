@@ -34,9 +34,10 @@ const test = true;
 export const handler = async function executeAiAction(event, context) {
   try {
     const data = await getDataForUtilityScores();
-    const utilityScores = await getUtilityScores(data);
-    // todo: take action based on aiProfile
-    console.log({ utilityScores });
+    const actionsWithUtilityScores = await getUtilityScores(data);
+    const aiAction = getOneAction(actionsWithUtilityScores);
+
+    console.log(aiAction);
 
     if (test) return;
 
@@ -68,10 +69,11 @@ async function getDataForUtilityScores() {
     getTransactions(),
     getCompanies(),
   ]);
-  console.log(results);
 
-  if (results.some((r) => r.status === 'rejected'))
+  if (results.some((r) => r.status === 'rejected')) {
+    console.log('Results from async data requests: ', results);
     throw new Error('Failed to get data for ai action');
+  }
 
   const keyNames = ['user', 'orders', 'transactions', 'companies'];
 
@@ -84,8 +86,6 @@ async function getDataForUtilityScores() {
   );
 
   const userOrders = await getUserOrders(data.user.pk);
-
-  console.log({ userOrders });
 
   return { ...data, userOrders };
 }
@@ -130,9 +130,6 @@ async function getUserOrders(userId) {
   const { data } = await axios.get(
     `${ORDER_SERVICE_URL}/order/userId/${userId}?status=open&orderAsc=false`
   );
-  console.log(
-    `${ORDER_SERVICE_URL}/order/userId/${userId}?status=open&orderAsc=false`
-  );
   return data;
 }
 
@@ -147,36 +144,6 @@ async function getCompanies() {
   const { data } = await axios.get(`${COMPANY_SERVICE_URL}/company/all`);
   return data;
 }
-
-// {
-//   "description": "This is an online gaming platform designed for competitive Twitter battles for most likes and shares.",
-//   "documentType": "record",
-//   "name": "GameStonk",
-//   "pk": "32dac7e1-4dc7-4315-91d5-ec8c9394da33",
-//   "pricePerShare": 18784,
-//   "tickerSymbol": "GMS"
-// }
-
-// {
-//   "cashOnHand": 112267,
-//   "created": "2021-04-08T19:17:37.949Z",
-//   "displayName": "Gregg.Runolfsson",
-//   "email": "Diana.Champlin@yahoo.com",
-//   "pk": "3a4eb03f-3b8d-4563-9751-d055505798fc",
-//   "stocks": {
-//     "GMS": {
-//       "id": "32dac7e1-4dc7-4315-91d5-ec8c9394da33",
-//       "quantityHeld": 15,
-//       "quantityOnHand": 15
-//     },
-//     "OTHR": {
-//       "id": "7bbdaca6-4834-4177-924a-6c13c19101e5",
-//       "quantityHeld": 1,
-//       "quantityOnHand": 1
-//     }
-//   },
-//   "totalCash": 112267
-// }
 
 const possibleActions = {
   buyOrder: 'buyOrder',
@@ -199,42 +166,13 @@ const baseUtilityScores = {
 };
 
 async function getUtilityScores(data) {
-  console.log({ data });
-  const { aiProfile, user, orders, transactions, companies } = data;
-
-  console.log(
-    'log to shut the compiler up',
-    !!aiProfile,
-    !!user,
-    !!orders,
-    transactions,
-    !!companies
-  );
-
-  // console.log(companies);
-
-  // array of tuples ['TEST', {...userStockData}]
   const userStockValues = getUserStockValues(data);
-
-  console.log(JSON.stringify(userStockValues));
-
   const totalStockValue = getTotalStockValue(userStockValues);
-
-  console.log(totalStockValue);
-
   const { lowCashBoost, highCashBoost } = getHighLowCashBoosts(
     data,
     totalStockValue
   );
-
-  console.log({ lowCashBoost, highCashBoost });
-
-  // if (test) return;
-
   const mostFreqBoosts = calculateBoostForMostFrequentOrders(data);
-
-  console.log({ mostFreqBoosts });
-
   const changeInPricePerShare = calculateChangeInPricePerShare(data);
 
   const actions = getAllPossibleActions({
@@ -247,9 +185,9 @@ async function getUtilityScores(data) {
     changeInPricePerShare,
   });
 
-  console.log({ actions });
+  console.log(actions);
 
-  console.log('log to shut the compiler up', changeInPricePerShare);
+  return actions;
 }
 
 function getUserStockValues(data) {
@@ -342,8 +280,6 @@ function calculateChangeInPricePerShare(data) {
     transactionsSortedByStock
   );
 
-  console.log(priceChangeAcrossTransactions);
-
   // % change as decimal
   return calculateSharePriceChange(priceChangeAcrossTransactions, data);
 }
@@ -359,9 +295,7 @@ function calculatePriceChange(sortedTransactions) {
     const priceChanges = pricePerShare.map((price, i) =>
       i === pricePerShare.length - 1 ? 0 : price - pricePerShare[i + 1]
     );
-    console.log({ priceChanges });
     const change = priceChanges.reduce((sum, priceChange) => sum + priceChange);
-    console.log({ change });
     acc[tickerSymbol] = change; // cents
     return acc;
   }, {});
@@ -669,4 +603,22 @@ function getCancelOrderActions(args) {
   });
 
   return [...buyOrderActions, ...sellOrderActions];
+}
+
+function getOneAction(actions) {
+  const sortedByScore = actions.reduce((acc, action) => {
+    const { utilityScore } = action;
+    if (!(utilityScore in acc)) acc[utilityScore] = [];
+    acc[utilityScore].push(action);
+    return acc;
+  }, {});
+  const keyByHighestScore = Object.keys(sortedByScore).sort((a, b) => b - a);
+  let topActions = [];
+
+  for (let key of keyByHighestScore) {
+    if (topActions.length > 5) break;
+    topActions = [...topActions, ...sortedByScore[key]];
+  }
+
+  return getRandomValueFromArray(topActions);
 }
