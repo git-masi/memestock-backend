@@ -169,6 +169,7 @@ const possibleActions = {
   newSellOrder: 'newSellOrder',
   cancelBuyOrder: 'cancelBuyOrder',
   cancelSellOrder: 'cancelSellOrder',
+  doNothing: 'doNothing',
 };
 
 const baseUtilityScores = {
@@ -178,6 +179,7 @@ const baseUtilityScores = {
   [possibleActions.newSellOrder]: 20,
   [possibleActions.cancelBuyOrder]: 20,
   [possibleActions.cancelSellOrder]: 20,
+  [possibleActions.doNothing]: 10,
 };
 
 async function getUtilityScores(data) {
@@ -361,14 +363,24 @@ function calculateSharePriceChange(changes, data) {
 }
 
 function getAllPossibleActions(args) {
-  const existingOrderActions = getAllPossibleExistingOrderActions(args);
-
+  const existingOrderActions = getExistingOrderActions(args);
   const newOrderActions = getNewOrderActions(args);
+  const cancelOrderActions = getCancelOrderActions(args);
+  const doNothing = {
+    action: possibleActions.doNothing,
+    data: {},
+    utilityScore: baseUtilityScores.doNothing,
+  };
 
-  return [...existingOrderActions, ...newOrderActions];
+  return [
+    ...existingOrderActions,
+    ...newOrderActions,
+    ...cancelOrderActions,
+    doNothing,
+  ];
 }
 
-function getAllPossibleExistingOrderActions(args) {
+function getExistingOrderActions(args) {
   const {
     data,
     mostFreqBoosts,
@@ -391,8 +403,6 @@ function getAllPossibleExistingOrderActions(args) {
     const hasQuantity = user.stocks[tickerSymbol].quantityOnHand <= quantity;
     return hasQuantity;
   });
-
-  // console.log({ notOwnOrders, fillableBuyOrders, fillableSellOrders });
 
   const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
     const { tickerSymbol } = o.stock;
@@ -555,4 +565,8 @@ function getNewOrderActions(args) {
   });
 
   return [...possibleBuyOrderActions, ...possibleSellOrderActions];
+}
+
+function getCancelOrderActions(args) {
+  //
 }
