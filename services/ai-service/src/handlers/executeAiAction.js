@@ -8,6 +8,7 @@ import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
 import {
   createAttributesForStatusAndCreatedQuery,
+  getRandomValueFromArray,
   successResponse,
 } from 'libs';
 import {
@@ -412,6 +413,11 @@ function getAllPossibleExistingOrderActions(args) {
           )
         : 0;
 
+    const collectorBoost =
+      tickerSymbol in user.stocks
+        ? Math.ceil((aiProfile.collector + aiProfile.wildcard) / 2)
+        : 0;
+
     return {
       action: possibleActions.buyOrder,
       data: o,
@@ -419,7 +425,8 @@ function getAllPossibleExistingOrderActions(args) {
         baseUtilityScores.buyOrder +
         freqBoost +
         pricePressureBoost +
-        highCashBoost,
+        highCashBoost +
+        collectorBoost,
     };
   });
 
@@ -457,38 +464,95 @@ function getAllPossibleExistingOrderActions(args) {
 }
 
 function getNewOrderActions(args) {
-  const { data } = args;
-  const { user, companies } = data;
-  const { stocks: userStocks } = user;
+  const {
+    data,
+    mostFreqBoosts,
+    changeInPricePerShare,
+    highCashBoost,
+    lowCashBoost,
+  } = args;
+  const {
+    user: { stocks },
+    aiProfile,
+    companies,
+  } = data;
 
   const possibleBuyOrderActions = companies.map((c) => {
-    const { tickerSymbol, pricePerShare } = c;
+    const { tickerSymbol } = c;
 
-    // const freqBoost =
-    //   tickerSymbol in mostFreqBoosts?.mostFreqBuy
-    //     ? mostFreqBoosts.mostFreqBuy.boost
-    //     : 0;
+    const freqBoost =
+      tickerSymbol in mostFreqBoosts?.mostFreqBuy
+        ? mostFreqBoosts.mostFreqBuy.boost
+        : 0;
 
-    // const changeInPPS = changeInPricePerShare.find(
-    //   (obj) => obj.tickerSymbol === tickerSymbol
-    // );
+    const changeInPPS = changeInPricePerShare.find(
+      (obj) => obj.tickerSymbol === tickerSymbol
+    );
 
-    // const pricePressureBoost =
-    //   changeInPPS && changeInPPS > 0
-    //     ? Math.ceil(
-    //         changeInPPS.percentChange *
-    //           ((aiProfile.fomo + aiProfile.wildcard) / 2)
-    //       )
-    //     : 0;
+    const pricePressureBoost =
+      changeInPPS && changeInPPS < 0 // want to buy if stock price is falling
+        ? Math.ceil(
+            changeInPPS.percentChange *
+              ((aiProfile.fomo + aiProfile.wildcard) / 2)
+          )
+        : 0;
 
-    // return {
-    //   action: possibleActions.newBuyOrder,
-    //   data: o,
-    //   utilityScore:
-    //     baseUtilityScores.newBuyOrder +
-    //     freqBoost +
-    //     pricePressureBoost +
-    //     highCashBoost,
-    // };
+    const collectorBoost =
+      tickerSymbol in stocks
+        ? Math.ceil((aiProfile.collector + aiProfile.wildcard) / 2)
+        : 0;
+
+    return {
+      action: possibleActions.newBuyOrder,
+      data: c,
+      utilityScore:
+        baseUtilityScores.newBuyOrder +
+        freqBoost +
+        pricePressureBoost +
+        highCashBoost +
+        collectorBoost,
+    };
   });
+
+  const possibleSellOrderActions = companies.map((c) => {
+    const { tickerSymbol } = c;
+    const freqBoost =
+      tickerSymbol in mostFreqBoosts?.mostFreqSell
+        ? mostFreqBoosts.mostFreqSell.boost
+        : 0;
+
+    const changeInPPS = changeInPricePerShare.find(
+      (obj) => obj.tickerSymbol === tickerSymbol
+    );
+
+    const pricePressureBoost =
+      changeInPPS && changeInPPS > 0 // want to sell if price is rising
+        ? Math.ceil(
+            changeInPPS.percentChange *
+              ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+          )
+        : 0;
+
+    const lossAversionBoost =
+      changeInPPS && changeInPPS < 0 // want to sell if price is falling, fear of loss
+        ? Math.ceil(
+            changeInPPS.percentChange *
+              ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+          )
+        : 0;
+
+    const randomActionBoostOptions = [pricePressureBoost, lossAversionBoost];
+
+    return {
+      action: possibleActions.sellOrder,
+      data: c,
+      utilityScore:
+        baseUtilityScores.sellOrder +
+        freqBoost +
+        getRandomValueFromArray(randomActionBoostOptions) +
+        lowCashBoost,
+    };
+  });
+
+  return [...possibleBuyOrderActions, ...possibleSellOrderActions];
 }
