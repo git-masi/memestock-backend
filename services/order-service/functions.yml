@@ -11,3 +11,10 @@ getOrdersByStatus:
     - http:
         method: GET
         path: /order/{status}
+
+getOrdersByUserId:
+  handler: src/handlers/getOrdersByUserId.handler
+  events:
+    - http:
+        method: GET
+        path: /order/{userId} # optional query string param(s): status, orderAsc, compareTimeOperator, compareTime, limit, orderType
