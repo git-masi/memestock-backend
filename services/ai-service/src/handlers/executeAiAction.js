@@ -363,6 +363,8 @@ function calculateSharePriceChange(changes, data) {
 }
 
 function getAllPossibleActions(args) {
+  // these functions are wet >.<
+  // todo: refactor
   const existingOrderActions = getExistingOrderActions(args);
   const newOrderActions = getNewOrderActions(args);
   const cancelOrderActions = getCancelOrderActions(args);
