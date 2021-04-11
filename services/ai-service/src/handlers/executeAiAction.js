@@ -115,7 +115,7 @@ async function getUser(aiProfile) {
 
 async function getOrders() {
   const { data } = await axios.get(
-    `${ORDER_SERVICE_URL}/order/open?limit=${numOrdersToFetch}&orderAsc=false`
+    `${ORDER_SERVICE_URL}/order/status/open?limit=${numOrdersToFetch}&orderAsc=false`
   );
   return data;
 }
