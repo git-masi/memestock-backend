@@ -8,6 +8,8 @@ import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
 import {
   createAttributesForStatusAndCreatedQuery,
+  getRandomFloat,
+  getRandomIntZeroToX,
   getRandomValueFromArray,
   successResponse,
 } from 'libs';
@@ -52,10 +54,14 @@ const test = true;
 
 export const handler = async function executeAiAction(event, context) {
   try {
+    const deviationFromPPS = getRandomFloat(-0.1, 0.1);
+    console.log(deviationFromPPS);
+    if (test) return successResponse(deviationFromPPS);
+
     const data = await getDataForUtilityScores();
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
-    const actionTaken = takeAction(aiAction);
+    const actionTaken = takeAction(aiAction, data.user);
 
     if (test) return;
 
@@ -528,6 +534,8 @@ function getNewOrderActions(args) {
   ];
 }
 
+// todo: refactor to use cash on hand rather than total cash
+//       for low/hight cash boosts
 function getCancelOrderActions(args) {
   const { data, highCashBoost, lowCashBoost, changeInPricePerShare } = args;
   const { userOrders, aiProfile } = data;
@@ -624,12 +632,12 @@ function getOneAction(actions) {
   return action;
 }
 
-async function takeAction(action) {
+async function takeAction(action, user) {
   const { action: type } = action;
 
   switch (type) {
     case possibleActions.newBuyOrder:
-      return createNewBuyOrder(action);
+      return createNewBuyOrder(action, user);
 
     default:
       throw new Error(
@@ -638,4 +646,29 @@ async function takeAction(action) {
   }
 }
 
-async function createNewBuyOrder(action) {}
+async function createNewBuyOrder(action, user) {
+  const {
+    data: { pricePerShare },
+  } = action;
+  const { cashOnHand } = user;
+  const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
+  const newPricePerShare = Math.round(deviationFromPPS * pricePerShare);
+  const maxQuantity = Math.floor(cashOnHand / newPricePerShare);
+  const quantity = getRandomIntZeroToX(maxQuantity);
+
+  const body = {
+    orderType: 'buy',
+    total: quantity * newPricePerShare,
+    quantity,
+    stock: {
+      tickerSymbol: 'FRD',
+      description: 'We make big honkin trucks.',
+      pk: '8dba9900-ef1c-4b48-8f5f-4f282213c4ec',
+      name: 'Ferd Motor Company',
+    },
+    userId: 'e492ff84-a723-4429-b5f6-dfc097ddb348',
+  };
+  // const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+  console.log(body);
+  return action;
+}

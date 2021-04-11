@@ -7,5 +7,7 @@ export const getRandomIntMinToMax = (min, max) => randomInt(min, max)();
 export const getRandomValueFromArray = (arr) =>
   arr instanceof Array && arr[getRandomIntZeroToX(arr.length)];
 
+export const getRandomFloat = (min, max) => randomUniform(min, max)();
+
 export const generateRandomBoolean = (probability = 0.5) =>
   probability > randomUniform(0, 1)();

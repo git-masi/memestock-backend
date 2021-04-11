@@ -7,6 +7,7 @@ export {
   getRandomIntZeroToX,
   getRandomIntMinToMax,
   getRandomValueFromArray,
+  getRandomFloat,
   generateRandomBoolean,
 } from './randomValueUtils';
 export { emailRegex } from './regexUtils';
