@@ -54,10 +54,6 @@ const test = true;
 
 export const handler = async function executeAiAction(event, context) {
   try {
-    const deviationFromPPS = getRandomFloat(-0.1, 0.1);
-    console.log(deviationFromPPS);
-    if (test) return successResponse(deviationFromPPS);
-
     const data = await getDataForUtilityScores();
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
@@ -639,6 +635,9 @@ async function takeAction(action, user) {
     case possibleActions.newBuyOrder:
       return createNewBuyOrder(action, user);
 
+    case possibleActions.newSellOrder:
+      return createNewSellOrder(action, user);
+
     default:
       throw new Error(
         `Could not take action, ${type} is not a valid action type.`
@@ -648,27 +647,60 @@ async function takeAction(action, user) {
 
 async function createNewBuyOrder(action, user) {
   const {
-    data: { pricePerShare },
+    data: {
+      pricePerShare,
+      data: { tickerSymbol, description, pk, name },
+    },
   } = action;
   const { cashOnHand } = user;
   const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
   const newPricePerShare = Math.round(deviationFromPPS * pricePerShare);
   const maxQuantity = Math.floor(cashOnHand / newPricePerShare);
   const quantity = getRandomIntZeroToX(maxQuantity);
-
+  const stock = {
+    tickerSymbol,
+    description,
+    pk,
+    name,
+  };
   const body = {
     orderType: 'buy',
     total: quantity * newPricePerShare,
     quantity,
-    stock: {
-      tickerSymbol: 'FRD',
-      description: 'We make big honkin trucks.',
-      pk: '8dba9900-ef1c-4b48-8f5f-4f282213c4ec',
-      name: 'Ferd Motor Company',
-    },
-    userId: 'e492ff84-a723-4429-b5f6-dfc097ddb348',
+    stock,
+    userId: user.pk,
   };
-  // const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
-  console.log(body);
-  return action;
+  console.log('New buy order body: ', body);
+  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+  return data;
+}
+
+async function createNewSellOrder(action, user) {
+  const {
+    data: {
+      pricePerShare,
+      data: { tickerSymbol, description, pk, name },
+    },
+  } = action;
+  const { stocks } = user;
+  const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
+  const newPricePerShare = Math.round(deviationFromPPS * pricePerShare);
+  const maxQuantity = stocks[tickerSymbol].quantityOnHand;
+  const quantity = getRandomIntZeroToX(maxQuantity);
+  const stock = {
+    tickerSymbol,
+    description,
+    pk,
+    name,
+  };
+  const body = {
+    orderType: 'sell',
+    total: quantity * newPricePerShare,
+    quantity,
+    stock,
+    userId: user.pk,
+  };
+  console.log('New sell order body: ', body);
+  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+  return data;
 }
