@@ -12,6 +12,13 @@ getUser:
         method: GET
         path: /user
 
+completeOrder:
+  handler: src/handlers/completeOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: user/complete-order
+
 signup:
   handler: src/handlers/signup.handler
   events:
