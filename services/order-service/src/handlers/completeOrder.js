@@ -65,28 +65,26 @@ async function getOrderAndUser(orderId, userId) {
     );
   }
 
-  // todo: enable these guard clauses after testing
-  //
-  // const tickerSymbol = order.stock.tickerSymbol;
-  // const userHasStock = tickerSymbol in user.stocks;
-  // const userHasQuantityRequired =
-  //   user?.stocks?.[tickerSymbol]?.quantityOnHand > order.quantity;
+  const tickerSymbol = order.stock.tickerSymbol;
+  const userHasStock = tickerSymbol in user.stocks;
+  const userHasQuantityRequired =
+    user?.stocks?.[tickerSymbol]?.quantityOnHand > order.quantity;
 
-  // if (
-  //   order.orderType === 'buy' &&
-  //   (!userHasStock || !userHasQuantityRequired)
-  // ) {
-  //   console.log('User does not have enough stock to complete the order: ', {
-  //     user,
-  //     order,
-  //   });
-  //   throw createHttpError.BadRequest('User cannot complete this order');
-  // }
+  if (
+    order.orderType === 'buy' &&
+    (!userHasStock || !userHasQuantityRequired)
+  ) {
+    console.log('User does not have enough stock to complete the order: ', {
+      user,
+      order,
+    });
+    throw createHttpError.BadRequest('User cannot complete this order');
+  }
 
-  // if (order.orderType === 'sell' && user.cashOnHand < order.total) {
-  //   console.log('Cash on hand too low to complete order: ', { user, order });
-  //   throw createHttpError.BadRequest('User cannot complete this order');
-  // }
+  if (order.orderType === 'sell' && user.cashOnHand < order.total) {
+    console.log('Cash on hand too low to complete order: ', { user, order });
+    throw createHttpError.BadRequest('User cannot complete this order');
+  }
 
   return { order, user };
 }
