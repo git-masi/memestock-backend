@@ -648,6 +648,15 @@ async function takeAction(action, user) {
     case possibleActions.newSellOrder:
       return createNewSellOrder(action, user);
 
+    case possibleActions.cancelBuyOrder:
+      return cancelOrder(action, user);
+
+    case possibleActions.cancelSellOrder:
+      return cancelOrder(action, user);
+
+    case possibleActions.doNothing:
+      return {};
+
     default:
       throw new Error(
         `Could not take action, ${type} is not a valid action type.`
@@ -721,4 +730,8 @@ async function createNewSellOrder(action, user) {
   // const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
   // return data;
   return {};
+}
+
+function cancelOrder() {
+  //
 }
