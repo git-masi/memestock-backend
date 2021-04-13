@@ -2,7 +2,7 @@ import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
 import isEmpty from 'lodash.isempty';
 import createHttpError from 'http-errors';
-import { commonMiddlewareWithValidator, successResponse } from 'libs';
+import { commonMiddlewareWithValidator, statuses, successResponse } from 'libs';
 
 const { ORDERS_TABLE_NAME, USER_SERVICE_URL } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -33,9 +33,13 @@ async function completeOrder(event) {
       body: { orderId, userCompletingOrder },
     } = event;
 
-    const { order, user } = await getOrderAndUser(orderId, userCompletingOrder);
+    const orderAndUser = await getOrderAndUser(orderId, userCompletingOrder);
 
-    console.log({ order, user });
+    console.log({ ...orderAndUser });
+    // ideally this would be an ACID transaction
+    await Promise.all([updateUsers(orderAndUser), updateOrderStatus(orderId)]);
+
+    // todo: create transaction
 
     return successResponse();
   } catch (error) {
@@ -61,26 +65,28 @@ async function getOrderAndUser(orderId, userId) {
     );
   }
 
-  const tickerSymbol = order.stock.tickerSymbol;
-  const userHasStock = tickerSymbol in user.stocks;
-  const userHasQuantityRequired =
-    user?.stocks?.[tickerSymbol]?.quantityOnHand > order.quantity;
+  // todo: enable these guard clauses after testing
+  //
+  // const tickerSymbol = order.stock.tickerSymbol;
+  // const userHasStock = tickerSymbol in user.stocks;
+  // const userHasQuantityRequired =
+  //   user?.stocks?.[tickerSymbol]?.quantityOnHand > order.quantity;
 
-  if (
-    order.orderType === 'buy' &&
-    (!userHasStock || !userHasQuantityRequired)
-  ) {
-    console.log('User does not have enough stock to complete the order: ', {
-      user,
-      order,
-    });
-    throw createHttpError.BadRequest('User cannot complete this order');
-  }
+  // if (
+  //   order.orderType === 'buy' &&
+  //   (!userHasStock || !userHasQuantityRequired)
+  // ) {
+  //   console.log('User does not have enough stock to complete the order: ', {
+  //     user,
+  //     order,
+  //   });
+  //   throw createHttpError.BadRequest('User cannot complete this order');
+  // }
 
-  if (order.orderType === 'sell' && user.cashOnHand < order.total) {
-    console.log('Cash on hand too low to complete order: ', { user, order });
-    throw createHttpError.BadRequest('User cannot complete this order');
-  }
+  // if (order.orderType === 'sell' && user.cashOnHand < order.total) {
+  //   console.log('Cash on hand too low to complete order: ', { user, order });
+  //   throw createHttpError.BadRequest('User cannot complete this order');
+  // }
 
   return { order, user };
 }
@@ -99,4 +105,22 @@ function getOrder(orderId) {
 async function getUser(userId) {
   const { data } = await axios.get(`${USER_SERVICE_URL}/user?userId=${userId}`);
   return data;
+}
+
+function updateUsers(body) {
+  return axios.put(`${USER_SERVICE_URL}/user/complete-order`, body);
+}
+
+function updateOrderStatus(orderId) {
+  return dynamoDb
+    .update({
+      TableName: ORDERS_TABLE_NAME,
+      Key: { id: orderId },
+      UpdateExpression: 'set #status = :completed',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':completed': statuses.completed,
+      },
+    })
+    .promise();
 }
