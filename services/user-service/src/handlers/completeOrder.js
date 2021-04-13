@@ -48,8 +48,6 @@ const requestSchema = {
 };
 const validationOptions = { inputSchema: requestSchema };
 
-const test = true;
-
 async function completeOrder(event) {
   try {
     const {
@@ -70,10 +68,6 @@ async function completeOrder(event) {
     if (!originatingUser || !completingUser)
       throw createHttpError.BadRequest('Could not get users');
 
-    console.log({ originatingUser, completingUser });
-
-    // if (test) return successResponse();`
-
     const params =
       orderType === 'buy'
         ? createBuyOrderParams({
@@ -87,11 +81,11 @@ async function completeOrder(event) {
             completingUser,
           });
 
-    const res = await dynamoDb.transactWrite(params).promise();
+    console.log(params);
 
-    console.log(res);
+    await dynamoDb.transactWrite(params).promise();
 
-    return successResponse(params);
+    return successResponse();
   } catch (error) {
     console.log(error);
     throw error;
@@ -111,33 +105,6 @@ function getUser(pk) {
     })
     .promise();
 }
-
-// {
-//   order: {
-//     quantity: 50,
-//     orderType: 'buy',
-//     userId: 'e492ff84-a723-4429-b5f6-dfc097ddb348',
-//     status: 'open',
-//     total: 62400,
-//     created: '2021-04-09T19:13:53.306Z',
-//     stock: {
-//       name: 'Ferd Motor Company',
-//       description: 'We make big honkin trucks.',
-//       tickerSymbol: 'FRD',
-//       pk: '8dba9900-ef1c-4b48-8f5f-4f282213c4ec'
-//     },
-//     id: '99552ae9-a79f-490b-b3b5-2fc86c886bc2'
-//   },
-//   user: {
-//     displayName: 'Gregg.Runolfsson',
-//     stocks: { GMS: [Object], OTHR: [Object] },
-//     cashOnHand: 112267,
-//     created: '2021-04-08T19:17:37.949Z',
-//     pk: '3a4eb03f-3b8d-4563-9751-d055505798fc',
-//     email: 'Diana.Champlin@yahoo.com',
-//     totalCash: 112267
-//   }
-// }
 
 function createBuyOrderParams(args) {
   // Guard against data mutation
