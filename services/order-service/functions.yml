@@ -18,3 +18,10 @@ getOrdersByUserId:
     - http:
         method: GET
         path: /order/userId/{userId} # optional query string param(s): status, orderAsc, compareTimeOperator, compareTime, limit, orderType
+
+completeOrder:
+  handler: src/handlers/completeOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: /order/complete

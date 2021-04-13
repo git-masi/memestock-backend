@@ -106,6 +106,8 @@ async function getDataForUtilityScores() {
     { aiProfile }
   );
 
+  console.log({ orders: data.orders });
+
   const userOrders = await getUserOrders(data.user.pk);
 
   return { ...data, userOrders };
@@ -356,6 +358,7 @@ function getExistingOrderActions(args) {
   });
 
   const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
+    console.log('buy order: ', o);
     const { tickerSymbol } = o.stock;
     const freqBoost =
       tickerSymbol in mostFreqBoosts?.mostFreqBuy
@@ -392,6 +395,7 @@ function getExistingOrderActions(args) {
   });
 
   const possibleSellOrderActions = fillableSellOrders.map((o) => {
+    console.log('sell order: ', o);
     const { tickerSymbol } = o.stock;
     const freqBoost =
       tickerSymbol in mostFreqBoosts?.mostFreqSell
@@ -632,6 +636,12 @@ async function takeAction(action, user) {
   const { action: type } = action;
 
   switch (type) {
+    case possibleActions.buyOrder:
+      return completeOrder(action, user);
+
+    case possibleActions.sellOrder:
+      return completeOrder(action, user);
+
     case possibleActions.newBuyOrder:
       return createNewBuyOrder(action, user);
 
@@ -645,12 +655,21 @@ async function takeAction(action, user) {
   }
 }
 
-async function createNewBuyOrder(action, user) {
+async function completeOrder(action, user) {
   const {
-    data: {
-      pricePerShare,
-      data: { tickerSymbol, description, pk, name },
-    },
+    data: { id: orderId },
+  } = action;
+  // const { data } = await axios.put(`${ORDER_SERVICE_URL}/order/complete`, {
+  //   orderId,
+  //   userCompletingOrder: user.pk,
+  // });
+  return data;
+}
+
+async function createNewBuyOrder(action, user) {
+  console.log({ action });
+  const {
+    data: { pricePerShare, tickerSymbol, description, pk, name },
   } = action;
   const { cashOnHand } = user;
   const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
@@ -671,16 +690,14 @@ async function createNewBuyOrder(action, user) {
     userId: user.pk,
   };
   console.log('New buy order body: ', body);
-  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
-  return data;
+  // const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+  // return data;
+  return {};
 }
 
 async function createNewSellOrder(action, user) {
   const {
-    data: {
-      pricePerShare,
-      data: { tickerSymbol, description, pk, name },
-    },
+    data: { pricePerShare, tickerSymbol, description, pk, name },
   } = action;
   const { stocks } = user;
   const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
@@ -701,6 +718,7 @@ async function createNewSellOrder(action, user) {
     userId: user.pk,
   };
   console.log('New sell order body: ', body);
-  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
-  return data;
+  // const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+  // return data;
+  return {};
 }

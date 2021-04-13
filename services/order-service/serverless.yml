@@ -17,6 +17,7 @@ provider:
     - ${file(iam/OrdersTableIAM.yml):OrdersTableIAM}
   environment:
     ORDERS_TABLE_NAME: !Ref OrdersTable
+    USER_SERVICE_URL: 'https://741a1l025i.execute-api.us-east-1.amazonaws.com/dev'
     GSI_STATUS_AND_CREATED: 'statusAndCreated'
     GSI_USER_ID_AND_CREATED: 'userIdAndCreated'
 
