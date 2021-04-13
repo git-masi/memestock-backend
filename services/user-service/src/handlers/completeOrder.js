@@ -223,6 +223,84 @@ function createBuyOrderParams(args) {
 }
 
 function createSellOrderParams(args) {
-  const { order, originatingUser, completingUser } = args;
-  //
+  // Guard against data mutation
+  const copy = cloneDeep(args);
+  const { order, originatingUser, completingUser } = copy;
+  const { stocks: ogUserStocks } = originatingUser;
+  const { stocks: completingUserStocks } = completingUser;
+  const orderTickerSymbol = order.stock.tickerSymbol;
+  const ogUserStock = ogUserStocks[orderTickerSymbol];
+  const completingUserStock = completingUserStocks[orderTickerSymbol];
+
+  const newOGUserStock = {
+    ...ogUserStock,
+    quantityHeld: ogUserStock.quantityHeld - order.quantity,
+    quantityOnHand: ogUserStock.quantityOnHand - order.quantity,
+  };
+  const newCompletingUserStock = completingUserStock
+    ? {
+        ...completingUserStock,
+        quantityHeld: completingUserStock.quantityHeld + order.quantity,
+        quantityOnHand: completingUserStock.quantityOnHand + order.quantity,
+      }
+    : {
+        id: order.stock.pk,
+        quantityHeld: order.quantity,
+        quantityOnHand: order.quantity,
+      };
+  const newOGUserCash = {
+    cashOnHand: originatingUser.cashOnHand + order.total,
+    totalCash: originatingUser.totalCash + order.total,
+  };
+  const newCompletingUserCash = {
+    cashOnHand: completingUser.cashOnHand - order.total,
+    totalCash: completingUser.totalCash - order.total,
+  };
+
+  const params = {
+    TransactItems: [
+      {
+        Update: {
+          TableName: USERS_TABLE_NAME,
+          Key: { pk: originatingUser.pk },
+          UpdateExpression:
+            'SET #cashOnHand = :coh, #totalCash = :tc, #stocks.#tickerSymbol = :stock',
+          ExpressionAttributeNames: {
+            '#cashOnHand': 'cashOnHand',
+            '#totalCash': 'totalCash',
+            '#stocks': 'stocks',
+            '#tickerSymbol': orderTickerSymbol,
+          },
+          ExpressionAttributeValues: {
+            ':coh': newOGUserCash.cashOnHand,
+            ':tc': newOGUserCash.totalCash,
+            ':stock': newOGUserStock,
+          },
+          ReturnValues: 'ALL_NEW',
+        },
+      },
+      {
+        Update: {
+          TableName: USERS_TABLE_NAME,
+          Key: { pk: completingUser.pk },
+          UpdateExpression:
+            'SET #cashOnHand = :coh, #totalCash = :tc, #stocks.#tickerSymbol = :stock',
+          ExpressionAttributeNames: {
+            '#cashOnHand': 'cashOnHand',
+            '#totalCash': 'totalCash',
+            '#stocks': 'stocks',
+            '#tickerSymbol': orderTickerSymbol,
+          },
+          ExpressionAttributeValues: {
+            ':coh': newCompletingUserCash.cashOnHand,
+            ':tc': newCompletingUserCash.totalCash,
+            ':stock': newCompletingUserStock,
+          },
+          ReturnValues: 'ALL_NEW',
+        },
+      },
+    ],
+  };
+
+  return params;
 }
