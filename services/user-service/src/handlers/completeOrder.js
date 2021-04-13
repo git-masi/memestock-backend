@@ -1,4 +1,5 @@
 import { DynamoDB } from 'aws-sdk';
+import cloneDeep from 'lodash.clonedeep';
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 
 const { USERS_TABLE_NAME } = process.env;
@@ -46,32 +47,6 @@ const requestSchema = {
 };
 const validationOptions = { inputSchema: requestSchema };
 
-// {
-//   order: {
-//     quantity: 50,
-//     orderType: 'buy',
-//     userId: 'e492ff84-a723-4429-b5f6-dfc097ddb348',
-//     status: 'open',
-//     total: 62400,
-//     created: '2021-04-09T19:13:53.306Z',
-//     stock: {
-//       name: 'Ferd Motor Company',
-//       description: 'We make big honkin trucks.',
-//       tickerSymbol: 'FRD',
-//       pk: '8dba9900-ef1c-4b48-8f5f-4f282213c4ec'
-//     },
-//     id: '99552ae9-a79f-490b-b3b5-2fc86c886bc2'
-//   },
-//   user: {
-//     displayName: 'Gregg.Runolfsson',
-//     stocks: { GMS: [Object], OTHR: [Object] },
-//     cashOnHand: 112267,
-//     created: '2021-04-08T19:17:37.949Z',
-//     pk: '3a4eb03f-3b8d-4563-9751-d055505798fc',
-//     email: 'Diana.Champlin@yahoo.com',
-//     totalCash: 112267
-//   }
-// }
 async function completeOrder(event) {
   try {
     const {
@@ -123,23 +98,117 @@ function getUser(pk) {
     .promise();
 }
 
+// {
+//   order: {
+//     quantity: 50,
+//     orderType: 'buy',
+//     userId: 'e492ff84-a723-4429-b5f6-dfc097ddb348',
+//     status: 'open',
+//     total: 62400,
+//     created: '2021-04-09T19:13:53.306Z',
+//     stock: {
+//       name: 'Ferd Motor Company',
+//       description: 'We make big honkin trucks.',
+//       tickerSymbol: 'FRD',
+//       pk: '8dba9900-ef1c-4b48-8f5f-4f282213c4ec'
+//     },
+//     id: '99552ae9-a79f-490b-b3b5-2fc86c886bc2'
+//   },
+//   user: {
+//     displayName: 'Gregg.Runolfsson',
+//     stocks: { GMS: [Object], OTHR: [Object] },
+//     cashOnHand: 112267,
+//     created: '2021-04-08T19:17:37.949Z',
+//     pk: '3a4eb03f-3b8d-4563-9751-d055505798fc',
+//     email: 'Diana.Champlin@yahoo.com',
+//     totalCash: 112267
+//   }
+// }
+
 function createBuyOrderParams(args) {
-  const { order, originatingUser, completingUser } = args;
+  // Guard against data mutation
+  const copy = cloneDeep(args);
+  const { order, originatingUser, completingUser } = copy;
+
+  const orderTickerSymbol = order.stock.tickerSymbol;
+  const originatingUserHasStock = orderTickerSymbol in originatingUser.stocks;
+  const newOGUserStock = originatingUserHasStock
+    ? {
+        ...originatingUser.stocks[orderTickerSymbol],
+        quantityHeld:
+          originatingUser.stocks[orderTickerSymbol].quantityHeld +
+          order.quantity,
+        quantityOnHand:
+          originatingUser.stocks[orderTickerSymbol].quantityOnHand +
+          order.quantity,
+      }
+    : {
+        id: order.stock.pk,
+        quantityHeld: order.quantity,
+        quantityOnHand: order.quantity,
+      };
+  const newCompletingUserStock = {
+    ...completingUser.stocks[orderTickerSymbol],
+    quantityHeld:
+      completingUser.stocks[orderTickerSymbol].quantityHeld - order.quantity,
+    quantityOnHand:
+      completingUser.stocks[orderTickerSymbol].quantityOnHand - order.quantity,
+  };
+  const newOGUserCash = {
+    cashOnHand: originatingUser.cashOnHand - order.total,
+    totalCash: originatingUser.totalCash - order.total,
+  };
+  const newCompletingUserCash = {
+    cashOnHand: completingUser.cashOnHand + order.total,
+    totalCash: completingUser.totalCash + order.total,
+  };
 
   const params = {
     TransactItems: [
       {
         Update: {
           TableName: USERS_TABLE_NAME,
-          Key: { pk: originatingUserId },
-          UpdateExpression: 'set #a = :x + :y',
-          ConditionExpression: '#a < :MAX',
-          ExpressionAttributeNames: { '#a': 'Sum' },
-          ExpressionAttributeValues: {
-            ':x': 20,
-            ':y': 45,
-            ':MAX': 100,
+          Key: { pk: originatingUser.pk },
+          UpdateExpression:
+            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks = :stocks',
+          ExpressionAttributeNames: {
+            '#cashOnHand': 'cashOnHand',
+            '#totalCash': 'totalCash',
+            '#stocks': 'stocks',
           },
+          ExpressionAttributeValues: {
+            ':coh': newOGUserCash.cashOnHand,
+            ':tc': newOGUserCash.totalCash,
+            ':stocks': {
+              ...originatingUser.stocks,
+              [originatingUser.stocks[orderTickerSymbol]]: newOGUserStock,
+            },
+          },
+          ReturnValues: 'ALL_NEW',
+        },
+      },
+      {
+        Update: {
+          TableName: USERS_TABLE_NAME,
+          Key: { pk: completingUser.pk },
+          UpdateExpression:
+            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks = :stocks',
+          ExpressionAttributeNames: {
+            '#cashOnHand': 'cashOnHand',
+            '#totalCash': 'totalCash',
+            '#stocks': 'stocks',
+          },
+          ExpressionAttributeValues: {
+            ':coh': newCompletingUserCash.cashOnHand,
+            ':tc': newCompletingUserCash.totalCash,
+            ':stocks': {
+              ...completingUser.stocks,
+              [completingUser.stocks[
+                orderTickerSymbol
+              ]]: newCompletingUserStock,
+            },
+          },
+          ReturnValues: 'ALL_NEW',
         },
       },
     ],
