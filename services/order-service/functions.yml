@@ -25,3 +25,10 @@ completeOrder:
     - http:
         method: PUT
         path: /order/complete
+
+cancelOrder:
+  handler: src/handlers/cancelOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: /order/cancel
