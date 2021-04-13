@@ -87,7 +87,9 @@ async function completeOrder(event) {
             completingUser,
           });
 
-    // await dynamoDb.transactWrite(params).promise();
+    const res = await dynamoDb.transactWrite(params).promise();
+
+    console.log(res);
 
     return successResponse(params);
   } catch (error) {
@@ -179,7 +181,7 @@ function createBuyOrderParams(args) {
           TableName: USERS_TABLE_NAME,
           Key: { pk: originatingUser.pk },
           UpdateExpression:
-            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks.#tickerSymbol = :stocks',
+            'SET #cashOnHand = :coh, #totalCash = :tc, #stocks.#tickerSymbol = :stock',
           ExpressionAttributeNames: {
             '#cashOnHand': 'cashOnHand',
             '#totalCash': 'totalCash',
@@ -199,7 +201,7 @@ function createBuyOrderParams(args) {
           TableName: USERS_TABLE_NAME,
           Key: { pk: completingUser.pk },
           UpdateExpression:
-            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks.#tickerSymbol = :stock',
+            'SET #cashOnHand = :coh, #totalCash = :tc, #stocks.#tickerSymbol = :stock',
           ExpressionAttributeNames: {
             '#cashOnHand': 'cashOnHand',
             '#totalCash': 'totalCash',
