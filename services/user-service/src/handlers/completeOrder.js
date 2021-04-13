@@ -10,9 +10,33 @@ const requestSchema = {
       properties: {
         order: {
           type: 'object',
+          properties: {
+            quantity: {
+              type: 'integer',
+            },
+            total: {
+              type: 'integer',
+            },
+            orderType: {
+              type: 'string',
+              pattern: '^buy|sell$',
+            },
+            userId: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          required: ['quantity', 'total', 'orderType', 'userId'],
         },
         user: {
           type: 'object',
+          properties: {
+            pk: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          required: ['pk'],
         },
       },
       required: ['order', 'user'],
@@ -56,6 +80,8 @@ async function completeOrder(event) {
     const { orderType, userId: originatingUserId } = order;
     const { pk: completingUserId } = user;
 
+    // We have the completingUser data already but this acts as a further
+    // validation to make sure the user exists
     const [originatingUser, completingUser] = await Promise.all(
       getUser(originatingUserId),
       getUser(completingUserId)
