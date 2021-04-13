@@ -61,24 +61,18 @@ async function completeOrder(event) {
       getUser(completingUserId)
     );
 
-    const params = {
-      TransactItems: [
-        {
-          Update: {
-            TableName: USERS_TABLE_NAME,
-            Key: { pk: originatingUserId },
-            UpdateExpression: 'set #a = :x + :y',
-            ConditionExpression: '#a < :MAX',
-            ExpressionAttributeNames: { '#a': 'Sum' },
-            ExpressionAttributeValues: {
-              ':x': 20,
-              ':y': 45,
-              ':MAX': 100,
-            },
-          },
-        },
-      ],
-    };
+    const params =
+      orderType === 'buy'
+        ? createBuyOrderParams({
+            order,
+            originatingUser,
+            completingUser,
+          })
+        : createSellOrderParams({
+            order,
+            originatingUser,
+            completingUser,
+          });
 
     await dynamoDb.transactWrite(params).promise();
 
@@ -93,3 +87,42 @@ export const handler = commonMiddlewareWithValidator(
   completeOrder,
   validationOptions
 );
+
+function getUser(pk) {
+  dynamoDb
+    .get({
+      TableName: USERS_TABLE_NAME,
+      Key: { pk },
+    })
+    .promise();
+}
+
+function createBuyOrderParams(args) {
+  const { order, originatingUser, completingUser } = args;
+
+  const params = {
+    TransactItems: [
+      {
+        Update: {
+          TableName: USERS_TABLE_NAME,
+          Key: { pk: originatingUserId },
+          UpdateExpression: 'set #a = :x + :y',
+          ConditionExpression: '#a < :MAX',
+          ExpressionAttributeNames: { '#a': 'Sum' },
+          ExpressionAttributeValues: {
+            ':x': 20,
+            ':y': 45,
+            ':MAX': 100,
+          },
+        },
+      },
+    ],
+  };
+
+  return params;
+}
+
+function createSellOrderParams(args) {
+  const { order, originatingUser, completingUser } = args;
+  //
+}
