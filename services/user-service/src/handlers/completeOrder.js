@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import cloneDeep from 'lodash.clonedeep';
+import createHttpError from 'http-errors';
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 
 const { USERS_TABLE_NAME } = process.env;
@@ -47,6 +48,8 @@ const requestSchema = {
 };
 const validationOptions = { inputSchema: requestSchema };
 
+const test = true;
+
 async function completeOrder(event) {
   try {
     const {
@@ -57,10 +60,19 @@ async function completeOrder(event) {
 
     // We have the completingUser data already but this acts as a further
     // validation to make sure the user exists
-    const [originatingUser, completingUser] = await Promise.all(
+    const [originatingUserRes, completingUserRes] = await Promise.all([
       getUser(originatingUserId),
-      getUser(completingUserId)
-    );
+      getUser(completingUserId),
+    ]);
+    const { Item: originatingUser } = originatingUserRes;
+    const { Item: completingUser } = completingUserRes;
+
+    if (!originatingUser || !completingUser)
+      throw createHttpError.BadRequest('Could not get users');
+
+    console.log({ originatingUser, completingUser });
+
+    // if (test) return successResponse();`
 
     const params =
       orderType === 'buy'
@@ -75,9 +87,9 @@ async function completeOrder(event) {
             completingUser,
           });
 
-    await dynamoDb.transactWrite(params).promise();
+    // await dynamoDb.transactWrite(params).promise();
 
-    return successResponse();
+    return successResponse(params);
   } catch (error) {
     console.log(error);
     throw error;
@@ -90,7 +102,7 @@ export const handler = commonMiddlewareWithValidator(
 );
 
 function getUser(pk) {
-  dynamoDb
+  return dynamoDb
     .get({
       TableName: USERS_TABLE_NAME,
       Key: { pk },
@@ -129,18 +141,17 @@ function createBuyOrderParams(args) {
   // Guard against data mutation
   const copy = cloneDeep(args);
   const { order, originatingUser, completingUser } = copy;
-
+  const { stocks: ogUserStocks } = originatingUser;
+  const { stocks: completingUserStocks } = completingUser;
   const orderTickerSymbol = order.stock.tickerSymbol;
-  const originatingUserHasStock = orderTickerSymbol in originatingUser.stocks;
-  const newOGUserStock = originatingUserHasStock
+  const ogUserStock = ogUserStocks[orderTickerSymbol];
+  const completingUserStock = completingUserStocks[orderTickerSymbol];
+
+  const newOGUserStock = ogUserStock
     ? {
-        ...originatingUser.stocks[orderTickerSymbol],
-        quantityHeld:
-          originatingUser.stocks[orderTickerSymbol].quantityHeld +
-          order.quantity,
-        quantityOnHand:
-          originatingUser.stocks[orderTickerSymbol].quantityOnHand +
-          order.quantity,
+        ...ogUserStock,
+        quantityHeld: ogUserStock.quantityHeld + order.quantity,
+        quantityOnHand: ogUserStock.quantityOnHand + order.quantity,
       }
     : {
         id: order.stock.pk,
@@ -148,11 +159,9 @@ function createBuyOrderParams(args) {
         quantityOnHand: order.quantity,
       };
   const newCompletingUserStock = {
-    ...completingUser.stocks[orderTickerSymbol],
-    quantityHeld:
-      completingUser.stocks[orderTickerSymbol].quantityHeld - order.quantity,
-    quantityOnHand:
-      completingUser.stocks[orderTickerSymbol].quantityOnHand - order.quantity,
+    ...completingUserStock,
+    quantityHeld: completingUserStock.quantityHeld - order.quantity,
+    quantityOnHand: completingUserStock.quantityOnHand - order.quantity,
   };
   const newOGUserCash = {
     cashOnHand: originatingUser.cashOnHand - order.total,
@@ -170,19 +179,17 @@ function createBuyOrderParams(args) {
           TableName: USERS_TABLE_NAME,
           Key: { pk: originatingUser.pk },
           UpdateExpression:
-            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks = :stocks',
+            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks.#tickerSymbol = :stocks',
           ExpressionAttributeNames: {
             '#cashOnHand': 'cashOnHand',
             '#totalCash': 'totalCash',
             '#stocks': 'stocks',
+            '#tickerSymbol': orderTickerSymbol,
           },
           ExpressionAttributeValues: {
             ':coh': newOGUserCash.cashOnHand,
             ':tc': newOGUserCash.totalCash,
-            ':stocks': {
-              ...originatingUser.stocks,
-              [originatingUser.stocks[orderTickerSymbol]]: newOGUserStock,
-            },
+            ':stock': newOGUserStock,
           },
           ReturnValues: 'ALL_NEW',
         },
@@ -192,21 +199,17 @@ function createBuyOrderParams(args) {
           TableName: USERS_TABLE_NAME,
           Key: { pk: completingUser.pk },
           UpdateExpression:
-            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks = :stocks',
+            'SET #cashOnHand = :coh, #totalCach = :tc, #stocks.#tickerSymbol = :stock',
           ExpressionAttributeNames: {
             '#cashOnHand': 'cashOnHand',
             '#totalCash': 'totalCash',
             '#stocks': 'stocks',
+            '#tickerSymbol': orderTickerSymbol,
           },
           ExpressionAttributeValues: {
             ':coh': newCompletingUserCash.cashOnHand,
             ':tc': newCompletingUserCash.totalCash,
-            ':stocks': {
-              ...completingUser.stocks,
-              [completingUser.stocks[
-                orderTickerSymbol
-              ]]: newCompletingUserStock,
-            },
+            ':stock': newCompletingUserStock,
           },
           ReturnValues: 'ALL_NEW',
         },
