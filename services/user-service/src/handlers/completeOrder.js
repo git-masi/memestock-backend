@@ -21,7 +21,7 @@ const requestSchema = {
             },
             orderType: {
               type: 'string',
-              pattern: '^buy|sell$',
+              pattern: '^(?:buy|sell)$',
             },
             userId: {
               type: 'string',
@@ -243,7 +243,7 @@ function createSellOrderParams(args) {
             ':tc': newOGUserCash.totalCash,
             ':stock': newOGUserStock,
           },
-          ReturnValues: 'ALL_NEW',
+          ReturnValues: 'UPDATED_NEW',
         },
       },
       {

@@ -29,7 +29,8 @@ async function cancelOrder(event) {
 
     const { Item: order } = await getOrder(orderId);
 
-    await Promise.all([updateOrderStatus(orderId), updateUser(order.userId)]);
+    // ideally this would be an ACID transaction
+    await Promise.all([updateOrderStatus(orderId), updateUser(order)]);
 
     return successResponse();
   } catch (error) {
@@ -54,7 +55,8 @@ function getOrder(orderId) {
     .promise();
 }
 
-function updateUser(body) {
+function updateUser(order) {
+  const body = { order };
   return axios.put(`${USER_SERVICE_URL}/user/cancel-order`, body);
 }
 

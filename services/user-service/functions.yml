@@ -19,6 +19,13 @@ completeOrder:
         method: PUT
         path: user/complete-order
 
+cancelOrder:
+  handler: src/handlers/cancelOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: user/cancel-order
+
 signup:
   handler: src/handlers/signup.handler
   events:
