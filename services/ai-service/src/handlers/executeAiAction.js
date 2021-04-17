@@ -669,7 +669,7 @@ async function takeAction(action, user) {
       return cancelOrder(action);
 
     case possibleActions.cancelSellOrder:
-      return cancelOrder(action, user);
+      return cancelOrder(action);
 
     case possibleActions.doNothing:
       return {};
@@ -758,7 +758,7 @@ async function cancelOrder(action) {
     data: { id: orderId },
   } = action;
 
-  await axios.post(`${ORDER_SERVICE_URL}/order/cancel`, {
+  await axios.put(`${ORDER_SERVICE_URL}/order/cancel`, {
     orderId,
   });
 

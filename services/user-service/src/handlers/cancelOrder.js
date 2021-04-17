@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import createHttpError from 'http-errors';
+import isEmpty from 'lodash.isempty';
 import { commonMiddlewareWithValidator, successResponse } from 'libs';
 
 const { USERS_TABLE_NAME } = process.env;
@@ -48,10 +49,14 @@ const validationOptions = { inputSchema: requestSchema };
 
 async function cancelOrder(event) {
   try {
-    const { body: order } = event;
+    const {
+      body: { order },
+    } = event;
     const { userId } = order;
 
-    const user = await getUser(userId);
+    const { Item: user } = await getUser(userId);
+
+    if (isEmpty(user)) createHttpError.BadRequest('Could not get user');
 
     const params = createUpdateParams(user, order);
 

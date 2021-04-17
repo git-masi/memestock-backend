@@ -56,6 +56,7 @@ function getOrder(orderId) {
 }
 
 function updateUser(order) {
+  // todo: refactor to use the update route
   const body = { order };
   return axios.put(`${USER_SERVICE_URL}/user/cancel-order`, body);
 }
