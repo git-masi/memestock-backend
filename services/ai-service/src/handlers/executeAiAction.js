@@ -56,9 +56,6 @@ export const handler = async function executeAiAction() {
     const data = await getDataForUtilityScores();
     const actionsWithUtilityScores = await getUtilityScores(data);
 
-    // const test = true;
-    // if (test) return successResponse();
-
     const aiAction = getOneAction(actionsWithUtilityScores);
     const actionTaken = takeAction(aiAction, data.user);
 
@@ -347,7 +344,10 @@ function getExistingOrderActions(args) {
   const buyOrders = filterByOrderType(notOwnOrders, 'buy');
   const sellOrders = filterByOrderType(notOwnOrders, 'sell');
   const fillableBuyOrders = buyOrders.filter((o) => {
-    const { tickerSymbol, quantity } = o.stock;
+    const {
+      quantity,
+      stock: { tickerSymbol },
+    } = o;
     const hasStock = `${tickerSymbol}` in user.stocks;
     if (!hasStock) return false;
     const hasQuantity = user.stocks[tickerSymbol].quantityOnHand <= quantity;
@@ -356,8 +356,6 @@ function getExistingOrderActions(args) {
   const fillableSellOrders = sellOrders.filter(
     (o) => o.total <= user.cashOnHand
   );
-
-  console.log({ fillableBuyOrders, fillableSellOrders });
 
   const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
     const { tickerSymbol } = o.stock;
