@@ -54,6 +54,10 @@ export const handler = async function executeAiAction() {
   try {
     const data = await getDataForUtilityScores();
     const actionsWithUtilityScores = await getUtilityScores(data);
+
+    // const test = true;
+    // if (test) return successResponse();
+
     const aiAction = getOneAction(actionsWithUtilityScores);
     const actionTaken = takeAction(aiAction, data.user);
 
@@ -181,8 +185,6 @@ async function getUtilityScores(data) {
     totalStockValue,
     changeInPricePerShare,
   });
-
-  console.log(actions);
 
   return actions;
 }
@@ -352,10 +354,9 @@ function getExistingOrderActions(args) {
   });
 
   const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
-    console.log('buy order: ', o);
     const { tickerSymbol } = o.stock;
     const freqBoost =
-      tickerSymbol in mostFreqBoosts?.mostFreqBuy
+      tickerSymbol in (mostFreqBoosts?.mostFreqBuy ?? {})
         ? mostFreqBoosts.mostFreqBuy.boost
         : 0;
 
@@ -372,7 +373,7 @@ function getExistingOrderActions(args) {
         : 0;
 
     const collectorBoost =
-      tickerSymbol in user.stocks
+      tickerSymbol in (user?.stocks ?? {})
         ? Math.ceil((aiProfile.collector + aiProfile.wildcard) / 2)
         : 0;
 
@@ -389,10 +390,9 @@ function getExistingOrderActions(args) {
   });
 
   const possibleSellOrderActions = fillableSellOrders.map((o) => {
-    console.log('sell order: ', o);
     const { tickerSymbol } = o.stock;
     const freqBoost =
-      tickerSymbol in mostFreqBoosts?.mostFreqSell
+      tickerSymbol in (mostFreqBoosts?.mostFreqSell ?? {})
         ? mostFreqBoosts.mostFreqSell.boost
         : 0;
 
@@ -419,6 +419,8 @@ function getExistingOrderActions(args) {
     };
   });
 
+  // console.log([...possibleBuyOrderActions, ...possibleSellOrderActions]);
+
   return [...possibleBuyOrderActions, ...possibleSellOrderActions];
 }
 
@@ -444,7 +446,7 @@ function getNewOrderActions(args) {
     if (pricePerShare * 0.8 > cashOnHand) return;
 
     const freqBoost =
-      tickerSymbol in mostFreqBoosts?.mostFreqBuy
+      tickerSymbol in (mostFreqBoosts?.mostFreqBuy ?? {})
         ? mostFreqBoosts.mostFreqBuy.boost
         : 0;
 
@@ -492,10 +494,10 @@ function getNewOrderActions(args) {
   const possibleSellOrderActions = companies.map((c) => {
     const { tickerSymbol } = c;
     // if user does not own stock return
-    if (!(tickerSymbol in stocks)) return;
+    if (!(tickerSymbol in (stocks ?? {}))) return;
 
     const freqBoost =
-      tickerSymbol in mostFreqBoosts?.mostFreqSell
+      tickerSymbol in (mostFreqBoosts?.mostFreqSell ?? {})
         ? mostFreqBoosts.mostFreqSell.boost
         : 0;
 
@@ -683,11 +685,11 @@ async function takeAction(action, user) {
 
 async function completeOrder(action, user) {
   const {
-    data: { id: orderId },
+    data: { id },
   } = action;
 
   await axios.put(`${ORDER_SERVICE_URL}/order/complete`, {
-    orderId,
+    orderId: id,
     userCompletingOrder: user.pk,
   });
 
