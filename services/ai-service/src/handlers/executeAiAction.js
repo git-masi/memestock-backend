@@ -10,6 +10,7 @@ import {
   createAttributesForStatusAndCreatedQuery,
   getRandomFloat,
   getRandomIntMinToMax,
+  getRandomIntZeroToX,
   getRandomValueFromArray,
   successResponse,
 } from 'libs';
@@ -49,17 +50,12 @@ const baseUtilityScores = {
   [possibleActions.doNothing]: 10,
 };
 
-// todo: delete after testing
-const test = true;
-
 export const handler = async function executeAiAction() {
   try {
     const data = await getDataForUtilityScores();
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
     const actionTaken = takeAction(aiAction, data.user);
-
-    // if (test) return successResponse();
 
     const params = {
       TableName: AI_ACTIONS_TABLE_NAME,
@@ -105,8 +101,6 @@ async function getDataForUtilityScores() {
     },
     { aiProfile }
   );
-
-  console.log({ orders: data.orders });
 
   const userOrders = await getUserOrders(data.user.pk);
 
@@ -437,9 +431,10 @@ function getNewOrderActions(args) {
     lowCashBoost,
   } = args;
   const {
-    user: { stocks, cashOnHand },
+    user: { stocks, cashOnHand, pk },
     aiProfile,
     companies,
+    orders,
   } = data;
 
   // todo: refactor to use reduce instead of map
@@ -470,6 +465,16 @@ function getNewOrderActions(args) {
         ? Math.ceil((aiProfile.collector + aiProfile.wildcard) / 2)
         : 0;
 
+    const ownOrders = orders.filter((o) => o.userId === pk);
+
+    const numExistingOrders = ownOrders.filter(
+      (o) => o.orderType === 'buy' && o.stock.tickerSymbol === tickerSymbol
+    ).length;
+
+    const existingOrdersDecrease = Math.ceil(
+      numExistingOrders * getRandomIntZeroToX(aiProfile.wildcard)
+    );
+
     return {
       action: possibleActions.newBuyOrder,
       data: c,
@@ -478,7 +483,8 @@ function getNewOrderActions(args) {
         freqBoost +
         pricePressureBoost +
         highCashBoost +
-        collectorBoost,
+        collectorBoost -
+        existingOrdersDecrease,
     };
   });
 
@@ -515,6 +521,16 @@ function getNewOrderActions(args) {
 
     const randomActionBoostOptions = [pricePressureBoost, lossAversionBoost];
 
+    const ownOrders = orders.filter((o) => o.userId === pk);
+
+    const numExistingOrders = ownOrders.filter(
+      (o) => o.orderType === 'sell' && o.stock.tickerSymbol === tickerSymbol
+    ).length;
+
+    const existingOrdersDecrease = Math.ceil(
+      numExistingOrders * getRandomIntZeroToX(aiProfile.wildcard)
+    );
+
     return {
       action: possibleActions.sellOrder,
       data: c,
@@ -522,7 +538,8 @@ function getNewOrderActions(args) {
         baseUtilityScores.sellOrder +
         freqBoost +
         getRandomValueFromArray(randomActionBoostOptions) +
-        lowCashBoost,
+        lowCashBoost -
+        existingOrdersDecrease,
     };
   });
 
