@@ -668,11 +668,13 @@ async function completeOrder(action, user) {
   const {
     data: { id: orderId },
   } = action;
-  const { data } = await axios.put(`${ORDER_SERVICE_URL}/order/complete`, {
+
+  await axios.put(`${ORDER_SERVICE_URL}/order/complete`, {
     orderId,
     userCompletingOrder: user.pk,
   });
-  return data;
+
+  return action;
 }
 
 async function createNewBuyOrder(action, user) {
@@ -699,8 +701,10 @@ async function createNewBuyOrder(action, user) {
     userId: user.pk,
   };
   console.log('New buy order body: ', body);
-  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
-  return data;
+
+  await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+
+  return body;
 }
 
 async function createNewSellOrder(action, user) {
@@ -726,16 +730,20 @@ async function createNewSellOrder(action, user) {
     userId: user.pk,
   };
   console.log('New sell order body: ', body);
-  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
-  return data;
+
+  await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+
+  return body;
 }
 
 async function cancelOrder(action) {
   const {
     data: { id: orderId },
   } = action;
-  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/cancel`, {
+
+  await axios.post(`${ORDER_SERVICE_URL}/order/cancel`, {
     orderId,
   });
-  return data;
+
+  return action;
 }
