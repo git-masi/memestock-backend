@@ -43,8 +43,6 @@ const requestSchema = {
 };
 const validationOptions = { inputSchema: requestSchema };
 
-const test = true;
-
 async function createTransaction(event) {
   try {
     const { body } = event;
@@ -52,9 +50,10 @@ async function createTransaction(event) {
 
     if (isEmpty(user)) return createHttpError.BadRequest('Invalid user ID');
 
-    await updateUser(user, body);
+    if (!canCompleteOrder(user, body))
+      return createHttpError.BadRequest('User cannot create order');
 
-    if (test) return successResponse();
+    await updateUser(user, body);
 
     const order = createOrderAttributes(body);
     const params = {
@@ -80,6 +79,26 @@ async function getUser(body) {
   const { userId } = body;
   const { data } = await axios.get(`${USER_SERVICE_URL}/user?userId=${userId}`);
   return data;
+}
+
+function canCompleteOrder(user, order) {
+  const { cashOnHand, stocks } = user;
+  const {
+    orderType,
+    total,
+    quantity,
+    stock: { tickerSymbol },
+  } = order;
+
+  if (orderType === 'buy') {
+    if (cashOnHand < total) return false;
+  }
+
+  if (orderType === 'sell') {
+    if (stocks[tickerSymbol].quantityOnHand < quantity) return false;
+  }
+
+  return true;
 }
 
 async function updateUser(user, order) {
