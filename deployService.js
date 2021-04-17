@@ -23,7 +23,7 @@ if (serviceName === 'all') {
 readDir(directory);
 
 if (serviceIsValid) {
-  deploy(directory + serviceName);
+  deploySync(directory + serviceName);
 }
 
 function readDir(directory) {
@@ -36,17 +36,31 @@ function readDir(directory) {
   });
 }
 
-function deploy(dir) {
+function deploySync(dir) {
   const awsProfile = profile ? `export AWS_PROFILE=${profile} &&` : '';
   const deployScript = `cd ${dir} && ${awsProfile} sls deploy -s ${env} -l`;
   execSync(deployScript, { stdio: [0, 1, 2] });
 
-  // exec(deployScript, (error, stdout, stderr) => {
-  //   if (error) {
-  //     console.error(`exec error: ${error}`);
-  //     return;
-  //   }
-  //   console.log(`stdout: ${stdout}`);
-  //   console.error(`\nstderr: ${stderr}`);
-  // });
+  exec(deployScript, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`);
+      return;
+    }
+    console.log(`stdout: ${stdout}`);
+    console.error(`\nstderr: ${stderr}`);
+  });
+}
+
+function deploy(dir) {
+  const awsProfile = profile ? `export AWS_PROFILE=${profile} &&` : '';
+  const deployScript = `cd ${dir} && ${awsProfile} sls deploy -s ${env} -l`;
+
+  exec(deployScript, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`);
+      return;
+    }
+    console.log(`stdout: ${stdout}`);
+    console.error(`\nstderr: ${stderr}`);
+  });
 }
