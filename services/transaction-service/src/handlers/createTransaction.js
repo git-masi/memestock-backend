@@ -30,7 +30,6 @@ const requestSchema = {
         },
         message: {
           type: 'string',
-          minLength: 1,
         },
         buyer: {
           type: 'object',

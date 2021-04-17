@@ -4,7 +4,11 @@ import isEmpty from 'lodash.isempty';
 import createHttpError from 'http-errors';
 import { commonMiddlewareWithValidator, statuses, successResponse } from 'libs';
 
-const { ORDERS_TABLE_NAME, USER_SERVICE_URL } = process.env;
+const {
+  ORDERS_TABLE_NAME,
+  USER_SERVICE_URL,
+  TRANSACTION_SERVICE_URL,
+} = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 const requestSchema = {
   properties: {
@@ -33,13 +37,24 @@ async function completeOrder(event) {
       body: { orderId, userCompletingOrder },
     } = event;
 
-    const orderAndUser = await getOrderAndUser(orderId, userCompletingOrder);
+    const { Item: order } = await getOrder(orderId);
 
-    console.log({ ...orderAndUser });
+    if (isEmpty(order))
+      return createHttpError.BadRequest('Could not get order');
+
+    const [initiatingUser, completingUser] = await Promise.all([
+      getUser(order.userId),
+      getUser(userCompletingOrder),
+    ]);
+
+    validateOrderAndCompletingUser(order, completingUser);
+
     // ideally this would be an ACID transaction
-    await Promise.all([updateUsers(orderAndUser), updateOrderStatus(orderId)]);
-
-    // todo: create transaction
+    await Promise.all([
+      updateUsers({ order, user: userCompletingOrder }),
+      updateOrderStatus(orderId),
+      createTransaction({ order, initiatingUser, completingUser }),
+    ]);
 
     return successResponse();
   } catch (error) {
@@ -53,18 +68,7 @@ export const handler = commonMiddlewareWithValidator(
   validationOptions
 );
 
-async function getOrderAndUser(orderId, userId) {
-  const [{ Item: order }, user] = await Promise.all([
-    getOrder(orderId),
-    getUser(userId),
-  ]);
-
-  if (!order || isEmpty(user)) {
-    throw createHttpError.BadRequest(
-      'Invalid value for orderId or userCompletingOrder'
-    );
-  }
-
+async function validateOrderAndCompletingUser(order, user) {
   const tickerSymbol = order.stock.tickerSymbol;
   const userHasStock = tickerSymbol in user.stocks;
   const userHasQuantityRequired =
@@ -85,8 +89,6 @@ async function getOrderAndUser(orderId, userId) {
     console.log('Cash on hand too low to complete order: ', { user, order });
     throw createHttpError.BadRequest('User cannot complete this order');
   }
-
-  return { order, user };
 }
 
 function getOrder(orderId) {
@@ -121,4 +123,49 @@ function updateOrderStatus(orderId) {
       },
     })
     .promise();
+}
+
+function createTransaction(args) {
+  const { order, initiatingUser, completingUser } = args;
+  const { total, quantity, stock } = order;
+  const { buyer, seller } = getBuyerAndSeller(args);
+  // todo: this should be required
+  const message =
+    order.orderType === 'buy'
+      ? initiatingUser?.message ?? 'To the moon!'
+      : completingUser?.message ?? 'To the moon!';
+  const body = {
+    total,
+    quantity,
+    stock,
+    message,
+    buyer,
+    seller,
+  };
+
+  return axios.post(`${TRANSACTION_SERVICE_URL}/transaction/create`, body);
+}
+
+function getBuyerAndSeller(args) {
+  const { order, initiatingUser, completingUser } = args;
+  const initUserVals = {
+    displayName: initiatingUser.displayName,
+    email: initiatingUser.email,
+    pk: initiatingUser.pk,
+  };
+  const completingUserVals = {
+    displayName: completingUser.displayName,
+    email: completingUser.email,
+    pk: completingUser.pk,
+  };
+
+  if (order.orderType === 'buy') {
+    return { buyer: initUserVals, seller: completingUserVals };
+  }
+
+  if (order.orderType === 'sell') {
+    return { buyer: completingUserVals, seller: initUserVals };
+  }
+
+  return { buyer: {}, seller: {} };
 }
