@@ -6,6 +6,7 @@
 
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
+import cloneDeep from 'lodash.clonedeep';
 import {
   createAttributesForStatusAndCreatedQuery,
   getRandomFloat,
@@ -167,17 +168,18 @@ async function getCompanies() {
 }
 
 async function getUtilityScores(data) {
-  const userStockValues = getUserStockValues(data);
+  const copy = cloneDeep(data);
+  const userStockValues = getUserStockValues(copy);
   const totalStockValue = getTotalStockValue(userStockValues);
   const { lowCashBoost, highCashBoost } = getHighLowCashBoosts(
-    data,
+    copy,
     totalStockValue
   );
-  const mostFreqBoosts = calculateBoostForMostFrequentOrders(data);
-  const changeInPricePerShare = calculateChangeInPricePerShare(data);
+  const mostFreqBoosts = calculateBoostForMostFrequentOrders(copy);
+  const changeInPricePerShare = calculateChangeInPricePerShare(copy);
 
   const actions = getAllPossibleActions({
-    data,
+    data: copy,
     mostFreqBoosts,
     lowCashBoost,
     highCashBoost,
@@ -344,14 +346,18 @@ function getExistingOrderActions(args) {
   const notOwnOrders = orders.filter((o) => o.userId !== user.pk);
   const buyOrders = filterByOrderType(notOwnOrders, 'buy');
   const sellOrders = filterByOrderType(notOwnOrders, 'sell');
-  const fillableBuyOrders = buyOrders.filter((o) => o.total <= user.cashOnHand);
-  const fillableSellOrders = sellOrders.filter((o) => {
+  const fillableBuyOrders = buyOrders.filter((o) => {
     const { tickerSymbol, quantity } = o.stock;
     const hasStock = `${tickerSymbol}` in user.stocks;
     if (!hasStock) return false;
     const hasQuantity = user.stocks[tickerSymbol].quantityOnHand <= quantity;
     return hasQuantity;
   });
+  const fillableSellOrders = sellOrders.filter(
+    (o) => o.total <= user.cashOnHand
+  );
+
+  console.log({ fillableBuyOrders, fillableSellOrders });
 
   const possibleBuyOrderActions = fillableBuyOrders.map((o) => {
     const { tickerSymbol } = o.stock;
@@ -532,10 +538,10 @@ function getNewOrderActions(args) {
     );
 
     return {
-      action: possibleActions.sellOrder,
+      action: possibleActions.newSellOrder,
       data: c,
       utilityScore:
-        baseUtilityScores.sellOrder +
+        baseUtilityScores.newSellOrder +
         freqBoost +
         getRandomValueFromArray(randomActionBoostOptions) +
         lowCashBoost -
@@ -752,11 +758,11 @@ async function createNewSellOrder(action, user) {
 
 async function cancelOrder(action) {
   const {
-    data: { id: orderId },
+    data: { id },
   } = action;
 
   await axios.put(`${ORDER_SERVICE_URL}/order/cancel`, {
-    orderId,
+    orderId: id,
   });
 
   return action;
