@@ -9,7 +9,7 @@ import axios from 'axios';
 import {
   createAttributesForStatusAndCreatedQuery,
   getRandomFloat,
-  getRandomIntZeroToX,
+  getRandomIntMinToMax,
   getRandomValueFromArray,
   successResponse,
 } from 'libs';
@@ -52,14 +52,14 @@ const baseUtilityScores = {
 // todo: delete after testing
 const test = true;
 
-export const handler = async function executeAiAction(event, context) {
+export const handler = async function executeAiAction() {
   try {
     const data = await getDataForUtilityScores();
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
     const actionTaken = takeAction(aiAction, data.user);
 
-    if (test) return;
+    // if (test) return successResponse();
 
     const params = {
       TableName: AI_ACTIONS_TABLE_NAME,
@@ -74,7 +74,7 @@ export const handler = async function executeAiAction(event, context) {
     await dynamoDb.put(params).promise();
 
     // todo: delete later along with http event
-    return successResponse('success');
+    return successResponse();
   } catch (error) {
     console.log(error);
     throw error;
@@ -649,7 +649,7 @@ async function takeAction(action, user) {
       return createNewSellOrder(action, user);
 
     case possibleActions.cancelBuyOrder:
-      return cancelOrder(action, user);
+      return cancelOrder(action);
 
     case possibleActions.cancelSellOrder:
       return cancelOrder(action, user);
@@ -668,10 +668,10 @@ async function completeOrder(action, user) {
   const {
     data: { id: orderId },
   } = action;
-  // const { data } = await axios.put(`${ORDER_SERVICE_URL}/order/complete`, {
-  //   orderId,
-  //   userCompletingOrder: user.pk,
-  // });
+  const { data } = await axios.put(`${ORDER_SERVICE_URL}/order/complete`, {
+    orderId,
+    userCompletingOrder: user.pk,
+  });
   return data;
 }
 
@@ -684,7 +684,7 @@ async function createNewBuyOrder(action, user) {
   const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
   const newPricePerShare = Math.round(deviationFromPPS * pricePerShare);
   const maxQuantity = Math.floor(cashOnHand / newPricePerShare);
-  const quantity = getRandomIntZeroToX(maxQuantity);
+  const quantity = getRandomIntMinToMax(1, maxQuantity);
   const stock = {
     tickerSymbol,
     description,
@@ -699,9 +699,8 @@ async function createNewBuyOrder(action, user) {
     userId: user.pk,
   };
   console.log('New buy order body: ', body);
-  // const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
-  // return data;
-  return {};
+  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+  return data;
 }
 
 async function createNewSellOrder(action, user) {
@@ -712,7 +711,7 @@ async function createNewSellOrder(action, user) {
   const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
   const newPricePerShare = Math.round(deviationFromPPS * pricePerShare);
   const maxQuantity = stocks[tickerSymbol].quantityOnHand;
-  const quantity = getRandomIntZeroToX(maxQuantity);
+  const quantity = getRandomIntMinToMax(1, maxQuantity);
   const stock = {
     tickerSymbol,
     description,
@@ -727,11 +726,16 @@ async function createNewSellOrder(action, user) {
     userId: user.pk,
   };
   console.log('New sell order body: ', body);
-  // const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
-  // return data;
-  return {};
+  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
+  return data;
 }
 
-function cancelOrder() {
-  //
+async function cancelOrder(action) {
+  const {
+    data: { id: orderId },
+  } = action;
+  const { data } = await axios.post(`${ORDER_SERVICE_URL}/order/cancel`, {
+    orderId,
+  });
+  return data;
 }
