@@ -419,8 +419,6 @@ function getExistingOrderActions(args) {
     };
   });
 
-  // console.log([...possibleBuyOrderActions, ...possibleSellOrderActions]);
-
   return [...possibleBuyOrderActions, ...possibleSellOrderActions];
 }
 
@@ -647,7 +645,7 @@ function getOneAction(actions) {
   }
 
   const action = getRandomValueFromArray(topActions);
-  console.log(action);
+  console.log('Selected action: ', action);
   return action;
 }
 
@@ -697,7 +695,6 @@ async function completeOrder(action, user) {
 }
 
 async function createNewBuyOrder(action, user) {
-  console.log({ action });
   const {
     data: { pricePerShare, tickerSymbol, description, pk, name },
   } = action;
@@ -719,7 +716,6 @@ async function createNewBuyOrder(action, user) {
     stock,
     userId: user.pk,
   };
-  console.log('New buy order body: ', body);
 
   await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
 
@@ -748,7 +744,6 @@ async function createNewSellOrder(action, user) {
     stock,
     userId: user.pk,
   };
-  console.log('New sell order body: ', body);
 
   await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
 
