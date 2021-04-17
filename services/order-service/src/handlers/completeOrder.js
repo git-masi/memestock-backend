@@ -68,7 +68,7 @@ async function getOrderAndUser(orderId, userId) {
   const tickerSymbol = order.stock.tickerSymbol;
   const userHasStock = tickerSymbol in user.stocks;
   const userHasQuantityRequired =
-    user?.stocks?.[tickerSymbol]?.quantityOnHand > order.quantity;
+    user?.stocks?.[tickerSymbol]?.quantityOnHand >= order.quantity;
 
   if (
     order.orderType === 'buy' &&

@@ -350,7 +350,7 @@ function getExistingOrderActions(args) {
     } = o;
     const hasStock = `${tickerSymbol}` in user.stocks;
     if (!hasStock) return false;
-    const hasQuantity = user.stocks[tickerSymbol].quantityOnHand <= quantity;
+    const hasQuantity = user.stocks[tickerSymbol].quantityOnHand >= quantity;
     return hasQuantity;
   });
   const fillableSellOrders = sellOrders.filter(
