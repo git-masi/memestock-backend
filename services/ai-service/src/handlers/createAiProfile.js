@@ -16,7 +16,7 @@ import {
 
 const { AI_PROFILES_TABLE_NAME, USER_SERVICE_URL } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
-const createUserPath = `${USER_SERVICE_URL}/users/create`;
+const createUserPath = `${USER_SERVICE_URL}/user/create`;
 
 async function createAiProfile(event, context) {
   try {

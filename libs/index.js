@@ -7,8 +7,11 @@ export {
   getRandomIntZeroToX,
   getRandomIntMinToMax,
   getRandomValueFromArray,
+  getRandomFloat,
   generateRandomBoolean,
 } from './randomValueUtils';
 export { emailRegex } from './regexUtils';
 export { createAttributesForStatusAndCreatedQuery } from './createAttributesForStatusAndCreatedQuery';
 export { statuses } from './statuses';
+export { createStatusAndCreatedIndexParams } from './commonQueries';
+export { convertStringBoolean } from './convertStringBoolean';

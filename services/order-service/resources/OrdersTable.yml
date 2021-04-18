@@ -10,6 +10,8 @@ OrdersTable:
         AttributeType: S
       - AttributeName: created
         AttributeType: S
+      - AttributeName: userId
+        AttributeType: S
     KeySchema:
       - AttributeName: id
         KeyType: HASH
@@ -17,6 +19,14 @@ OrdersTable:
       - IndexName: statusAndCreated
         KeySchema:
           - AttributeName: status
+            KeyType: HASH
+          - AttributeName: created
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      - IndexName: userIdAndCreated
+        KeySchema:
+          - AttributeName: userId
             KeyType: HASH
           - AttributeName: created
             KeyType: RANGE

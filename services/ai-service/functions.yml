@@ -7,5 +7,10 @@ createAiProfile:
 
 executeAiAction:
   handler: src/handlers/executeAiAction.handler
-  # events:
-  #   - schedule: rate(30 seconds)
+  events:
+    - schedule:
+        rate: rate(1 minute)
+        enabled: true
+  # - http:
+  #     method: GET
+  #     path: /ai/action

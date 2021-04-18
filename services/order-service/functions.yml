@@ -4,3 +4,31 @@ createOrder:
     - http:
         method: POST
         path: /order/create
+
+getOrdersByStatus:
+  handler: src/handlers/getOrdersByStatus.handler
+  events:
+    - http:
+        method: GET
+        path: /order/status/{status}
+
+getOrdersByUserId:
+  handler: src/handlers/getOrdersByUserId.handler
+  events:
+    - http:
+        method: GET
+        path: /order/userId/{userId} # optional query string param(s): status, orderAsc, compareTimeOperator, compareTime, limit, orderType
+
+completeOrder:
+  handler: src/handlers/completeOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: /order/complete
+
+cancelOrder:
+  handler: src/handlers/cancelOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: /order/cancel

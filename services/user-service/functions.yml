@@ -12,6 +12,27 @@ getUser:
         method: GET
         path: /user
 
+updateUser:
+  handler: src/handlers/updateUser.handler
+  events:
+    - http:
+        method: PUT
+        path: /user/update
+
+completeOrder:
+  handler: src/handlers/completeOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: user/complete-order
+
+cancelOrder:
+  handler: src/handlers/cancelOrder.handler
+  events:
+    - http:
+        method: PUT
+        path: user/cancel-order
+
 signup:
   handler: src/handlers/signup.handler
   events:
