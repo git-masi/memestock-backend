@@ -51,7 +51,7 @@ async function completeOrder(event) {
 
     // ideally this would be an ACID transaction
     await Promise.all([
-      updateUsers({ order, user: userCompletingOrder }),
+      updateUsers({ order, user: completingUser }),
       updateOrderStatus(orderId),
       createTransaction({ order, initiatingUser, completingUser }),
     ]);
