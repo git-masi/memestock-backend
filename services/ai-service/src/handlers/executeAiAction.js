@@ -7,13 +7,13 @@
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
 import cloneDeep from 'lodash.clonedeep';
+import isEmpty from 'lodash.isempty';
 import {
   createAttributesForStatusAndCreatedQuery,
   getRandomFloat,
   getRandomIntMinToMax,
   getRandomIntZeroToX,
   getRandomValueFromArray,
-  successResponse,
 } from 'libs';
 import {
   getFirstItemCreated,
@@ -54,6 +54,8 @@ const baseUtilityScores = {
 export const handler = async function executeAiAction() {
   try {
     const data = await getDataForUtilityScores();
+    if (!data) return;
+
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
     const actionTaken = await takeAction(aiAction, data.user);
@@ -69,9 +71,6 @@ export const handler = async function executeAiAction() {
     };
 
     await dynamoDb.put(params).promise();
-
-    // todo: delete later along with http event
-    return successResponse();
   } catch (error) {
     console.log(error);
     throw error;
@@ -80,6 +79,8 @@ export const handler = async function executeAiAction() {
 
 async function getDataForUtilityScores() {
   const nextAiProfile = await getNextAiProfile();
+  if (!nextAiProfile || isEmpty(nextAiProfile) || isEmpty(nextAiProfile?.Items))
+    return null;
   const aiProfile = getItemFromResult(nextAiProfile);
   const results = await Promise.allSettled([
     getUser(aiProfile),
