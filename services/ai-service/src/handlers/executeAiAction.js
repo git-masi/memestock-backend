@@ -7,7 +7,6 @@
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
 import cloneDeep from 'lodash.clonedeep';
-import isEmpty from 'lodash.isempty';
 import {
   createAttributesForStatusAndCreatedQuery,
   getRandomFloat,
@@ -79,9 +78,9 @@ export const handler = async function executeAiAction() {
 
 async function getDataForUtilityScores() {
   const nextAiProfile = await getNextAiProfile();
-  if (!nextAiProfile || isEmpty(nextAiProfile) || isEmpty(nextAiProfile?.Items))
-    return null;
   const aiProfile = getItemFromResult(nextAiProfile);
+  if (!aiProfile) return null;
+
   const results = await Promise.allSettled([
     getUser(aiProfile),
     getRecentOrders(),
