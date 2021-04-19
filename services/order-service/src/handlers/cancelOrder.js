@@ -1,5 +1,7 @@
 import { DynamoDB } from 'aws-sdk';
 import axios from 'axios';
+import isEmpty from 'lodash.isempty';
+import createHttpError from 'http-errors';
 import { commonMiddlewareWithValidator, statuses, successResponse } from 'libs';
 
 const { ORDERS_TABLE_NAME, USER_SERVICE_URL } = process.env;
@@ -28,6 +30,8 @@ async function cancelOrder(event) {
     } = event;
 
     const { Item: order } = await getOrder(orderId);
+
+    if (isEmpty(order)) return createHttpError.BadRequest('Invalid order');
 
     // ideally this would be an ACID transaction
     await Promise.all([updateOrderStatus(orderId), updateUser(order)]);

@@ -13,7 +13,6 @@ import {
   getRandomIntMinToMax,
   getRandomIntZeroToX,
   getRandomValueFromArray,
-  successResponse,
 } from 'libs';
 import {
   getFirstItemCreated,
@@ -54,9 +53,12 @@ const baseUtilityScores = {
 export const handler = async function executeAiAction() {
   try {
     const data = await getDataForUtilityScores();
+    if (!data) return;
+
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
     const actionTaken = await takeAction(aiAction, data.user);
+    console.log('Action vs action taken data: ', { aiAction, actionTaken });
 
     const params = {
       TableName: AI_ACTIONS_TABLE_NAME,
@@ -69,9 +71,6 @@ export const handler = async function executeAiAction() {
     };
 
     await dynamoDb.put(params).promise();
-
-    // todo: delete later along with http event
-    return successResponse();
   } catch (error) {
     console.log(error);
     throw error;
@@ -81,6 +80,8 @@ export const handler = async function executeAiAction() {
 async function getDataForUtilityScores() {
   const nextAiProfile = await getNextAiProfile();
   const aiProfile = getItemFromResult(nextAiProfile);
+  if (!aiProfile) return null;
+
   const results = await Promise.allSettled([
     getUser(aiProfile),
     getRecentOrders(),
@@ -675,7 +676,7 @@ async function takeAction(action, user) {
       return cancelOrder(action);
 
     case possibleActions.doNothing:
-      return {};
+      return action;
 
     default:
       throw new Error(
@@ -722,7 +723,13 @@ async function createNewBuyOrder(action, user) {
 
   await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
 
-  return body;
+  return {
+    ...action,
+    data: {
+      ...action.data,
+      requestBody: body,
+    },
+  };
 }
 
 async function createNewSellOrder(action, user) {
@@ -750,7 +757,13 @@ async function createNewSellOrder(action, user) {
 
   await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
 
-  return body;
+  return {
+    ...action,
+    data: {
+      ...action.data,
+      requestBody: body,
+    },
+  };
 }
 
 async function cancelOrder(action) {

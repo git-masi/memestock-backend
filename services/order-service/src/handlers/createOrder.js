@@ -127,7 +127,7 @@ function createUpdateReqBody(user, order) {
     body.stocks = {
       [tickerSymbol]: {
         ...stock,
-        quantityHeld: stock.quantityHeld - quantity,
+        quantityOnHand: stock.quantityOnHand - quantity,
       },
     };
   }
