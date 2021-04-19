@@ -58,6 +58,7 @@ export const handler = async function executeAiAction() {
     const actionsWithUtilityScores = await getUtilityScores(data);
     const aiAction = getOneAction(actionsWithUtilityScores);
     const actionTaken = await takeAction(aiAction, data.user);
+    console.log('Action vs action taken data: ', { aiAction, actionTaken });
 
     const params = {
       TableName: AI_ACTIONS_TABLE_NAME,
