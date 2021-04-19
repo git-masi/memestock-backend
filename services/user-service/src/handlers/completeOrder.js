@@ -133,7 +133,7 @@ function createBuyOrderParams(args) {
     quantityOnHand: completingUserStock.quantityOnHand - order.quantity,
   };
   const newOGUserCash = {
-    cashOnHand: originatingUser.cashOnHand - order.total,
+    // cashOnHand: originatingUser.cashOnHand - order.total, // we already decreased the cash on hand when the order was created
     totalCash: originatingUser.totalCash - order.total,
   };
   const newCompletingUserCash = {
@@ -202,7 +202,7 @@ function createSellOrderParams(args) {
   const newOGUserStock = {
     ...ogUserStock,
     quantityHeld: ogUserStock.quantityHeld - order.quantity,
-    quantityOnHand: ogUserStock.quantityOnHand - order.quantity,
+    // quantityOnHand: ogUserStock.quantityOnHand - order.quantity, // we already decreased the quantity on hand when the order was created
   };
   const newCompletingUserStock = completingUserStock
     ? {
