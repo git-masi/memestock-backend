@@ -676,7 +676,7 @@ async function takeAction(action, user) {
       return cancelOrder(action);
 
     case possibleActions.doNothing:
-      return {};
+      return action;
 
     default:
       throw new Error(
@@ -723,7 +723,13 @@ async function createNewBuyOrder(action, user) {
 
   await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
 
-  return body;
+  return {
+    ...action,
+    data: {
+      ...action.data,
+      requestBody: body,
+    },
+  };
 }
 
 async function createNewSellOrder(action, user) {
@@ -751,7 +757,13 @@ async function createNewSellOrder(action, user) {
 
   await axios.post(`${ORDER_SERVICE_URL}/order/create`, body);
 
-  return body;
+  return {
+    ...action,
+    data: {
+      ...action.data,
+      requestBody: body,
+    },
+  };
 }
 
 async function cancelOrder(action) {
