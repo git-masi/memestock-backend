@@ -3,6 +3,8 @@ createTransaction:
   events:
     - http:
         method: POST
+        cors:
+          origin: '*'
         path: /transaction/create
 
 getTransactions:

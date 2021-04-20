@@ -3,7 +3,7 @@ import {
   commonMiddlewareWithValidator,
   createStatusAndCreatedIndexParams,
   statuses,
-  successResponse,
+  successResponseCors,
 } from 'libs';
 
 const { TRANSACTIONS_TABLE_NAME } = process.env;
@@ -47,7 +47,7 @@ export async function getTransactions(event) {
     .query(createStatusAndCreatedIndexParams(indexParams))
     .promise();
 
-  return successResponse(Items);
+  return successResponseCors(Items);
 }
 
 export const handler = commonMiddlewareWithValidator(
