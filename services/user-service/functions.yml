@@ -39,6 +39,8 @@ signup:
     - http:
         method: POST
         path: /user/signup
+        cors:
+          origin: '*'
 
 login:
   handler: src/handlers/login.handler
@@ -46,3 +48,5 @@ login:
     - http:
         method: POST
         path: /user/login
+        cors:
+          origin: '*'

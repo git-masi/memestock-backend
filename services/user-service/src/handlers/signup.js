@@ -1,6 +1,6 @@
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
 // import createHttpError from 'http-errors';
-import { commonMiddlewareWithValidator, successResponse } from 'libs';
+import { commonMiddlewareWithValidator, successResponseCors } from 'libs';
 import { v4 as uuid } from 'uuid';
 import { emailPattern } from 'libs/regexUtils';
 import { addNewUserToDynamo } from '../utils/usersTableUtils';
@@ -42,7 +42,7 @@ async function signup(event, context) {
       .promise();
 
     // Do not send all data to frontend
-    return successResponse({
+    return successResponseCors({
       accountStatus: createUserRes?.User?.UserStatus,
       email,
     });

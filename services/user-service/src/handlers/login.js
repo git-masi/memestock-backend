@@ -1,5 +1,5 @@
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
-import { commonMiddlewareWithValidator, successResponse } from 'libs';
+import { commonMiddlewareWithValidator, successResponseCors } from 'libs';
 
 const { COGNITO_GENERIC_USER_CLIENT_ID } = process.env;
 const cognito = new CognitoIdentityServiceProvider();
@@ -39,10 +39,10 @@ async function login(event, context) {
         ...body,
       });
 
-      return successResponse(newPasswordRes?.AuthenticationResult);
+      return successResponseCors(newPasswordRes?.AuthenticationResult);
     }
 
-    return successResponse(initAuthRes?.AuthenticationResult);
+    return successResponseCors(initAuthRes?.AuthenticationResult);
   } catch (error) {
     console.log(error);
     throw error;
