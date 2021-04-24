@@ -3,11 +3,13 @@ import httpJsonBodyParser from '@middy/http-json-body-parser';
 import httpEventNormalizer from '@middy/http-event-normalizer';
 import httpErrorHandler from '@middy/http-error-handler';
 import validator from '@middy/validator';
+import cors from '@middy/http-cors';
 
 const commonMiddlewareGroup = [
   httpJsonBodyParser(),
   httpEventNormalizer(),
   httpErrorHandler(),
+  cors(),
 ];
 
 export const commonMiddleware = (handler) =>

@@ -17,6 +17,7 @@
     "webpack": "^4.35.2"
   },
   "dependencies": {
+    "@middy/http-cors": "^2.0.1",
     "aws-sdk": "^2.639.0",
     "axios": "^0.21.1",
     "http-errors": "^1.8.0",
