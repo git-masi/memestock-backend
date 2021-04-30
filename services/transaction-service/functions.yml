@@ -13,3 +13,10 @@ getTransactions:
     - http:
         method: GET
         path: /transaction/many
+
+getTransactionsCount:
+  handler: src/handlers/getTransactionsCount.handler
+  events:
+    - http:
+        method: GET
+        path: /transaction/count
