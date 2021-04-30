@@ -15,3 +15,7 @@ export { createAttributesForStatusAndCreatedQuery } from './createAttributesForS
 export { statuses } from './statuses';
 export { createStatusAndCreatedIndexParams } from './commonQueries';
 export { convertStringBoolean } from './convertStringBoolean';
+export {
+  genericUserAuthorizer,
+  getCognitoUserByAccessToken,
+} from './cognitoAuthorizers';

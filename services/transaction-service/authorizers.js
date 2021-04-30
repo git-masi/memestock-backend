@@ -1,0 +1,1 @@
+export { genericUserAuthorizer } from 'libs';

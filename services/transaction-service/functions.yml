@@ -1,3 +1,6 @@
+genericUserAuthorizer:
+  handler: authorizers.genericUserAuthorizer
+
 createTransaction:
   handler: src/handlers/createTransaction.handler
   events:
@@ -24,3 +27,7 @@ getTransactionsCount:
         path: /transaction/count
         cors:
           origin: '*'
+        authorizer:
+          name: genericUserAuthorizer
+          identitySource:
+            - 'method.request.header.Authorizer'
