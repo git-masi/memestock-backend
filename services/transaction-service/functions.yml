@@ -3,9 +3,9 @@ createTransaction:
   events:
     - http:
         method: POST
+        path: /transaction/create
         cors:
           origin: '*'
-        path: /transaction/create
 
 getTransactions:
   handler: src/handlers/getTransactions.handler
@@ -13,6 +13,8 @@ getTransactions:
     - http:
         method: GET
         path: /transaction/many
+        cors:
+          origin: '*'
 
 getTransactionsCount:
   handler: src/handlers/getTransactionsCount.handler
@@ -20,3 +22,5 @@ getTransactionsCount:
     - http:
         method: GET
         path: /transaction/count
+        cors:
+          origin: '*'
