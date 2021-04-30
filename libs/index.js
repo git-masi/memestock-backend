@@ -18,4 +18,5 @@ export { convertStringBoolean } from './convertStringBoolean';
 export {
   genericUserAuthorizer,
   getCognitoUserByAccessToken,
+  getUserIdFromEvent,
 } from './cognitoAuthorizers';

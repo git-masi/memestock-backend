@@ -53,3 +53,16 @@ function createPolicy(principalId, effect, resource) {
 
   return authResponse;
 }
+
+// This lib is not bundled correctly for some reason
+// Normally we'd use optional chaining but that
+// throws an error so trycatch instead
+export function getUserIdFromEvent(event) {
+  try {
+    return event.requestContext.authorizer.user.UserAttributes.find(
+      (attribute) => attribute.Name === 'custom:userId'
+    ).Value;
+  } catch (error) {
+    return null;
+  }
+}
