@@ -17,6 +17,10 @@ const requestSchema = {
           type: 'string',
           pattern: '^\\d+$',
         },
+        exclusiveStartKey: {
+          type: 'string',
+          format: 'uuid',
+        },
         compareTime: {
           type: 'string',
         },
@@ -36,16 +40,23 @@ const validationOptions = { inputSchema: requestSchema };
 export async function getTransactions(event) {
   const { queryStringParameters } = event;
   console.log({ queryStringParameters });
+  const { exclusiveStartKey, compareTime } = queryStringParameters;
 
-  const indexParams = {
+  const indexParams = createStatusAndCreatedIndexParams({
     tableName: TRANSACTIONS_TABLE_NAME,
     status: statuses.created,
     ...queryStringParameters,
-  };
+  });
 
-  const { Items } = await dynamoDb
-    .query(createStatusAndCreatedIndexParams(indexParams))
-    .promise();
+  if (exclusiveStartKey) {
+    indexParams.ExclusiveStartKey = {
+      id: exclusiveStartKey,
+      status: statuses.created,
+      created: compareTime,
+    };
+  }
+
+  const { Items } = await dynamoDb.query(indexParams).promise();
 
   return successResponseCors(Items);
 }
