@@ -30,4 +30,4 @@ getTransactionsCount:
         authorizer:
           name: genericUserAuthorizer
           identitySource:
-            - 'method.request.header.Authorizer'
+            - 'method.request.header.Authorization'

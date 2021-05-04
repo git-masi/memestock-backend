@@ -1,8 +1,10 @@
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
 
-export async function genericUserAuthorizer(event, context) {
+export async function genericUserAuthorizer(event, context, callback) {
   try {
     const { methodArn, authorizationToken } = event;
+
+    if (!authorizationToken) throw new Error('No authorization token');
 
     const user = await getCognitoUserByAccessToken(authorizationToken);
     const { Username } = user;
@@ -10,12 +12,12 @@ export async function genericUserAuthorizer(event, context) {
 
     const allowPolicy = createAllowPolicy(Username, methodArn);
 
-    allowPolicy.context = { ...allowPolicy.context, user };
+    allowPolicy.context = { user: JSON.stringify(user) };
 
-    context.succeed(allowPolicy);
+    callback(null, allowPolicy);
   } catch (error) {
     console.log(error);
-    context.fail('Authorizer verification failed');
+    callback('Unauthorized');
   }
 }
 
@@ -59,7 +61,8 @@ function createPolicy(principalId, effect, resource) {
 // throws an error so trycatch instead
 export function getUserIdFromEvent(event) {
   try {
-    return event.requestContext.authorizer.user.UserAttributes.find(
+    const user = JSON.parse(event.requestContext.authorizer.user);
+    return user.UserAttributes.find(
       (attribute) => attribute.Name === 'custom:userId'
     ).Value;
   } catch (error) {
