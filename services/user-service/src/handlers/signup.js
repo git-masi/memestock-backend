@@ -36,6 +36,8 @@ async function signup(event, context) {
     const { email, username } = body;
 
     const newUser = await addNewUserToDynamo({ email, displayName: username });
+    console.log('signup ', body);
+    console.log('newUser ', newUser);
 
     const createUserRes = await cognito
       .adminCreateUser(createCognitoUserParams({ ...body, id: newUser.pk }))
@@ -47,7 +49,25 @@ async function signup(event, context) {
       email,
     });
   } catch (error) {
-    console.log(error);
+    console.log('signup error: ', JSON.stringify(error, null, 4));
+    if (error.message.includes('ConditionalCheckFailed') && error.statusCode === 400) {
+      // A sample error was:
+      // error:  {
+      //   "message": "Transaction cancelled, please refer cancellation reasons for specific reasons [None, ConditionalCheckFailed, ConditionalCheckFailed]",
+      //     "code": "TransactionCanceledException",
+      //     "time": "2021-05-05T02:45:04.820Z",
+      //     "requestId": "J0OB94Q3AAF6D8EJOGJVD98JIBVV4KQNSO5AEMVJF66Q9ASUAAJG",
+      //     "statusCode": 400,
+      //     "retryable": false,
+      //     "retryDelay": 20.500838186105806
+      // }
+      // Transaction cancelled, please refer cancellation reasons for specific reasons [None, ConditionalCheckFailed, ConditionalCheckFailed]
+      // means that the user already exists
+      error.originalmessage = error.message;
+      error.message = 'MemeStock-E0001: UserAlreadyExists';
+      error.statusCode = 409; // Conflict
+      console.log('Return error: ', JSON.stringify(error, null, 4));
+    }
     throw error;
   }
 }
