@@ -3,13 +3,12 @@ import { CognitoIdentityServiceProvider } from 'aws-sdk';
 export async function testAuthorizer(event, context, callback) {
   try {
     const { methodArn, authorizationToken } = event;
+    const validToken = 'testing123CanAnybodyHearMe';
 
-    if (!authorizationToken) throw new Error('No authorization token');
+    if (authorizationToken !== validToken)
+      throw new Error(`Invalid token: ${authorizationToken}`);
 
-    const allowPolicy = createAllowPolicy(
-      'testing123CanAnybodyHearMe',
-      methodArn
-    );
+    const allowPolicy = createAllowPolicy(validToken, methodArn);
 
     callback(null, allowPolicy);
   } catch (error) {
