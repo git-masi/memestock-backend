@@ -1,4 +1,4 @@
-genericUserAuthorizer:
+testAuthorizer:
   handler: authorizers.testAuthorizer
 
 createOrder:
