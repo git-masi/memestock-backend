@@ -30,7 +30,7 @@ const {
 const dynamoDb = new DynamoDB.DocumentClient();
 const numOrdersToFetch = 20;
 const numTransactionsToFetch = 20;
-const possibleActions = {
+const possibleActions = Object.freeze({
   buyOrder: 'buyOrder',
   sellOrder: 'sellOrder',
   newBuyOrder: 'newBuyOrder',
@@ -38,9 +38,9 @@ const possibleActions = {
   cancelBuyOrder: 'cancelBuyOrder',
   cancelSellOrder: 'cancelSellOrder',
   doNothing: 'doNothing',
-};
+});
 
-const baseUtilityScores = {
+const baseUtilityScores = Object.freeze({
   [possibleActions.buyOrder]: 20,
   [possibleActions.sellOrder]: 20,
   [possibleActions.newBuyOrder]: 20,
@@ -48,7 +48,7 @@ const baseUtilityScores = {
   [possibleActions.cancelBuyOrder]: 20,
   [possibleActions.cancelSellOrder]: 20,
   [possibleActions.doNothing]: 10,
-};
+});
 
 export const handler = async function executeAiAction() {
   try {

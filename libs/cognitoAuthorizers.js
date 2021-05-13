@@ -1,5 +1,23 @@
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
 
+export async function testAuthorizer(event, context, callback) {
+  try {
+    const { methodArn, authorizationToken } = event;
+
+    if (!authorizationToken) throw new Error('No authorization token');
+
+    const allowPolicy = createAllowPolicy(
+      'testing123CanAnybodyHearMe',
+      methodArn
+    );
+
+    callback(null, allowPolicy);
+  } catch (error) {
+    console.log(error);
+    callback('Unauthorized');
+  }
+}
+
 export async function genericUserAuthorizer(event, context, callback) {
   try {
     const { methodArn, authorizationToken } = event;

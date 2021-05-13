@@ -17,6 +17,7 @@ export { createStatusAndCreatedIndexParams } from './commonQueries';
 export { convertStringBoolean } from './convertStringBoolean';
 export {
   genericUserAuthorizer,
+  testAuthorizer,
   getCognitoUserByAccessToken,
   getUserIdFromEvent,
 } from './cognitoAuthorizers';
