@@ -1,9 +1,17 @@
+genericUserAuthorizer:
+  handler: authorizers.testAuthorizer
+
 createOrder:
   handler: src/handlers/createOrder.handler
   events:
     - http:
         method: POST
         path: /order/create
+        cors: true
+        authorizer:
+          name: testAuthorizer
+          identitySource:
+            - 'method.request.header.Authorization'
 
 getOrdersByStatus:
   handler: src/handlers/getOrdersByStatus.handler

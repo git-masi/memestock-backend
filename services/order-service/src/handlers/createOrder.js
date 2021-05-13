@@ -7,7 +7,11 @@ import cloneDeep from 'lodash.clonedeep';
 import createHttpError from 'http-errors';
 
 // Libs
-import { commonMiddlewareWithValidator, successResponse, statuses } from 'libs';
+import {
+  commonMiddlewareWithValidator,
+  statuses,
+  successResponseCors,
+} from 'libs';
 
 const { ORDERS_TABLE_NAME, USER_SERVICE_URL } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -43,7 +47,7 @@ const requestSchema = {
 };
 const validationOptions = { inputSchema: requestSchema };
 
-async function createTransaction(event) {
+async function createOrder(event) {
   try {
     const { body } = event;
     const user = await getUser(body);
@@ -63,7 +67,7 @@ async function createTransaction(event) {
 
     await dynamoDb.put(params).promise();
 
-    return successResponse(order);
+    return successResponseCors(order);
   } catch (error) {
     console.log(error);
     throw error;
@@ -71,7 +75,7 @@ async function createTransaction(event) {
 }
 
 export const handler = commonMiddlewareWithValidator(
-  createTransaction,
+  createOrder,
   validationOptions
 );
 
