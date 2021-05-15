@@ -1,4 +1,4 @@
-service: react-redux-cognito
+service: memestock
 
 frameworkVersion: '2'
 
