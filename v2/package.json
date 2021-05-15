@@ -1,0 +1,26 @@
+{
+  "name": "v2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "sls offline cloudside"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@middy/core": "^2.2.0",
+    "@middy/http-error-handler": "^2.2.0",
+    "@middy/http-event-normalizer": "^2.2.0",
+    "@middy/http-json-body-parser": "^2.2.0",
+    "ajv": "^8.4.0",
+    "lodash.clonedeep": "^4.5.0",
+    "aws-sdk": "^2.902.0"
+  },
+  "devDependencies": {
+    "serverless-bundle": "^4.3.1",
+    "serverless-cloudside-plugin": "^1.0.4",
+    "serverless-offline": "^7.0.0"
+  }
+}

@@ -1,0 +1,67 @@
+service: react-redux-cognito
+
+frameworkVersion: '2'
+
+plugins:
+  - serverless-bundle
+  # - serverless-pseudo-parameters # Not necessary with Serverless >2.3.x
+  - serverless-offline
+  - serverless-cloudside-plugin
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: nodejs12.x
+  memorySize: 256
+  apiGateway:
+    shouldStartNameWithService: true
+  lambdaHashingVersion: '20201221'
+  # environment:
+  #   COGNITO_GENERIC_USER_POOL_ID: !Ref GenericUserPool
+  #   COGNITO_GENERIC_USER_CLIENT_ID: !Ref GenericUserClient
+  # iamRoleStatements:
+  #   - Effect: Allow
+  #     Action:
+  #       - 'cognito-idp:AdminConfirmSignUp'
+  #       - 'cognito-idp:AdminCreateUser'
+  #       - 'cognito-idp:AdminGetUser'
+  #       - 'cognito-idp:AdminSetUserPassword'
+  #       - 'cognito-idp:AdminUpdateUserAttributes'
+  #       - 'cognito-idp:AdminInitiateAuth'
+  #       - 'cognito-idp:DescribeUserPool'
+  #       - 'cognito-idp:ListUsers'
+  #     Resource:
+  #       - !GetAtt GenericUserPool.Arn
+
+custom:
+  serverless-offline:
+    httpPort: 4321
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+functions:
+  users:
+    handler: handlers/users.handler
+    events:
+      - http:
+          method: get
+          path: users
+      - http:
+          method: post
+          path: users
+      - http:
+          method: put
+          path: users
+      - http:
+          method: delete
+          path: users
