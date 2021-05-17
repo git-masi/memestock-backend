@@ -18,7 +18,7 @@ provider:
     shouldStartNameWithService: true
   lambdaHashingVersion: '20201221'
   environment:
-    MAIN_TABLE: !Ref MemeStockMainTable
+    MAIN_TABLE_NAME: !Ref MemeStockMainTable
   iamRoleStatements:
     - Effect: Allow
       Action:
