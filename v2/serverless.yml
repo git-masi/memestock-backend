@@ -13,25 +13,23 @@ provider:
   region: us-east-1
   runtime: nodejs12.x
   memorySize: 256
+  # stage: ${opt:stage, dev}
   apiGateway:
     shouldStartNameWithService: true
   lambdaHashingVersion: '20201221'
-  # environment:
-  #   COGNITO_GENERIC_USER_POOL_ID: !Ref GenericUserPool
-  #   COGNITO_GENERIC_USER_CLIENT_ID: !Ref GenericUserClient
-  # iamRoleStatements:
-  #   - Effect: Allow
-  #     Action:
-  #       - 'cognito-idp:AdminConfirmSignUp'
-  #       - 'cognito-idp:AdminCreateUser'
-  #       - 'cognito-idp:AdminGetUser'
-  #       - 'cognito-idp:AdminSetUserPassword'
-  #       - 'cognito-idp:AdminUpdateUserAttributes'
-  #       - 'cognito-idp:AdminInitiateAuth'
-  #       - 'cognito-idp:DescribeUserPool'
-  #       - 'cognito-idp:ListUsers'
-  #     Resource:
-  #       - !GetAtt GenericUserPool.Arn
+  environment:
+    MAIN_TABLE: !Ref MemeStockMainTable
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+      Resource:
+        - !GetAtt MemeStockMainTable.Arn
+        - !Join ['/', [!GetAtt MemeStockMainTable.Arn, 'index', '*']]
 
 custom:
   serverless-offline:
@@ -48,6 +46,22 @@ resources:
         ResponseType: DEFAULT_4XX
         RestApiId:
           Ref: 'ApiGatewayRestApi'
+    MemeStockMainTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        # TableName: MemeStockMainTable-${self:provider.stage}
+        TableName: MemeStockMainTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
 
 functions:
   users:
