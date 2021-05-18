@@ -12,7 +12,7 @@ export const passwordPattern = passwordRegex.toString().replace(/\//g, '');
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
 
-const schemas = Object.freeze({
+const httpSchemas = Object.freeze({
   [httpMethods.GET]: {
     type: 'object',
     properties: {
@@ -50,10 +50,10 @@ const schemas = Object.freeze({
   [httpMethods.DELETE]: {},
 });
 
-export function validRequestFor(anEvent) {
-  return validateSchemaFor(anEvent.httpMethod);
+export function validRequestFor(event) {
+  return validateSchemaFor(event.httpMethod);
 
-  function validateSchemaFor(aMethod) {
-    return ajv.compile(schemas[aMethod])(anEvent);
+  function validateSchemaFor(method) {
+    return ajv.compile(httpSchemas[method])(event);
   }
 }
