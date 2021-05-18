@@ -6,11 +6,14 @@ import { commonMiddleware } from '../utils/middleware';
 import { validRequestFor } from './usersSchema';
 
 const { MAIN_TABLE_NAME } = process.env;
-const minStartingCash = 10000; // cents
-const maxStartingCash = 500000; // cents
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export const handler = commonMiddleware(lambdaForUsers);
+
+const userTypes = Object.freeze({
+  human: 'HUMAN',
+  ai: 'AI',
+});
 
 async function lambdaForUsers(event) {
   try {
@@ -45,51 +48,103 @@ async function getUserFrom(anEvent) {
   return { id: 1, username: 'bob' };
 }
 
-async function createUserFrom(anEvent) {
+function createUserFrom(anEvent) {
   const {
     body: { displayName, email },
   } = anEvent;
-  const startingCash = getRandomInt(minStartingCash, maxStartingCash);
-  const transaction = {
+
+  const transaction = userParamsFrom({
+    displayName,
+    email,
+    type: userTypes.human,
+  });
+
+  return dynamoDb.transactWrite(transaction).promise();
+}
+
+function userParamsFrom(aUserConfig) {
+  const { displayName, email, type } = aUserConfig;
+  let result;
+
+  switch (type) {
+    case userTypes.human:
+      result = humanUserFrom(displayName, email);
+      break;
+
+    case userTypes.ai:
+      result = aiUserFrom(displayName, email);
+      break;
+
+    default:
+      result = {};
+      break;
+  }
+
+  return result;
+}
+
+function humanUserFrom(aDisplayName, anEmail) {
+  return {
     TransactItems: [
       {
         Put: {
-          TableName: MAIN_TABLE_NAME,
-          Item: {
-            pk: 'USER',
-            sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
-            displayName,
-            email,
-            // stocks: await createStartingStocks(),
-            stocks: {},
-            totalCash: startingCash,
-            cashOnHand: startingCash,
-          },
+          ...userParams(),
+          sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
+          email: anEmail,
         },
       },
       {
-        Put: {
-          TableName: MAIN_TABLE_NAME,
-          ConditionExpression: 'attribute_not_exists(pk)',
-          Item: {
-            pk: `DISPLAY_NAME#${displayName}`,
-            sk: displayName,
-          },
-        },
+        Put: guardParamsFrom('DISPLAY_NAME', aDisplayName),
       },
       {
-        Put: {
-          TableName: MAIN_TABLE_NAME,
-          ConditionExpression: 'attribute_not_exists(pk)',
-          Item: {
-            pk: `EMAIL#${email}`,
-            sk: email,
-          },
-        },
+        Put: guardParamsFrom('EMAIL', anEmail),
       },
     ],
   };
-  return dynamoDb.transactWrite(transaction).promise();
+}
+
+function aiUserFrom(aDisplayName, anEmail) {
+  return {
+    TransactItems: [
+      {
+        Put: {
+          ...userParams(),
+          sk: `AI#${new Date().toISOString()}#${nanoid(8)}`,
+        },
+      },
+      {
+        Put: guardParamsFrom('DISPLAY_NAME', aDisplayName),
+      },
+    ],
+  };
+}
+
+function userParams() {
+  const minStartingCash = 100_00; // cents
+  const maxStartingCash = 5000_00; // cents
+  const startingCash = getRandomInt(minStartingCash, maxStartingCash);
+  return {
+    TableName: MAIN_TABLE_NAME,
+    Item: {
+      pk: 'USER',
+      displayName,
+      // stocks: await createStartingStocks(),
+      stocks: {},
+      totalCash: startingCash,
+      cashOnHand: startingCash,
+    },
+  };
+}
+
+function guardParamsFrom(aPrefix, aValue) {
+  return {
+    TableName: MAIN_TABLE_NAME,
+    ConditionExpression: 'attribute_not_exists(pk)',
+    Item: {
+      pk: `${aPrefix}#${aValue}`,
+      sk: aValue,
+    },
+  };
 }
 
 // const getRandomIntZeroToX = (x) => randomInt(0, x)();
