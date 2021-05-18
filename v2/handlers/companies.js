@@ -37,8 +37,22 @@ function route(event) {
   }
 }
 
-function getCompaniesFromHttpEvent() {
-  return {};
+function getCompaniesFromHttpEvent(event) {
+  return getCompanies();
+}
+
+export function getCompanies() {
+  const params = {
+    TableName: MAIN_TABLE_NAME,
+    KeyConditionExpression: '#pk = :pk',
+    ExpressionAttributeNames: {
+      '#pk': 'pk',
+    },
+    ExpressionAttributeValues: {
+      ':pk': 'COMPANY',
+    },
+  };
+  return dynamoDb.query(params).promise();
 }
 
 function createCompanyFromHttpEvent(event) {
