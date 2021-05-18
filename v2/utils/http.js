@@ -17,7 +17,7 @@ export class HttpError extends Error {
   static BadRequest = (body) => new HttpError(400, body);
 }
 
-export function apiResponse(config) {
+export function apiResponse(config = {}) {
   try {
     validateApiResponseConfig(config);
 

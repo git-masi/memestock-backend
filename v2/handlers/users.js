@@ -3,6 +3,7 @@ import { randomInt } from 'd3-random';
 import { nanoid } from 'nanoid';
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
+import { getCompanies } from './companies';
 import { validUserConfig, validUsersHttpEvent } from './usersSchema';
 
 const { MAIN_TABLE_NAME } = process.env;
@@ -18,8 +19,8 @@ export const userTypes = Object.freeze({
 async function lambdaForUsers(event) {
   try {
     if (!validUsersHttpEvent(event)) throw HttpError.BadRequest();
-    const result = await route(event);
-    return apiResponse({ body: result });
+    await route(event);
+    return apiResponse();
   } catch (error) {
     console.info(error);
 
@@ -60,22 +61,22 @@ function createUserFromHttpEvent(event) {
   });
 }
 
-export function createUser(userConfig) {
+export async function createUser(userConfig) {
   if (!validUserConfig(userConfig)) throw new Error('Invalid user config');
-  return dynamoDb.transactWrite(createTransaction(userConfig)).promise();
+  return dynamoDb.transactWrite(await createTransaction(userConfig)).promise();
 }
 
-function createTransaction(userConfig) {
+async function createTransaction(userConfig) {
   const { displayName, email, type } = userConfig;
   let result;
 
   switch (type) {
     case userTypes.human:
-      result = humanUser(displayName, email);
+      result = await humanUser(displayName, email);
       break;
 
     case userTypes.ai:
-      result = aiUser(displayName);
+      result = await aiUser(displayName);
       break;
 
     default:
@@ -86,7 +87,7 @@ function createTransaction(userConfig) {
   return result;
 }
 
-function humanUser(displayName, email) {
+async function humanUser(displayName, email) {
   const humanParams = {
     sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
     email,
@@ -94,7 +95,7 @@ function humanUser(displayName, email) {
   const result = {
     TransactItems: [
       {
-        Put: userItem(displayName, humanParams),
+        Put: await userItem(displayName, humanParams),
       },
       {
         Put: guardItem('DISPLAY_NAME', displayName),
@@ -108,12 +109,12 @@ function humanUser(displayName, email) {
   return result;
 }
 
-function aiUser(displayName) {
+async function aiUser(displayName) {
   const aiUserParams = { sk: `AI#${new Date().toISOString()}#${nanoid(8)}` };
   const result = {
     TransactItems: [
       {
-        Put: userItem(displayName, aiUserParams),
+        Put: await userItem(displayName, aiUserParams),
       },
       {
         Put: guardItem('DISPLAY_NAME', displayName),
@@ -124,7 +125,7 @@ function aiUser(displayName) {
   return result;
 }
 
-function userItem(displayName, extendedParams) {
+async function userItem(displayName, extendedParams) {
   const minStartingCash = 100_00; // cents
   const maxStartingCash = 5000_00; // cents
   const startingCash = getRandomInt(minStartingCash, maxStartingCash);
@@ -133,13 +134,37 @@ function userItem(displayName, extendedParams) {
     Item: {
       pk: 'USER',
       displayName,
-      // stocks: await createStartingStocks(),
-      stocks: {},
+      stocks: await createStartingStocks(minStartingCash, maxStartingCash),
       totalCash: startingCash,
       cashOnHand: startingCash,
       ...extendedParams,
     },
   };
+}
+
+async function createStartingStocks(minStartingCash, maxStartingCash) {
+  const { Items: companies } = await getCompanies();
+  console.log({ companies });
+  const numStocks = getRandomInt(1, companies.length);
+  const stocks = {};
+  let totalStockValue = getRandomInt(minStartingCash, maxStartingCash);
+
+  for (let i = 0; i < numStocks; i++) {
+    const { tickerSymbol, pk, pricePerShare } =
+      getRandomValueFromArray(companies);
+    const valueHeld =
+      i === numStocks - 1 ? totalStockValue : getRandomInt(0, totalStockValue);
+    const amountHeld = Math.floor(valueHeld / pricePerShare);
+    const quantityHeld = amountHeld > 0 ? amountHeld : 1;
+
+    stocks[tickerSymbol] = {
+      pk,
+      quantityHeld,
+      quantityOnHand: quantityHeld,
+    };
+  }
+
+  return stocks;
 }
 
 // Used to prevent duplicate entries for an attribute
@@ -160,8 +185,10 @@ function getRandomInt(min, max) {
   return randomInt(min, max)();
 }
 
-// const getRandomValueArray = (arr) =>
-//   arr instanceof Array && arr[getRandomIntZeroToX(arr.length)];
+function getRandomValueFromArray(arr) {
+  if (!(arr instanceof Array)) return null;
+  return arr[getRandomInt(0, arr.length)];
+}
 
 // const getRandomFloat = (min, max) => randomUniform(min, max)();
 
