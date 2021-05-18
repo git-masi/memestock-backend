@@ -75,7 +75,7 @@ export function validUserConfig(userConfig) {
       },
       type: {
         type: 'string',
-        pattern: `^l${Object.values(userTypes).join('|')}$`,
+        pattern: `^${Object.values(userTypes).join('|')}$`,
       },
     },
     required: ['displayName', 'type'],
