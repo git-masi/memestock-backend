@@ -87,42 +87,44 @@ function createTransaction(userConfig) {
 }
 
 function humanUser(displayName, email) {
-  return {
+  const humanParams = {
+    sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
+    email,
+  };
+  const result = {
     TransactItems: [
       {
-        Put: {
-          ...userParams(displayName),
-          sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
-          email: email,
-        },
+        Put: userItem(displayName, humanParams),
       },
       {
-        Put: guardParams('DISPLAY_NAME', displayName),
+        Put: guardItem('DISPLAY_NAME', displayName),
       },
       {
-        Put: guardParams('EMAIL', email),
+        Put: guardItem('EMAIL', email),
       },
     ],
   };
+
+  return result;
 }
 
 function aiUser(displayName) {
-  return {
+  const aiUserParams = { sk: `AI#${new Date().toISOString()}#${nanoid(8)}` };
+  const result = {
     TransactItems: [
       {
-        Put: {
-          ...userParams(displayName),
-          sk: `AI#${new Date().toISOString()}#${nanoid(8)}`,
-        },
+        Put: userItem(displayName, aiUserParams),
       },
       {
-        Put: guardParams('DISPLAY_NAME', displayName),
+        Put: guardItem('DISPLAY_NAME', displayName),
       },
     ],
   };
+
+  return result;
 }
 
-function userParams(displayName) {
+function userItem(displayName, extendedParams) {
   const minStartingCash = 100_00; // cents
   const maxStartingCash = 5000_00; // cents
   const startingCash = getRandomInt(minStartingCash, maxStartingCash);
@@ -135,11 +137,13 @@ function userParams(displayName) {
       stocks: {},
       totalCash: startingCash,
       cashOnHand: startingCash,
+      ...extendedParams,
     },
   };
 }
 
-function guardParams(prefix, value) {
+// Used to prevent duplicate entries for an attribute
+function guardItem(prefix, value) {
   return {
     TableName: MAIN_TABLE_NAME,
     ConditionExpression: 'attribute_not_exists(pk)',
