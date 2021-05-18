@@ -31,48 +31,50 @@ async function lambdaForUsers(event) {
   }
 }
 
-function route(anEvent) {
-  switch (anEvent.httpMethod) {
+function route(event) {
+  switch (event.httpMethod) {
     case httpMethods.GET:
-      return getUserFrom(anEvent);
+      return getUser(event);
 
     case httpMethods.POST:
-      return createUserFrom(anEvent);
+      return createUserFromHttpEvent(event);
 
     default:
       throw HttpError.BadRequest();
   }
 }
 
-async function getUserFrom(anEvent) {
+async function getUser(event) {
   return { id: 1, username: 'bob' };
 }
 
-function createUserFrom(anEvent) {
+function createUserFromHttpEvent(event) {
   const {
     body: { displayName, email },
-  } = anEvent;
+  } = event;
 
-  const transaction = userParamsFrom({
+  return createUser({
     displayName,
     email,
     type: userTypes.human,
   });
-
-  return dynamoDb.transactWrite(transaction).promise();
 }
 
-function userParamsFrom(aUserConfig) {
-  const { displayName, email, type } = aUserConfig;
+export function createUser(userConfig) {
+  return dynamoDb.transactWrite(createTransaction(userConfig)).promise();
+}
+
+function createTransaction(userConfig) {
+  const { displayName, email, type } = userConfig;
   let result;
 
   switch (type) {
     case userTypes.human:
-      result = humanUserFrom(displayName, email);
+      result = humanUser(displayName, email);
       break;
 
     case userTypes.ai:
-      result = aiUserFrom(displayName, email);
+      result = aiUser(displayName);
       break;
 
     default:
@@ -83,27 +85,27 @@ function userParamsFrom(aUserConfig) {
   return result;
 }
 
-function humanUserFrom(aDisplayName, anEmail) {
+function humanUser(displayName, email) {
   return {
     TransactItems: [
       {
         Put: {
           ...userParams(),
           sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
-          email: anEmail,
+          email: email,
         },
       },
       {
-        Put: guardParamsFrom('DISPLAY_NAME', aDisplayName),
+        Put: guardParams('DISPLAY_NAME', displayName),
       },
       {
-        Put: guardParamsFrom('EMAIL', anEmail),
+        Put: guardParams('EMAIL', email),
       },
     ],
   };
 }
 
-function aiUserFrom(aDisplayName, anEmail) {
+function aiUser(displayName) {
   return {
     TransactItems: [
       {
@@ -113,7 +115,7 @@ function aiUserFrom(aDisplayName, anEmail) {
         },
       },
       {
-        Put: guardParamsFrom('DISPLAY_NAME', aDisplayName),
+        Put: guardParams('DISPLAY_NAME', displayName),
       },
     ],
   };
@@ -136,13 +138,13 @@ function userParams() {
   };
 }
 
-function guardParamsFrom(aPrefix, aValue) {
+function guardParams(prefix, value) {
   return {
     TableName: MAIN_TABLE_NAME,
     ConditionExpression: 'attribute_not_exists(pk)',
     Item: {
-      pk: `${aPrefix}#${aValue}`,
-      sk: aValue,
+      pk: `${prefix}#${value}`,
+      sk: value,
     },
   };
 }
@@ -153,7 +155,7 @@ function getRandomInt(min, max) {
   return randomInt(min, max)();
 }
 
-// const getRandomValueFromArray = (arr) =>
+// const getRandomValueArray = (arr) =>
 //   arr instanceof Array && arr[getRandomIntZeroToX(arr.length)];
 
 // const getRandomFloat = (min, max) => randomUniform(min, max)();
