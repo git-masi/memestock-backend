@@ -91,7 +91,7 @@ function humanUser(displayName, email) {
     TransactItems: [
       {
         Put: {
-          ...userParams(),
+          ...userParams(displayName),
           sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
           email: email,
         },
@@ -111,7 +111,7 @@ function aiUser(displayName) {
     TransactItems: [
       {
         Put: {
-          ...userParams(),
+          ...userParams(displayName),
           sk: `AI#${new Date().toISOString()}#${nanoid(8)}`,
         },
       },
@@ -122,7 +122,7 @@ function aiUser(displayName) {
   };
 }
 
-function userParams() {
+function userParams(displayName) {
   const minStartingCash = 100_00; // cents
   const maxStartingCash = 5000_00; // cents
   const startingCash = getRandomInt(minStartingCash, maxStartingCash);
