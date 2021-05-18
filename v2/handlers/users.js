@@ -34,7 +34,7 @@ async function lambdaForUsers(event) {
 function route(event) {
   switch (event.httpMethod) {
     case httpMethods.GET:
-      return getUser(event);
+      return getUserFromHttpEvent(event);
 
     case httpMethods.POST:
       return createUserFromHttpEvent(event);
@@ -44,7 +44,7 @@ function route(event) {
   }
 }
 
-async function getUser(event) {
+async function getUserFromHttpEvent(event) {
   return { id: 1, username: 'bob' };
 }
 
