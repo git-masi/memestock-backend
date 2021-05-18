@@ -3,21 +3,21 @@ import { randomInt } from 'd3-random';
 import { nanoid } from 'nanoid';
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { validRequestFor } from './usersSchema';
+import { validUserConfig, validUsersHttpEvent } from './usersSchema';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export const handler = commonMiddleware(lambdaForUsers);
 
-const userTypes = Object.freeze({
+export const userTypes = Object.freeze({
   human: 'HUMAN',
   ai: 'AI',
 });
 
 async function lambdaForUsers(event) {
   try {
-    if (!validRequestFor(event)) throw HttpError.BadRequest();
+    if (!validUsersHttpEvent(event)) throw HttpError.BadRequest();
     const result = await route(event);
     return apiResponse({ body: result });
   } catch (error) {
@@ -61,6 +61,7 @@ function createUserFromHttpEvent(event) {
 }
 
 export function createUser(userConfig) {
+  if (!validUserConfig(userConfig)) throw new Error('Invalid user config');
   return dynamoDb.transactWrite(createTransaction(userConfig)).promise();
 }
 
