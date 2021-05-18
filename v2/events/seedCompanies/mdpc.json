@@ -1,0 +1,11 @@
+{
+  "resource": "/",
+  "path": "/companies",
+  "httpMethod": "POST",
+  "body": {
+    "name": "Munder Difflin Paper Company",
+    "tickerSymbol": "MDPC",
+    "description": "This is a traditional paper supply company with manufacturing and distribution capabilities across the US.",
+    "pricePerShare": 1636
+  }
+}

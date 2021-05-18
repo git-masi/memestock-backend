@@ -1,0 +1,11 @@
+{
+  "resource": "/",
+  "path": "/companies",
+  "httpMethod": "POST",
+  "body": {
+    "name": "Congo Basin",
+    "tickerSymbol": "CBN",
+    "description": "The worlds second largest online retailer named after the worlds second largest rainforest.",
+    "pricePerShare": 12321
+  }
+}

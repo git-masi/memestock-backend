@@ -1,0 +1,11 @@
+{
+  "resource": "/",
+  "path": "/companies",
+  "httpMethod": "POST",
+  "body": {
+    "name": "Other, LLC",
+    "tickerSymbol": "OTHR",
+    "description": "Offering a wide variety of services, this organization suffers from a lack of key branding. They are acclimating to the diminishing horizons engendered by mediocrity.",
+    "pricePerShare": 5156
+  }
+}

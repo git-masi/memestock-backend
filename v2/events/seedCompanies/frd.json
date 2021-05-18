@@ -1,0 +1,11 @@
+{
+  "resource": "/",
+  "path": "/companies",
+  "httpMethod": "POST",
+  "body": {
+    "name": "Ferd Motor Company",
+    "tickerSymbol": "FRD",
+    "description": "We make big honkin trucks.",
+    "pricePerShare": 1236
+  }
+}
