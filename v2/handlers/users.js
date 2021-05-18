@@ -144,7 +144,6 @@ async function userItem(displayName, extendedParams) {
 
 async function createStartingStocks(minStartingCash, maxStartingCash) {
   const { Items: companies } = await getCompanies();
-  console.log({ companies });
   const numStocks = getRandomInt(1, companies.length);
   const stocks = {};
   let totalStockValue = getRandomInt(minStartingCash, maxStartingCash);
