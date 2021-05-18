@@ -79,3 +79,18 @@ functions:
       - http:
           method: delete
           path: users
+  companies:
+    handler: handlers/companies.handler
+    events:
+      - http:
+          method: get
+          path: companies
+      - http:
+          method: post
+          path: companies
+      - http:
+          method: put
+          path: companies
+      - http:
+          method: delete
+          path: companies
