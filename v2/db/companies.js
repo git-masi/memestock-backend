@@ -18,15 +18,13 @@ export function getCompanies() {
   return dynamoDb.query(params).promise();
 }
 
-function createCompanyFromHttpEvent(event) {
-  const params = createCompanyParams(event);
+export function createCompany(companyConfig) {
+  const params = createCompanyParams(companyConfig);
   return dynamoDb.transactWrite(params).promise();
 }
 
-function createCompanyParams(event) {
-  const {
-    body: { name, tickerSymbol, description, pricePerShare },
-  } = event;
+function createCompanyParams(companyConfig) {
+  const { name, tickerSymbol, description, pricePerShare } = companyConfig;
 
   return {
     TransactItems: [
@@ -51,17 +49,5 @@ function createCompanyParams(event) {
         Put: guardItem('TICKER_SYMBOL', tickerSymbol),
       },
     ],
-  };
-}
-
-// Used to prevent duplicate entries for an attribute
-function guardItem(prefix, value) {
-  return {
-    TableName: MAIN_TABLE_NAME,
-    ConditionExpression: 'attribute_not_exists(pk)',
-    Item: {
-      pk: `${prefix}#${value}`,
-      sk: value,
-    },
   };
 }

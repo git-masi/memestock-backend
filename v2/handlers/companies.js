@@ -1,15 +1,15 @@
 import { commonMiddleware } from '../utils/middleware';
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { validCompaniesHttpEvent } from '../schema/companies';
-import { getCompanies } from '../db/companies';
+import { createCompany, getCompanies } from '../db/companies';
 
 export const handler = commonMiddleware(lambdaForCompanies);
 
 async function lambdaForCompanies(event) {
   try {
     if (!validCompaniesHttpEvent(event)) throw HttpError.BadRequest();
-    const result = await route(event);
-    return apiResponse({ body: result });
+    await route(event);
+    return apiResponse();
   } catch (error) {
     console.info(error);
 
@@ -36,4 +36,8 @@ function route(event) {
 
 function getCompaniesFromHttpEvent(event) {
   return getCompanies();
+}
+
+function createCompanyFromHttpEvent(event) {
+  return createCompany(event.body);
 }
