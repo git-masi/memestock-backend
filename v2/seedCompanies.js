@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-const dir = './events/seedCompanies';
+const dir = './seedData/companies';
 
 readDir(dir);
 

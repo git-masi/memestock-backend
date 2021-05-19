@@ -1,17 +1,13 @@
 import Ajv from 'ajv';
 import { httpMethods } from '../utils/http';
-import { userTypes } from './users';
-
-export const emailRegex =
-  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-
-export const emailPattern = emailRegex.toString().replace(/\//g, '');
-
-export const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-
-export const passwordPattern = passwordRegex.toString().replace(/\//g, '');
+import { emailPattern } from '../utils/regex';
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
+
+export const userTypes = Object.freeze({
+  human: 'HUMAN',
+  ai: 'AI',
+});
 
 const httpSchemas = Object.freeze({
   [httpMethods.GET]: {
