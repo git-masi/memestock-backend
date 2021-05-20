@@ -12,7 +12,8 @@ const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export async function createAi() {
-  const sk = `AI#${new Date().toISOString()}#${nanoid(8)}`;
+  const created = new Date().toISOString();
+  const sk = `AI#${created}#${nanoid(8)}`;
   const aiQueryResult = await getAiBySortKey('last');
   const mostRecentAi = aiQueryResult?.Items?.[0] ?? null;
   const displayName = internet.userName();
@@ -20,11 +21,12 @@ export async function createAi() {
   const userAttributes = {
     sk,
     displayName,
+    created,
     nextAi: {
       pk: 'USER',
       sk: mostRecentAi?.nextAi?.sk ?? sk,
     },
-    ...addRandomPointsToProfile(getRandomValueFromArray(baseAiProfiles)),
+    ...createBaseProfile(),
   };
 
   const user = await userItem(userAttributes);
@@ -56,9 +58,9 @@ export async function createAi() {
   return dynamoDb.transactWrite(transaction).promise();
 }
 
-function addRandomPointsToProfile(baseProfile) {
-  const copy = { ...baseProfile };
-  const keys = Object.keys(baseProfile);
+function createBaseProfile() {
+  const copy = { ...getRandomValueFromArray(baseAiProfiles) };
+  const keys = Object.keys(copy);
 
   for (let key of keys) {
     copy[key] = copy[key] + getRandomInt(0, 10);
