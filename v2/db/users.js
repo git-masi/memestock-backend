@@ -53,7 +53,7 @@ async function humanUser(displayName, email) {
 async function aiUser(displayName) {
   const aiUserAttributes = {
     displayName,
-    sk: `AI#${new Date().toISOString()}#${nanoid(8)}`,
+    sk: `AI#${nanoid(8)}`,
   };
   const result = {
     TransactItems: [
