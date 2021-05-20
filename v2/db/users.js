@@ -53,7 +53,7 @@ async function humanUser(displayName, email) {
 async function aiUser(displayName) {
   const aiUserAttributes = {
     displayName,
-    sk: `AI#${nanoid(8)}`,
+    sk: `AI#${new Date().toISOString()}#${nanoid(8)}`,
   };
   const result = {
     TransactItems: [
@@ -80,12 +80,13 @@ export async function userItem(userAttributes) {
   const minStartingCash = 100_00; // cents
   const maxStartingCash = 5000_00; // cents
   const startingCash = getRandomInt(minStartingCash, maxStartingCash);
+  const created = userAttributes.sk.split('#')[1];
 
   return {
     TableName: MAIN_TABLE_NAME,
     Item: {
       pk: 'USER',
-      created: new Date().toISOString(),
+      created,
       stocks: await createStartingStocks(minStartingCash, maxStartingCash),
       totalCash: startingCash,
       cashOnHand: startingCash,
