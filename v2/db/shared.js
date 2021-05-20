@@ -11,3 +11,9 @@ export function guardItem(prefix, value) {
     },
   };
 }
+
+export function getFirstItem(queryResult) {
+  const { Items } = queryResult;
+  const result = Items?.[0] ?? null;
+  return result;
+}

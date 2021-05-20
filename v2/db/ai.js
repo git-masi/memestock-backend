@@ -6,7 +6,7 @@ import { baseAiProfiles } from '../utils/ai';
 import { getRandomInt } from '../utils/dynamicValues';
 import { userTypes } from '../schema/users';
 import { userItem } from './users';
-import { guardItem } from './shared';
+import { getFirstItem, guardItem } from './shared';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -14,8 +14,7 @@ const dynamoDb = new DynamoDB.DocumentClient();
 export async function createAi() {
   const created = new Date().toISOString();
   const sk = `AI#${created}#${nanoid(8)}`;
-  const aiQueryResult = await getAiBySortKey('last');
-  const mostRecentAi = aiQueryResult?.Items?.[0] ?? null;
+  const mostRecentAi = await getMostRecentAi();
   const displayName = internet.userName();
 
   const userAttributes = {
@@ -67,6 +66,10 @@ function createBaseProfile() {
   }
 
   return copy;
+}
+
+async function getMostRecentAi() {
+  return getFirstItem(await getAiBySortKey('last'));
 }
 
 function getAiBySortKey(searchOrder) {
