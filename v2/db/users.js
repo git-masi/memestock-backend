@@ -85,6 +85,7 @@ export async function userItem(userAttributes) {
     TableName: MAIN_TABLE_NAME,
     Item: {
       pk: 'USER',
+      created: new Date().toISOString(),
       stocks: await createStartingStocks(minStartingCash, maxStartingCash),
       totalCash: startingCash,
       cashOnHand: startingCash,
