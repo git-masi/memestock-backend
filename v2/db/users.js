@@ -1,42 +1,27 @@
 import { DynamoDB } from 'aws-sdk';
 import { nanoid } from 'nanoid';
 import { getCompanies } from './companies';
-import { validUserConfig, userTypes } from '../schema/users';
+import { validUserAttributes, userTypes } from '../schema/users';
 import { guardItem } from './shared';
 import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
-export async function createUser(userConfig) {
-  if (!validUserConfig(userConfig)) throw new Error('Invalid user config');
-  return dynamoDb.transactWrite(await userTransaction(userConfig)).promise();
+export async function createUser(userAttributes) {
+  return dynamoDb.transactWrite(await humanUser(userAttributes)).promise();
 }
 
-async function userTransaction(userConfig) {
-  const { displayName, email, type } = userConfig;
+async function humanUser(userAttributes) {
+  const { displayName, email } = userAttributes;
 
-  switch (type) {
-    case userTypes.human:
-      return await humanUser(displayName, email);
-
-    case userTypes.ai:
-      return await aiUser(displayName);
-
-    default:
-      return {};
-  }
-}
-
-async function humanUser(displayName, email) {
-  const humanParams = {
-    sk: `HUMAN#${new Date().toISOString()}#${nanoid(8)}`,
-    email,
-  };
   const result = {
     TransactItems: [
       {
-        Put: await userItem(displayName, humanParams),
+        Put: await userItem({
+          sk: `${userTypes.human}#${new Date().toISOString()}#${nanoid(8)}`,
+          ...userAttributes,
+        }),
       },
       {
         Put: guardItem('DISPLAY_NAME', displayName),
@@ -50,43 +35,18 @@ async function humanUser(displayName, email) {
   return result;
 }
 
-async function aiUser(displayName) {
-  const aiUserAttributes = {
-    displayName,
-    sk: `AI#${new Date().toISOString()}#${nanoid(8)}`,
-  };
-  const result = {
-    TransactItems: [
-      {
-        Put: await userItem(aiUserAttributes),
-      },
-      {
-        Put: guardItem('DISPLAY_NAME', displayName),
-      },
-    ],
-  };
-
-  return result;
-}
-
 export async function userItem(userAttributes) {
-  if (
-    userAttributes.constructor.name !== 'Object' ||
-    typeof userAttributes.sk !== 'string' ||
-    typeof userAttributes.displayName !== 'string'
-  )
-    throw new Error('Missing required attributes');
+  if (!validUserAttributes(userAttributes))
+    throw new Error('Invalid user attributes');
 
   const minStartingCash = 100_00; // cents
   const maxStartingCash = 5000_00; // cents
   const startingCash = getRandomInt(minStartingCash, maxStartingCash);
-  const created = userAttributes.sk.split('#')[1];
 
   return {
     TableName: MAIN_TABLE_NAME,
     Item: {
       pk: 'USER',
-      created,
       stocks: await createStartingStocks(minStartingCash, maxStartingCash),
       totalCash: startingCash,
       cashOnHand: startingCash,
