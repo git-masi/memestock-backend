@@ -2,6 +2,7 @@ import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
 import { validUsersHttpEvent, userTypes } from '../schema/users';
 import { createUser } from '../db/users';
+import { isEmpty } from '../utils/dataChecks';
 
 export const handler = commonMiddleware(lambdaForUsers);
 
