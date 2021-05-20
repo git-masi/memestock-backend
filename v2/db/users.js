@@ -51,11 +51,14 @@ async function humanUser(displayName, email) {
 }
 
 async function aiUser(displayName) {
-  const aiUserParams = { sk: `AI#${new Date().toISOString()}#${nanoid(8)}` };
+  const aiUserAttributes = {
+    displayName,
+    sk: `AI#${new Date().toISOString()}#${nanoid(8)}`,
+  };
   const result = {
     TransactItems: [
       {
-        Put: await userItem(displayName, aiUserParams),
+        Put: await userItem(aiUserAttributes),
       },
       {
         Put: guardItem('DISPLAY_NAME', displayName),
@@ -66,19 +69,26 @@ async function aiUser(displayName) {
   return result;
 }
 
-async function userItem(displayName, extendedParams) {
+export async function userItem(userAttributes) {
+  if (
+    userAttributes.constructor.name !== 'Object' ||
+    typeof userAttributes.sk !== 'string' ||
+    typeof userAttributes.displayName !== 'string'
+  )
+    throw new Error('Missing required attributes');
+
   const minStartingCash = 100_00; // cents
   const maxStartingCash = 5000_00; // cents
   const startingCash = getRandomInt(minStartingCash, maxStartingCash);
+
   return {
     TableName: MAIN_TABLE_NAME,
     Item: {
       pk: 'USER',
-      displayName,
       stocks: await createStartingStocks(minStartingCash, maxStartingCash),
       totalCash: startingCash,
       cashOnHand: startingCash,
-      ...extendedParams,
+      ...userAttributes,
     },
   };
 }

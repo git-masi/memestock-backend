@@ -94,3 +94,18 @@ functions:
       - http:
           method: delete
           path: companies
+  ai:
+    handler: handlers/ai.handler
+    events:
+      - http:
+          method: get
+          path: ai
+      - http:
+          method: post
+          path: ai
+      - http:
+          method: put
+          path: ai
+      - http:
+          method: delete
+          path: ai
