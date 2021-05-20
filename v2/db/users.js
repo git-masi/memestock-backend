@@ -1,8 +1,9 @@
 import { DynamoDB } from 'aws-sdk';
 import { nanoid } from 'nanoid';
 import { getCompanies } from './companies';
-import { validUserConfig } from '../schema/users';
+import { validUserConfig, userTypes } from '../schema/users';
 import { guardItem } from './shared';
+import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -17,19 +18,14 @@ async function userTransaction(userConfig) {
 
   switch (type) {
     case userTypes.human:
-      result = await humanUser(displayName, email);
-      break;
+      return await humanUser(displayName, email);
 
     case userTypes.ai:
-      result = await aiUser(displayName);
-      break;
+      return await aiUser(displayName);
 
     default:
-      result = {};
-      break;
+      return {};
   }
-
-  return result;
 }
 
 async function humanUser(displayName, email) {

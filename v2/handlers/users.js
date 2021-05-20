@@ -1,14 +1,16 @@
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { validUsersHttpEvent, userTypes } from './schema/users';
+import { validUsersHttpEvent, userTypes } from '../schema/users';
+import { createUser } from '../db/users';
 
 export const handler = commonMiddleware(lambdaForUsers);
 
 async function lambdaForUsers(event) {
   try {
     if (!validUsersHttpEvent(event)) throw HttpError.BadRequest();
-    await route(event);
-    return apiResponse();
+    const result = await route(event);
+    if (isEmpty(result)) return apiResponse();
+    return apiResponse({ body: result });
   } catch (error) {
     console.info(error);
 
