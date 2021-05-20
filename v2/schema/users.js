@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import { httpMethods } from '../utils/http';
-import { emailPattern } from '../utils/regex';
+import { emailPattern, utcIsoStringPattern } from '../utils/regex';
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
 
@@ -55,13 +55,17 @@ export function validUsersHttpEvent(event) {
   }
 }
 
-export function validUserConfig(userConfig) {
-  const userConfigSechma = {
+export function validUserAttributes(userAttributes) {
+  const skPattern = `^(${Object.values(userTypes).join(
+    '|'
+  )})#${utcIsoStringPattern}#\\w{8}$`;
+
+  const userAttributesSechma = {
     type: 'object',
     properties: {
-      email: {
+      sk: {
         type: 'string',
-        pattern: emailPattern,
+        pattern: skPattern,
       },
       displayName: {
         type: 'string',
@@ -69,13 +73,42 @@ export function validUserConfig(userConfig) {
         maxLength: 36,
         pattern: '^\\S*$',
       },
-      type: {
+      email: {
         type: 'string',
-        pattern: `^${Object.values(userTypes).join('|')}$`,
+        pattern: emailPattern,
+      },
+      created: {
+        type: 'string',
+        pattern: `^${utcIsoStringPattern}$`,
+      },
+      nextAi: {
+        type: 'object',
+        properties: {
+          pk: {
+            type: 'string',
+            pattern: 'USER',
+          },
+          sk: {
+            type: 'string',
+            pattern: skPattern,
+          },
+        },
+      },
+      collector: {
+        type: 'integer',
+      },
+      fomo: {
+        type: 'integer',
+      },
+      lossAversion: {
+        type: 'integer',
+      },
+      wildcard: {
+        type: 'integer',
       },
     },
-    required: ['displayName', 'type'],
+    required: ['displayName', 'sk'],
   };
 
-  return ajv.compile(userConfigSechma)(userConfig);
+  return ajv.compile(userAttributesSechma)(userAttributes);
 }
