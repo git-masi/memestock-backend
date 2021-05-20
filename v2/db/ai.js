@@ -6,6 +6,7 @@ import { baseAiProfiles } from '../utils/ai';
 import { getRandomInt } from '../utils/dynamicValues';
 import { userTypes } from '../schema/users';
 import { userItem } from './users';
+import { guardItem } from './shared';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -14,10 +15,11 @@ export async function createAi() {
   const sk = `AI#${new Date().toISOString()}#${nanoid(8)}`;
   const aiQueryResult = await getAiBySortKey('last');
   const mostRecentAi = aiQueryResult?.Items?.[0] ?? null;
+  const displayName = internet.userName();
 
   const userAttributes = {
     sk,
-    displayName: internet.userName(),
+    displayName,
     nextAi: {
       pk: 'USER',
       sk: mostRecentAi?.nextAi?.sk ?? sk,
@@ -25,19 +27,33 @@ export async function createAi() {
     ...addRandomPointsToProfile(getRandomValueFromArray(baseAiProfiles)),
   };
 
-  console.log(userAttributes);
-
   const user = await userItem(userAttributes);
 
-  return user;
+  let prevAi;
 
-  // const params = {
-  //   TableName: MAIN_TABLE_NAME,
-  // };
-  // const aiQueryResult = await getAiBySortKey();
-  // const mostRecentAi = aiQueryResult?.Items?.[0] ?? null;
-  // createAiProfile(mostRecentAi);
-  // return dynamoDb.transactWrite(params).promise();
+  if (mostRecentAi) {
+    prevAi = {
+      Update: {
+        TableName: MAIN_TABLE_NAME,
+        Key: {
+          pk: mostRecentAi.pk,
+          sk: mostRecentAi.sk,
+        },
+        UpdateExpression: 'SET #nextAi.#nestedSk = :nestedSk',
+        ExpressionAttributeNames: {
+          '#nextAi': 'nextAi',
+          '#nestedSk': 'sk',
+        },
+        ExpressionAttributeValues: {
+          ':nestedSk': sk,
+        },
+      },
+    };
+  }
+
+  const transaction = aiUserTransaction(user, prevAi, displayName);
+
+  return dynamoDb.transactWrite(transaction).promise();
 }
 
 function addRandomPointsToProfile(baseProfile) {
@@ -70,18 +86,21 @@ function getAiBySortKey(searchOrder) {
     .promise();
 }
 
-// async function aiUser(displayName) {
-//   const aiUserParams = { sk: `AI#${new Date().toISOString()}#${nanoid(8)}` };
-//   const result = {
-//     TransactItems: [
-//       {
-//         Put: await userItem(displayName, aiUserParams),
-//       },
-//       {
-//         Put: guardItem('DISPLAY_NAME', displayName),
-//       },
-//     ],
-//   };
+function aiUserTransaction(aiItem, prevAiItem, displayName) {
+  const result = {
+    TransactItems: [
+      {
+        Put: aiItem,
+      },
+      {
+        Put: guardItem('DISPLAY_NAME', displayName),
+      },
+    ],
+  };
 
-//   return result;
-// }
+  if (prevAiItem) {
+    result.TransactItems.push(prevAiItem);
+  }
+
+  return result;
+}
