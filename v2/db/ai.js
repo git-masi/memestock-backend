@@ -12,6 +12,10 @@ const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export async function createAi() {
+  return dynamoDb.transactWrite(await createAiUserTransaction()).promise();
+}
+
+async function createAiUserTransaction() {
   const mostRecentAi = await getMostRecentAi();
   const userAttributes = await createAiUserAttributes(mostRecentAi);
   const { sk, displayName } = userAttributes;
@@ -39,9 +43,26 @@ export async function createAi() {
     };
   }
 
-  const transaction = aiUserTransaction(user, prevAi, displayName);
+  const result = {
+    TransactItems: [
+      {
+        Put: user,
+      },
+      {
+        Put: guardItem('DISPLAY_NAME', displayName),
+      },
+    ],
+  };
 
-  return dynamoDb.transactWrite(transaction).promise();
+  if (prevAi) {
+    result.TransactItems.push(prevAi);
+  }
+
+  return result;
+}
+
+async function getMostRecentAi() {
+  return getFirstItem(await getAiBySortKey('last'));
 }
 
 async function createAiUserAttributes(mostRecentAi) {
@@ -73,10 +94,6 @@ function createBaseProfile() {
   return copy;
 }
 
-async function getMostRecentAi() {
-  return getFirstItem(await getAiBySortKey('last'));
-}
-
 function getAiBySortKey(searchOrder) {
   return dynamoDb
     .query({
@@ -94,23 +111,4 @@ function getAiBySortKey(searchOrder) {
       Limit: 1,
     })
     .promise();
-}
-
-function aiUserTransaction(aiItem, prevAiItem, displayName) {
-  const result = {
-    TransactItems: [
-      {
-        Put: aiItem,
-      },
-      {
-        Put: guardItem('DISPLAY_NAME', displayName),
-      },
-    ],
-  };
-
-  if (prevAiItem) {
-    result.TransactItems.push(prevAiItem);
-  }
-
-  return result;
 }
