@@ -12,22 +12,9 @@ const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export async function createAi() {
-  const created = new Date().toISOString();
-  const sk = `AI#${created}#${nanoid(8)}`;
   const mostRecentAi = await getMostRecentAi();
-  const displayName = internet.userName();
-
-  const userAttributes = {
-    sk,
-    displayName,
-    created,
-    nextAi: {
-      pk: 'USER',
-      sk: mostRecentAi?.nextAi?.sk ?? sk,
-    },
-    ...createBaseProfile(),
-  };
-
+  const userAttributes = await createAiUserAttributes(mostRecentAi);
+  const { sk, displayName } = userAttributes;
   const user = await userItem(userAttributes);
 
   let prevAi;
@@ -55,6 +42,24 @@ export async function createAi() {
   const transaction = aiUserTransaction(user, prevAi, displayName);
 
   return dynamoDb.transactWrite(transaction).promise();
+}
+
+async function createAiUserAttributes(mostRecentAi) {
+  const created = new Date().toISOString();
+  const sk = `AI#${created}#${nanoid(8)}`;
+
+  const result = {
+    sk,
+    created,
+    displayName: internet.userName(),
+    nextAi: {
+      pk: 'USER',
+      sk: mostRecentAi?.nextAi?.sk ?? sk,
+    },
+    ...createBaseProfile(),
+  };
+
+  return result;
 }
 
 function createBaseProfile() {
