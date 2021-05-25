@@ -109,3 +109,6 @@ functions:
       - http:
           method: delete
           path: ai
+      - http:
+          method: get
+          path: ai/action

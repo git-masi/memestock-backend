@@ -27,6 +27,19 @@ function route(event) {
     case httpMethods.POST:
       return createAi();
 
+    case httpMethods.GET:
+      return routeGetRequest(event);
+
+    default:
+      throw HttpError.BadRequest();
+  }
+}
+
+function routeGetRequest(event) {
+  switch (event.path) {
+    case '/ai/action':
+      return event;
+
     default:
       throw HttpError.BadRequest();
   }
