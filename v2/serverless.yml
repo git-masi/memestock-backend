@@ -112,3 +112,15 @@ functions:
       - http:
           method: get
           path: ai/action
+  orders:
+    handler: handlers/orders.handler
+    events:
+      - http:
+          method: get
+          path: orders
+      - http:
+          method: post
+          path: orders
+      - http:
+          method: put
+          path: orders
