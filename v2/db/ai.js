@@ -16,37 +16,12 @@ export async function createAi() {
 }
 
 async function createAiUserTransaction() {
-  const mostRecentAi = await getMostRecentAi();
-  const userAttributes = await createAiUserAttributes(mostRecentAi);
-  const { sk, displayName } = userAttributes;
-  const user = await userItem(userAttributes);
-
-  let prevAi;
-
-  if (mostRecentAi) {
-    prevAi = {
-      Update: {
-        TableName: MAIN_TABLE_NAME,
-        Key: {
-          pk: mostRecentAi.pk,
-          sk: mostRecentAi.sk,
-        },
-        UpdateExpression: 'SET #nextAi.#nestedSk = :nestedSk',
-        ExpressionAttributeNames: {
-          '#nextAi': 'nextAi',
-          '#nestedSk': 'sk',
-        },
-        ExpressionAttributeValues: {
-          ':nestedSk': sk,
-        },
-      },
-    };
-  }
+  const { userItem, prevAiUpdate, displayName } = await createUserItem();
 
   const result = {
     TransactItems: [
       {
-        Put: user,
+        Put: userItem,
       },
       {
         Put: guardItem('DISPLAY_NAME', displayName),
@@ -54,15 +29,44 @@ async function createAiUserTransaction() {
     ],
   };
 
-  if (prevAi) {
-    result.TransactItems.push(prevAi);
+  if (prevAiUpdate) {
+    result.TransactItems.push(prevAiUpdate);
   }
 
   return result;
 }
 
+async function createUserItem() {
+  const mostRecentAi = await getMostRecentAi();
+  const userAttributes = await createAiUserAttributes(mostRecentAi);
+  const { sk, displayName } = userAttributes;
+  const userItem = await userItem(userAttributes);
+  const prevAiUpdate = createPrevAiUpdate(mostRecentAi, sk);
+
+  return { userItem, prevAiUpdate, displayName };
+}
+
 async function getMostRecentAi() {
   return getFirstItem(await getAiBySortKey('last'));
+}
+
+function getAiBySortKey(searchOrder) {
+  return dynamoDb
+    .query({
+      TableName: MAIN_TABLE_NAME,
+      KeyConditionExpression: '#pk = :pk AND begins_with(#sk, :sk)',
+      ExpressionAttributeNames: {
+        '#pk': 'pk',
+        '#sk': 'sk',
+      },
+      ExpressionAttributeValues: {
+        ':pk': 'USER',
+        ':sk': `${userTypes.ai}`,
+      },
+      ScanIndexForward: searchOrder !== 'last',
+      Limit: 1,
+    })
+    .promise();
 }
 
 async function createAiUserAttributes(mostRecentAi) {
@@ -94,21 +98,26 @@ function createBaseProfile() {
   return copy;
 }
 
-function getAiBySortKey(searchOrder) {
-  return dynamoDb
-    .query({
-      TableName: MAIN_TABLE_NAME,
-      KeyConditionExpression: '#pk = :pk AND begins_with(#sk, :sk)',
-      ExpressionAttributeNames: {
-        '#pk': 'pk',
-        '#sk': 'sk',
+function createPrevAiUpdate(mostRecentAi, sk) {
+  if (mostRecentAi) {
+    return {
+      Update: {
+        TableName: MAIN_TABLE_NAME,
+        Key: {
+          pk: mostRecentAi.pk,
+          sk: mostRecentAi.sk,
+        },
+        UpdateExpression: 'SET #nextAi.#nestedSk = :nestedSk',
+        ExpressionAttributeNames: {
+          '#nextAi': 'nextAi',
+          '#nestedSk': 'sk',
+        },
+        ExpressionAttributeValues: {
+          ':nestedSk': sk,
+        },
       },
-      ExpressionAttributeValues: {
-        ':pk': 'USER',
-        ':sk': `${userTypes.ai}`,
-      },
-      ScanIndexForward: searchOrder !== 'last',
-      Limit: 1,
-    })
-    .promise();
+    };
+  }
+
+  return null;
 }
