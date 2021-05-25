@@ -18,7 +18,7 @@ async function humanUser(userAttributes) {
   const result = {
     TransactItems: [
       {
-        Put: await userItem({
+        Put: await createUserItem({
           sk: `${userTypes.human}#${new Date().toISOString()}#${nanoid(8)}`,
           ...userAttributes,
         }),
@@ -35,7 +35,8 @@ async function humanUser(userAttributes) {
   return result;
 }
 
-export async function userItem(userAttributes) {
+export async function createUserItem(userAttributes) {
+  console.log(userAttributes);
   if (!validUserAttributes(userAttributes))
     throw new Error('Invalid user attributes');
 

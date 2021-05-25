@@ -5,7 +5,7 @@ import { getRandomValueFromArray } from '../../services/ai-service/node_modules/
 import { baseAiProfiles } from '../utils/ai';
 import { getRandomInt } from '../utils/dynamicValues';
 import { userTypes } from '../schema/users';
-import { userItem } from './users';
+import { createUserItem as _createUserItem } from './users';
 import { getFirstItem, guardItem } from './shared';
 
 const { MAIN_TABLE_NAME } = process.env;
@@ -40,7 +40,7 @@ async function createUserItem() {
   const mostRecentAi = await getMostRecentAi();
   const userAttributes = await createAiUserAttributes(mostRecentAi);
   const { sk, displayName } = userAttributes;
-  const userItem = await userItem(userAttributes);
+  const userItem = await _createUserItem(userAttributes);
   const prevAiUpdate = createPrevAiUpdate(mostRecentAi, sk);
 
   return { userItem, prevAiUpdate, displayName };
