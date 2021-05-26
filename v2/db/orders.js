@@ -1,10 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import { nanoid } from 'nanoid';
 import { validOrderAttributes } from '../schema/orders';
-// import { getCompanies } from './companies';
-// import { validUserAttributes, userTypes } from '../schema/users';
-// import { guardItem } from './shared';
-// import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
