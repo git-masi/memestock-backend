@@ -4,6 +4,7 @@ import { getCompanies } from './companies';
 import { validUserAttributes, userTypes } from '../schema/users';
 import { guardItem } from './shared';
 import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
+import { pkPrefixes } from '../schema/pkPrefixes';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -24,10 +25,10 @@ async function humanUser(userAttributes) {
         }),
       },
       {
-        Put: guardItem('DISPLAY_NAME', displayName),
+        Put: guardItem(pkPrefixes.displayName, displayName),
       },
       {
-        Put: guardItem('EMAIL', email),
+        Put: guardItem(pkPrefixes.email, email),
       },
     ],
   };
@@ -46,7 +47,7 @@ export async function createUserItem(userAttributes) {
   return {
     TableName: MAIN_TABLE_NAME,
     Item: {
-      pk: 'USER',
+      pk: pkPrefixes.user,
       stocks: await createStartingStocks(minStartingCash, maxStartingCash),
       totalCash: startingCash,
       cashOnHand: startingCash,
