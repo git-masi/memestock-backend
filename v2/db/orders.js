@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import { nanoid } from 'nanoid';
+import { validOrderAttributes } from '../schema/orders';
 // import { getCompanies } from './companies';
 // import { validUserAttributes, userTypes } from '../schema/users';
 // import { guardItem } from './shared';
@@ -15,7 +16,10 @@ export async function createOrder(orderAttributes) {
 }
 
 function createOrderTransaction(orderAttributes) {
-  const { orderType, userId, companyPkSk, total, quantity } = orderAttributes;
+  if (!validOrderAttributes(orderAttributes))
+    throw new Error('Order attributes are invalid');
+
+  const { orderType, userPkSk, companyPkSk, total, quantity } = orderAttributes;
   const created = new Date().toISOString();
   const sk = `${created}#${nanoid(8)}`;
   const result = {
@@ -30,9 +34,9 @@ function createOrderTransaction(orderAttributes) {
             companyPkSk,
             total,
             quantity,
-            buyer: orderType === 'buy' ? userId : '',
-            seller: orderType === 'sell' ? userId : '',
-            originatingUser: userId,
+            buyer: orderType === 'buy' ? userPkSk : '',
+            seller: orderType === 'sell' ? userPkSk : '',
+            originatingUser: userPkSk,
             orderType,
             orderStatus: 'open',
           },
@@ -43,9 +47,9 @@ function createOrderTransaction(orderAttributes) {
           TableName: MAIN_TABLE_NAME,
           Item: {
             pk: `USER_ORDER`,
-            sk: `${userId}#ORDER#${sk}`,
+            sk: `${userPkSk}#ORDER#${sk}`,
             orderPkSk: `ORDER#${sk}`,
-            userPkSk: `USER#${userId}`,
+            userPkSk: `USER#${userPkSk}`,
             status: 'open', // use this as a filter
             orderType, // use this as a filter
           },
