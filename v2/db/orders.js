@@ -1,6 +1,7 @@
 import { DynamoDB } from 'aws-sdk';
 import { nanoid } from 'nanoid';
 import { validOrderAttributes } from '../schema/orders';
+import { pkPrefixes } from '../schema/pkPrefixes';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -24,7 +25,7 @@ function createOrderTransaction(orderAttributes) {
         Put: {
           TableName: MAIN_TABLE_NAME,
           Item: {
-            pk: 'ORDER',
+            pk: pkPrefixes.order,
             sk,
             created,
             companyPkSk,
@@ -42,10 +43,10 @@ function createOrderTransaction(orderAttributes) {
         Put: {
           TableName: MAIN_TABLE_NAME,
           Item: {
-            pk: `USER_ORDER`,
-            sk: `${userPkSk}#ORDER#${sk}`,
-            orderPkSk: `ORDER#${sk}`,
-            userPkSk: `USER#${userPkSk}`,
+            pk: pkPrefixes.userOrder,
+            sk: `${userPkSk}#${pkPrefixes.order}#${sk}`,
+            orderPkSk: `${pkPrefixes.order}#${sk}`,
+            userPkSk: `${pkPrefixes.user}#${userPkSk}`,
             status: 'open', // use this as a filter
             orderType, // use this as a filter
           },
