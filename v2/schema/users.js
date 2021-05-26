@@ -72,7 +72,7 @@ export function validUserAttributes(userAttributes) {
     properties: {
       sk: {
         type: 'string',
-        pattern: skPattern,
+        pattern: userSkPattern,
       },
       displayName: {
         type: 'string',
