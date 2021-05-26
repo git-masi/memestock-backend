@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import { guardItem } from './shared';
+import { pkPrefixes } from '../schema/pkPrefixes';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -12,7 +13,7 @@ export function getCompanies() {
       '#pk': 'pk',
     },
     ExpressionAttributeValues: {
-      ':pk': 'COMPANY',
+      ':pk': pkPrefixes.company,
     },
   };
   return dynamoDb.query(params).promise();
@@ -33,7 +34,7 @@ function createCompanyParams(companyConfig) {
           TableName: MAIN_TABLE_NAME,
           ConditionExpression: 'attribute_not_exists(pk)',
           Item: {
-            pk: 'COMPANY',
+            pk: pkPrefixes.company,
             sk: tickerSymbol,
             name,
             tickerSymbol,
@@ -43,10 +44,10 @@ function createCompanyParams(companyConfig) {
         },
       },
       {
-        Put: guardItem('COMPANY_NAME', name),
+        Put: guardItem(pkPrefixes.companyName, name),
       },
       {
-        Put: guardItem('TICKER_SYMBOL', tickerSymbol),
+        Put: guardItem(pkPrefixes.tickerSymbol, tickerSymbol),
       },
     ],
   };
