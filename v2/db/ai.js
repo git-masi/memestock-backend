@@ -7,6 +7,7 @@ import { getRandomInt } from '../utils/dynamicValues';
 import { userTypes } from '../schema/users';
 import { createUserItem as _createUserItem } from './users';
 import { getFirstItem, guardItem } from './shared';
+import { pkPrefixes } from '../schema/pkPrefixes';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -24,7 +25,7 @@ async function createAiUserTransaction() {
         Put: userItem,
       },
       {
-        Put: guardItem('DISPLAY_NAME', displayName),
+        Put: guardItem(pkPrefixes.displayName, displayName),
       },
     ],
   };
@@ -60,7 +61,7 @@ function getAiBySortKey(searchOrder) {
         '#sk': 'sk',
       },
       ExpressionAttributeValues: {
-        ':pk': 'USER',
+        ':pk': pkPrefixes.user,
         ':sk': `${userTypes.ai}`,
       },
       ScanIndexForward: searchOrder !== 'last',
@@ -71,14 +72,14 @@ function getAiBySortKey(searchOrder) {
 
 async function createAiUserAttributes(mostRecentAi) {
   const created = new Date().toISOString();
-  const sk = `AI#${created}#${nanoid(8)}`;
+  const sk = `${userTypes.ai}#${created}#${nanoid(8)}`;
 
   const result = {
     sk,
     created,
     displayName: internet.userName(),
     nextAi: {
-      pk: 'USER',
+      pk: pkPrefixes.user,
       sk: mostRecentAi?.nextAi?.sk ?? sk,
     },
     ...createBaseProfile(),
