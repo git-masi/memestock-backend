@@ -13,3 +13,7 @@ export const utcIsoStringRegex =
 export const utcIsoStringPattern = utcIsoStringRegex
   .toString()
   .replace(/[\^$/]/g, '');
+
+export function createRegexGroup(obj) {
+  return `(${Object.values(obj).join('|')})`;
+}
