@@ -59,7 +59,7 @@ export function validOrderAttributes(orderAttributes) {
         pattern: userPkSkPattern,
       },
       companyPkSk: {
-        type: '',
+        type: 'string',
         pattern: companyPkSkPattern,
       },
       total: {
