@@ -16,7 +16,7 @@ export const userTypes = Object.freeze({
 
 export const userSkPattern = `${createRegexGroup(
   userTypes
-)}#${utcIsoStringPattern}#\\w{8}`;
+)}#${utcIsoStringPattern}#[\\w\\-_]{8}`;
 
 export const userPkSkPattern = `^${pkPrefixes.user}#${userSkPattern}$`;
 
@@ -67,12 +67,13 @@ export function validUsersHttpEvent(event) {
 }
 
 export function validUserAttributes(userAttributes) {
+  console.log(userAttributes);
   const userAttributesSechma = {
     type: 'object',
     properties: {
       sk: {
         type: 'string',
-        pattern: userSkPattern,
+        pattern: `^${userSkPattern}$`,
       },
       displayName: {
         type: 'string',
@@ -93,7 +94,7 @@ export function validUserAttributes(userAttributes) {
         properties: {
           pk: {
             type: 'string',
-            pattern: pkPrefixes.user,
+            pattern: `${pkPrefixes.user}`,
           },
           sk: {
             type: 'string',
@@ -116,6 +117,8 @@ export function validUserAttributes(userAttributes) {
     },
     required: ['displayName', 'sk'],
   };
+
+  console.log(userAttributesSechma);
 
   return ajv.compile(userAttributesSechma)(userAttributes);
 }
