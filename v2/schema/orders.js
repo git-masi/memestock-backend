@@ -69,6 +69,7 @@ export function validOrderAttributes(orderAttributes) {
         type: 'integer',
       },
     },
+    required: ['orderType', 'userPkSk', 'companyPkSk', 'total', 'quantity'],
   };
 
   return ajv.compile(schema)(orderAttributes);
