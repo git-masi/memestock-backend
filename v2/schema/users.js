@@ -1,6 +1,11 @@
 import Ajv from 'ajv';
 import { httpMethods } from '../utils/http';
-import { emailPattern, utcIsoStringPattern } from '../utils/regex';
+import {
+  emailPattern,
+  utcIsoStringPattern,
+  createRegexGroup,
+} from '../utils/regex';
+import { pkPrefixes } from './pkPrefixes';
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
 
@@ -8,6 +13,12 @@ export const userTypes = Object.freeze({
   human: 'HUMAN',
   ai: 'AI',
 });
+
+export const userSkPattern = `${createRegexGroup(
+  userTypes
+)}#${utcIsoStringPattern}#\\w{8}`;
+
+export const userPkSkPattern = `^${pkPrefixes.user}#${userSkPattern}$`;
 
 const httpSchemas = Object.freeze({
   [httpMethods.GET]: {
@@ -56,10 +67,6 @@ export function validUsersHttpEvent(event) {
 }
 
 export function validUserAttributes(userAttributes) {
-  const skPattern = `^(${Object.values(userTypes).join(
-    '|'
-  )})#${utcIsoStringPattern}#\\w{8}$`;
-
   const userAttributesSechma = {
     type: 'object',
     properties: {
@@ -86,11 +93,11 @@ export function validUserAttributes(userAttributes) {
         properties: {
           pk: {
             type: 'string',
-            pattern: 'USER',
+            pattern: pkPrefixes.user,
           },
           sk: {
             type: 'string',
-            pattern: skPattern,
+            pattern: `^${userSkPattern}$`,
           },
         },
       },
