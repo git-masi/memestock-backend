@@ -47,7 +47,7 @@ function createOrderTransaction(orderAttributes) {
             sk: `${userPkSk}#${pkPrefixes.order}#${sk}`,
             orderPkSk: `${pkPrefixes.order}#${sk}`,
             userPkSk: `${pkPrefixes.user}#${userPkSk}`,
-            status: 'open', // use this as a filter
+            orderStatus: 'open', // use this as a filter
             orderType, // use this as a filter
           },
         },
@@ -58,7 +58,7 @@ function createOrderTransaction(orderAttributes) {
   return result;
 }
 
-export function getRecentOrders(status, orderType, limit = 10) {
+export function getRecentOrders(orderStatus, orderType, limit = 10) {
   const params = {
     TableName: MAIN_TABLE_NAME,
     KeyConditionExpression: '#pk = :pk',
@@ -72,23 +72,24 @@ export function getRecentOrders(status, orderType, limit = 10) {
     Limit: limit,
   };
 
-  getFilterExpression();
+  createFilterExpression();
 
   return dynamoDb.query(params).promise();
 
-  function getFilterExpression() {
-    if (status && orderType) {
-      params.FilterExpression = '#status = :status AND #orderType = :orderType';
-      params.ExpressionAttributeNames['#status'] = 'status';
-      params.ExpressionAttributeValues[':status'] = status;
+  function createFilterExpression() {
+    if (orderStatus && orderType) {
+      params.FilterExpression =
+        '#orderStatus = :orderStatus AND #orderType = :orderType';
+      params.ExpressionAttributeNames['#orderStatus'] = 'orderStatus';
+      params.ExpressionAttributeValues[':orderStatus'] = orderStatus;
       params.ExpressionAttributeNames['#orderType'] = 'orderType';
       params.ExpressionAttributeValues[':orderType'] = orderType;
       return;
     }
-    if (status) {
-      params.FilterExpression = '#status = :status';
-      params.ExpressionAttributeNames['#status'] = 'status';
-      params.ExpressionAttributeValues[':status'] = status;
+    if (orderStatus) {
+      params.FilterExpression = '#orderStatus = :orderStatus';
+      params.ExpressionAttributeNames['#orderStatus'] = 'orderStatus';
+      params.ExpressionAttributeValues[':orderStatus'] = orderStatus;
       return;
     }
     if (orderType) {
