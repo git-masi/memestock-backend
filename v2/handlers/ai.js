@@ -1,7 +1,12 @@
 import { commonMiddleware } from '../utils/middleware';
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { isEmpty } from '../utils/dataChecks';
-import { createAi, getMostRecentAiAction } from '../db/ai';
+import {
+  createAi,
+  getAiByPkSk,
+  getMostRecentAiAction,
+  getFirstOrLastAi,
+} from '../db/ai';
 import { getFirstItem } from '../db/shared';
 
 export const handler = commonMiddleware(handleAiGateway);
@@ -51,6 +56,19 @@ export async function executeAiAction() {
 }
 
 async function getDataForUtilityScores() {
-  const res = getFirstItem(await getMostRecentAiAction());
+  const res = await getNextAiProfile();
   console.log(res);
+}
+
+async function getNextAiProfile() {
+  const mostRecentAiAction = getFirstItem(await getMostRecentAiAction());
+
+  if (mostRecentAiAction) {
+    const {
+      nextAi: { pk, sk },
+    } = mostRecentAiAction;
+    return getFirstItem(await getAiByPkSk(pk, sk));
+  }
+
+  return getFirstItem(await getFirstOrLastAi('first'));
 }

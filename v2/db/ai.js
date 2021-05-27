@@ -48,10 +48,10 @@ async function createUserItem() {
 }
 
 async function getMostRecentAi() {
-  return getFirstItem(await getAiBySortKey('last'));
+  return getFirstItem(await getFirstOrLastAi('last'));
 }
 
-function getAiBySortKey(searchOrder) {
+export function getFirstOrLastAi(searchOrder = 'first') {
   return dynamoDb
     .query({
       TableName: MAIN_TABLE_NAME,
@@ -136,6 +136,18 @@ export function getMostRecentAiAction() {
       },
       ScanIndexForward: false,
       Limit: 1,
+    })
+    .promise();
+}
+
+export function getAiByPkSk(pk, sk) {
+  return dynamoDb
+    .get({
+      TableName: MAIN_TABLE_NAME,
+      Key: {
+        pk,
+        sk,
+      },
     })
     .promise();
 }
