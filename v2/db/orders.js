@@ -57,3 +57,45 @@ function createOrderTransaction(orderAttributes) {
 
   return result;
 }
+
+export function getRecentOrders(status, orderType, limit = 10) {
+  const params = {
+    TableName: MAIN_TABLE_NAME,
+    KeyConditionExpression: '#pk = :pk',
+    ExpressionAttributeNames: {
+      '#pk': 'pk',
+    },
+    ExpressionAttributeValues: {
+      ':pk': pkPrefixes.order,
+    },
+    ScanIndexForward: false,
+    Limit: limit,
+  };
+
+  getFilterExpression();
+
+  return dynamoDb.query(params).promise();
+
+  function getFilterExpression() {
+    if (status && orderType) {
+      params.FilterExpression = '#status = :status AND #orderType = :orderType';
+      params.ExpressionAttributeNames['#status'] = 'status';
+      params.ExpressionAttributeValues[':status'] = status;
+      params.ExpressionAttributeNames['#orderType'] = 'orderType';
+      params.ExpressionAttributeValues[':orderType'] = orderType;
+      return;
+    }
+    if (status) {
+      params.FilterExpression = '#status = :status';
+      params.ExpressionAttributeNames['#status'] = 'status';
+      params.ExpressionAttributeValues[':status'] = status;
+      return;
+    }
+    if (orderType) {
+      params.FilterExpression = '#orderType = :orderType';
+      params.ExpressionAttributeNames['#orderType'] = 'orderType';
+      params.ExpressionAttributeValues[':orderType'] = orderType;
+      return;
+    }
+  }
+}
