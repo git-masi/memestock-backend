@@ -7,7 +7,9 @@ import {
   getMostRecentAiAction,
   getFirstOrLastAi,
 } from '../db/ai';
-import { getFirstItem } from '../db/shared';
+import { getFirstItem, getItems } from '../db/shared';
+import { getCompanies } from '../db/companies';
+import { getRecentOrders } from '../db/orders';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -56,8 +58,22 @@ export async function executeAiAction() {
 }
 
 async function getDataForUtilityScores() {
-  const res = await getNextAiProfile();
-  console.log(res);
+  const numOrdersToGet = 20;
+  const nextAiProfile = await getNextAiProfile();
+
+  if (!nextAiProfile) return;
+
+  const dataFetchResults = await Promise.all([
+    getCompanies(),
+    getRecentOrders('open', 'buy', numOrdersToGet),
+    getRecentOrders('open', 'sell', numOrdersToGet),
+  ]);
+
+  const [companies, openBuyOrders, openSellOrders] = dataFetchResults.map(
+    (res) => getItems(res)
+  );
+
+  console.log(companies, openBuyOrders, openSellOrders);
 }
 
 async function getNextAiProfile() {
