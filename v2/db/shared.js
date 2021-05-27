@@ -12,8 +12,8 @@ export function guardItem(prefix, value) {
   };
 }
 
-export function getFirstItem(queryResult) {
-  const { Items } = queryResult;
-  const result = Items?.[0] ?? null;
+export function getFirstItem(dbResult) {
+  const { Items, Item } = dbResult;
+  const result = Items?.[0] ?? Item ?? null;
   return result;
 }
