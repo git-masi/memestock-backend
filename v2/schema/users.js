@@ -67,7 +67,6 @@ export function validUsersHttpEvent(event) {
 }
 
 export function validUserAttributes(userAttributes) {
-  console.log(userAttributes);
   const userAttributesSechma = {
     type: 'object',
     properties: {
@@ -117,8 +116,6 @@ export function validUserAttributes(userAttributes) {
     },
     required: ['displayName', 'sk'],
   };
-
-  console.log(userAttributesSechma);
 
   return ajv.compile(userAttributesSechma)(userAttributes);
 }

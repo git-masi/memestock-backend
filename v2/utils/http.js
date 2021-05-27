@@ -41,7 +41,7 @@ export function apiResponse(config = {}) {
             'Access-Control-Allow-Origin': origin,
           };
         } else {
-          console.log(
+          console.info(
             `request origin not in whitelist\norigin: ${origin}\nwhitelist: ${JSON.stringify(
               whitelist
             )}`
@@ -82,7 +82,7 @@ export function apiResponse(config = {}) {
 
     return response;
   } catch (error) {
-    console.log(error);
+    console.info(error);
     if (error instanceof HttpError) return { ...error };
     return {
       statusCode: 500,

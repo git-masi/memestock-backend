@@ -62,7 +62,7 @@ async function updateUser(event) {
 
     return successResponse();
   } catch (error) {
-    console.log(error);
+    console.info(error);
     throw error;
   }
 }
