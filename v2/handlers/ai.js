@@ -1,7 +1,8 @@
 import { commonMiddleware } from '../utils/middleware';
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { isEmpty } from '../utils/dataChecks';
-import { createAi } from '../db/ai';
+import { createAi, getMostRecentAiAction } from '../db/ai';
+import { getFirstItem } from '../db/shared';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -9,7 +10,7 @@ async function handleAiGateway(event) {
   try {
     // if (!validAiHttpEvent(event)) throw HttpError.BadRequest();
     const result = await route(event);
-    if (isEmpty(result)) return apiResponse();
+    if (!result || isEmpty(result)) return apiResponse();
     return apiResponse({ body: result });
   } catch (error) {
     console.info(error);
@@ -38,9 +39,18 @@ function route(event) {
 function routeGetRequest(event) {
   switch (event.path) {
     case '/ai/action':
-      return event;
+      return executeAiAction();
 
     default:
       throw HttpError.BadRequest();
   }
+}
+
+export async function executeAiAction() {
+  await getDataForUtilityScores();
+}
+
+async function getDataForUtilityScores() {
+  const res = getFirstItem(await getMostRecentAiAction());
+  console.log(res);
 }

@@ -122,3 +122,20 @@ function createPrevAiUpdate(mostRecentAi, sk) {
 
   return null;
 }
+
+export function getMostRecentAiAction() {
+  return dynamoDb
+    .query({
+      TableName: MAIN_TABLE_NAME,
+      KeyConditionExpression: '#pk = :pk',
+      ExpressionAttributeNames: {
+        '#pk': 'pk',
+      },
+      ExpressionAttributeValues: {
+        ':pk': pkPrefixes.aiAction,
+      },
+      ScanIndexForward: false,
+      Limit: 1,
+    })
+    .promise();
+}

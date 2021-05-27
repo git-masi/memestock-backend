@@ -24,3 +24,23 @@ export const baseAiProfiles = Object.freeze([
   baseConservativeRiskProfile,
   baseAgressiveRiskProfile,
 ]);
+
+export const possibleActions = Object.freeze({
+  buyOrder: 'buyOrder',
+  sellOrder: 'sellOrder',
+  newBuyOrder: 'newBuyOrder',
+  newSellOrder: 'newSellOrder',
+  cancelBuyOrder: 'cancelBuyOrder',
+  cancelSellOrder: 'cancelSellOrder',
+  doNothing: 'doNothing',
+});
+
+export const baseUtilityScores = Object.freeze({
+  [possibleActions.buyOrder]: 20,
+  [possibleActions.sellOrder]: 20,
+  [possibleActions.newBuyOrder]: 20,
+  [possibleActions.newSellOrder]: 20,
+  [possibleActions.cancelBuyOrder]: 20,
+  [possibleActions.cancelSellOrder]: 20,
+  [possibleActions.doNothing]: 10,
+});

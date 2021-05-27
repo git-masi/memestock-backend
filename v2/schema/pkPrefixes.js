@@ -7,4 +7,5 @@ export const pkPrefixes = Object.freeze({
   company: 'COMPANY',
   companyName: 'COMPANY_NAME',
   tickerSymbol: 'TICKER_SYMBOL',
+  aiAction: 'AI_ACTION',
 });
