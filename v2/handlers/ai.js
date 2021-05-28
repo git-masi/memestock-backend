@@ -54,7 +54,15 @@ function routeGetRequest(event) {
 }
 
 export async function executeAiAction() {
-  await getDataForUtilityScores();
+  // data: { aiProfile, companies, openBuyOrders, openSellOrders, userOrders }
+  const data = await getDataForUtilityScores();
+  const pricePerShare = getPricePerShareOfUserStocks(
+    data.aiProfile,
+    data.companies
+  );
+
+  // todo: delete
+  console.log(pricePerShare);
 }
 
 async function getDataForUtilityScores() {
@@ -76,7 +84,22 @@ async function getDataForUtilityScores() {
   const [companies, openBuyOrders, openSellOrders, userOrders] =
     dataFetchResults.map((res) => getItems(res));
 
-  console.log(companies, openBuyOrders, openSellOrders, userOrders);
+  // todo: delete
+  console.log(
+    nextAiProfile,
+    companies,
+    openBuyOrders,
+    openSellOrders,
+    userOrders
+  );
+
+  return {
+    aiProfile: nextAiProfile,
+    companies,
+    openBuyOrders,
+    openSellOrders,
+    userOrders,
+  };
 }
 
 async function getNextAiProfile() {
@@ -90,4 +113,25 @@ async function getNextAiProfile() {
   }
 
   return getFirstItem(await getFirstOrLastAi('first'));
+}
+
+function getPricePerShareOfUserStocks(user, companies) {
+  const { stocks } = user;
+  const companiesUserOwns = Object.keys(stocks);
+
+  const result = companiesUserOwns.reduce((acc, tickerSymbol) => {
+    const { currentPricePerShare } = companies.find(
+      (company) => company.tickerSymbol === tickerSymbol
+    );
+
+    acc[tickerSymbol] = {
+      currentPricePerShare,
+      userStockTotalValue:
+        currentPricePerShare * stocks[tickerSymbol].quantityHeld,
+    };
+
+    return acc;
+  }, {});
+
+  return result;
 }
