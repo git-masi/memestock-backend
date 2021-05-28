@@ -56,13 +56,13 @@ function routeGetRequest(event) {
 export async function executeAiAction() {
   // data: { aiProfile, companies, openBuyOrders, openSellOrders, userOrders }
   const data = await getDataForUtilityScores();
-  const pricePerShare = getPricePerShareOfUserStocks(
+  const pricePerShareData = getPricePerShareOfUserStocks(
     data.aiProfile,
     data.companies
   );
 
   // todo: delete
-  console.log(pricePerShare);
+  console.log(pricePerShareData);
 }
 
 async function getDataForUtilityScores() {
@@ -126,8 +126,7 @@ function getPricePerShareOfUserStocks(user, companies) {
 
     acc[tickerSymbol] = {
       currentPricePerShare,
-      userStockTotalValue:
-        currentPricePerShare * stocks[tickerSymbol].quantityHeld,
+      totalValueHeld: currentPricePerShare * stocks[tickerSymbol].quantityHeld,
     };
 
     return acc;
