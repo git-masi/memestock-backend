@@ -100,3 +100,22 @@ export function getRecentOrders(orderStatus, orderType, limit = 10) {
     }
   }
 }
+
+export function getRecentUserOrders(userPkSk, limit = 10) {
+  return dynamoDb
+    .query({
+      TableName: MAIN_TABLE_NAME,
+      KeyConditionExpression: '#pk = :pk AND begins_with(#sk, :sk)',
+      ExpressionAttributeNames: {
+        '#pk': 'pk',
+        '#sk': 'sk',
+      },
+      ExpressionAttributeValues: {
+        ':pk': pkPrefixes.aiAction,
+        ':sk': userPkSk,
+      },
+      ScanIndexForward: false,
+      Limit: limit,
+    })
+    .promise();
+}

@@ -9,7 +9,7 @@ import {
 } from '../db/ai';
 import { getFirstItem, getItems } from '../db/shared';
 import { getCompanies } from '../db/companies';
-import { getRecentOrders } from '../db/orders';
+import { getRecentOrders, getRecentUserOrders } from '../db/orders';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -67,13 +67,16 @@ async function getDataForUtilityScores() {
     getCompanies(),
     getRecentOrders('open', 'buy', numOrdersToGet),
     getRecentOrders('open', 'sell', numOrdersToGet),
+    getRecentUserOrders(
+      `${nextAiProfile.pk}#${nextAiProfile.sk}`,
+      numOrdersToGet
+    ),
   ]);
 
-  const [companies, openBuyOrders, openSellOrders] = dataFetchResults.map(
-    (res) => getItems(res)
-  );
+  const [companies, openBuyOrders, openSellOrders, userOrders] =
+    dataFetchResults.map((res) => getItems(res));
 
-  console.log(companies, openBuyOrders, openSellOrders);
+  console.log(companies, openBuyOrders, openSellOrders, userOrders);
 }
 
 async function getNextAiProfile() {
