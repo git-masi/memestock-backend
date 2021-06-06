@@ -65,7 +65,12 @@ export async function executeAiAction() {
   // }
   const userStockValues = getValueOfUserStocks(data.aiProfile, data.companies);
 
-  const boosts = getBoosts(data.aiProfile, userStockValues);
+  const boosts = getBoosts(
+    data.aiProfile,
+    userStockValues,
+    data.openBuyOrders,
+    data.openSellOrders
+  );
 
   // todo: delete
   console.log(boosts);
@@ -147,14 +152,17 @@ function getValueOfUserStocks(user, companies) {
   }
 }
 
-function getBoosts(aiProfile, userStockValues) {
+function getBoosts(aiProfile, userStockValues, openBuyOrders, openSellOrders) {
   const lowHighCashBoosts = getHighLowCashBoosts(
     aiProfile,
     userStockValues.totalStockValue
   );
-  // const mostFreqBoosts = calculateBoostForMostFrequentOrders(copy);
+  const mostFreqBoosts = calculateBoostForMostFrequentOrders(
+    openBuyOrders,
+    openSellOrders
+  );
   // const changeInPricePerShare = calculateChangeInPricePerShare(copy);
-  const result = { ...lowHighCashBoosts };
+  const result = { ...lowHighCashBoosts, ...mostFreqBoosts };
   return result;
 }
 
@@ -170,4 +178,36 @@ function getHighLowCashBoosts(aiProfile, totalStockValue) {
     : 0;
 
   return { lowCashBoost, highCashBoost };
+}
+
+function calculateBoostForMostFrequentOrders(openBuyOrders, openSellOrders) {
+  const result = {
+    mostFreqBuy: getMostFrequentStock(openBuyOrders),
+    mostFreqSell: getMostFrequentStock(openSellOrders),
+  };
+
+  return result;
+}
+
+function getMostFrequentStock(orders) {
+  if (orders.length < 1) return '';
+  const numPerStock = getNumOrdersPerStock();
+  console.log(numPerStock);
+  const entries = Object.entries(numPerStock);
+  const sorted = entries.sort((entryA, entryB) => entryB[1] - entryA[1]);
+  const firstEntry = sorted[0];
+  const result = firstEntry[0];
+
+  return result;
+
+  function getNumOrdersPerStock() {
+    const result = orders.reduce((acc, order) => {
+      const symbol = order?.tickerSymbol;
+      if (!(symbol in acc)) acc[symbol] = 0;
+      acc[symbol] += 1;
+      return acc;
+    }, {});
+
+    return result;
+  }
 }
