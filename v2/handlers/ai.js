@@ -65,10 +65,10 @@ export async function executeAiAction() {
   // }
   const userStockValues = getValueOfUserStocks(data.aiProfile, data.companies);
 
-  // const boosts = getBoosts();
+  const boosts = getBoosts(data.aiProfile, userStockValues);
 
   // todo: delete
-  console.log(userStockValues);
+  console.log(boosts);
 }
 
 async function getDataForUtilityScores() {
@@ -145,4 +145,29 @@ function getValueOfUserStocks(user, companies) {
 
     return acc;
   }
+}
+
+function getBoosts(aiProfile, userStockValues) {
+  const lowHighCashBoosts = getHighLowCashBoosts(
+    aiProfile,
+    userStockValues.totalStockValue
+  );
+  // const mostFreqBoosts = calculateBoostForMostFrequentOrders(copy);
+  // const changeInPricePerShare = calculateChangeInPricePerShare(copy);
+  const result = { ...lowHighCashBoosts };
+  return result;
+}
+
+function getHighLowCashBoosts(aiProfile, totalStockValue) {
+  const wealthInCashVsStocks = aiProfile.totalCash / totalStockValue; // Infinity is all cash, 0 is all stocks
+  const cashIsLow = wealthInCashVsStocks <= 0.08; // if true boost desire to sell: Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
+  const cashIsHigh = wealthInCashVsStocks >= 0.2; // if true boost desire to buy: Math.ceil(aiProfile.collector * wealthInCashVsStocks)
+  const lowCashBoost = cashIsLow
+    ? Math.ceil(aiProfile.lossAversion * wealthInCashVsStocks)
+    : 0;
+  const highCashBoost = cashIsHigh
+    ? Math.ceil(aiProfile.collector * wealthInCashVsStocks)
+    : 0;
+
+  return { lowCashBoost, highCashBoost };
 }
