@@ -51,6 +51,7 @@ function createOrderTransaction(reqBody) {
             userPkSk: userPkSk,
             orderStatus: 'open', // use this as a filter
             orderType, // use this as a filter
+            tickerSymbol,
           },
         },
       },
