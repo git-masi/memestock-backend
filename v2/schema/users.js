@@ -18,7 +18,7 @@ export const userSkPattern = `${createRegexGroup(
   userTypes
 )}#${utcIsoStringPattern}#[\\w\\-_]{8}`;
 
-export const userPkSkPattern = `^${pkPrefixes.user}#${userSkPattern}$`;
+export const userPkSkPattern = `${pkPrefixes.user}#${userSkPattern}`;
 
 const httpSchemas = Object.freeze({
   [httpMethods.GET]: {

@@ -6,17 +6,18 @@ import { pkPrefixes } from '../schema/pkPrefixes';
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
-export async function createOrder(orderAttributes) {
-  return dynamoDb
-    .transactWrite(createOrderTransaction(orderAttributes))
-    .promise();
+export async function createOrder(reqBody) {
+  return dynamoDb.transactWrite(createOrderTransaction(reqBody)).promise();
 }
 
-function createOrderTransaction(orderAttributes) {
+function createOrderTransaction(reqBody) {
+  const orderAttributes = createOrderAttributes(reqBody);
+
   if (!validOrderAttributes(orderAttributes))
     throw new Error('Order attributes are invalid');
 
-  const { orderType, userPkSk, companyPkSk, total, quantity } = orderAttributes;
+  const { orderType, userPkSk, companyPkSk, total, quantity, tickerSymbol } =
+    orderAttributes;
   const created = new Date().toISOString();
   const sk = `${created}#${nanoid(8)}`;
   const result = {
@@ -36,6 +37,7 @@ function createOrderTransaction(orderAttributes) {
             originatingUser: userPkSk,
             orderType,
             orderStatus: 'open',
+            tickerSymbol,
           },
         },
       },
@@ -46,7 +48,7 @@ function createOrderTransaction(orderAttributes) {
             pk: pkPrefixes.userOrder,
             sk: `${userPkSk}#${pkPrefixes.order}#${sk}`,
             orderPkSk: `${pkPrefixes.order}#${sk}`,
-            userPkSk: `${pkPrefixes.user}#${userPkSk}`,
+            userPkSk: userPkSk,
             orderStatus: 'open', // use this as a filter
             orderType, // use this as a filter
           },
@@ -54,6 +56,18 @@ function createOrderTransaction(orderAttributes) {
       },
     ],
   };
+
+  return result;
+}
+
+function createOrderAttributes(reqBody) {
+  const result = {
+    ...reqBody,
+    userPkSk: `${pkPrefixes.user}#${reqBody.user}`,
+    companyPkSk: `${pkPrefixes.company}#${reqBody.tickerSymbol}`,
+  };
+
+  delete result.user;
 
   return result;
 }

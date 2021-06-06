@@ -1,8 +1,8 @@
 import Ajv from 'ajv';
 import { httpMethods } from '../utils/http';
 import { createRegexGroup } from '../utils/regex';
-import { companyPkSkPattern } from './companies';
-import { userPkSkPattern } from './users';
+import { companyPkSkPattern, companySkPattern } from './companies';
+import { userPkSkPattern, userSkPattern } from './users';
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
 
@@ -28,7 +28,16 @@ const httpSchemas = Object.freeze({
     properties: {
       body: {
         type: 'object',
-        properties: {},
+        properties: {
+          user: { type: 'string', pattern: `^${userSkPattern}$` },
+          orderType: {
+            type: 'string',
+            pattern: `^${createRegexGroup(orderTypes)}$`,
+          },
+          tickerSymbol: { type: 'string', pattern: `^${companySkPattern}$` },
+          total: { type: 'integer', min: 1 },
+          quantity: { type: 'integer', min: 1 },
+        },
         required: [],
       },
     },
@@ -56,11 +65,15 @@ export function validOrderAttributes(orderAttributes) {
       },
       userPkSk: {
         type: 'string',
-        pattern: userPkSkPattern,
+        pattern: `^${userPkSkPattern}$`,
       },
       companyPkSk: {
         type: 'string',
         pattern: `^${companyPkSkPattern}$`,
+      },
+      tickerSymbol: {
+        type: 'string',
+        pattern: `^${companySkPattern}$`,
       },
       total: {
         type: 'integer',
