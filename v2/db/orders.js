@@ -6,20 +6,64 @@ import {
   validOrderAttributes,
 } from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
+import { HttpError } from '../utils/http';
+import { getItems } from './shared';
+import { getUser } from './users';
 
 const { MAIN_TABLE_NAME } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export async function createOrder(reqBody) {
-  return dynamoDb.transactWrite(createOrderTransaction(reqBody)).promise();
-}
-
-function createOrderTransaction(reqBody) {
-  const orderAttributes = createOrderAttributes(reqBody);
+  const orderAttributes = createOrderAttributes();
 
   if (!validOrderAttributes(orderAttributes))
-    throw new Error('Order attributes are invalid');
+    throw HttpError.BadRequest('Order attributes are invalid');
 
+  const isValidUserOrder = await validUserOrder(orderAttributes);
+
+  if (!isValidUserOrder)
+    throw HttpError.BadRequest('User cannot create this order');
+
+  return dynamoDb
+    .transactWrite(createOrderTransaction(orderAttributes))
+    .promise();
+
+  function createOrderAttributes() {
+    const result = {
+      ...reqBody,
+      userPkSk: `${pkPrefixes.user}#${reqBody.user}`,
+      companyPkSk: `${pkPrefixes.company}#${reqBody.tickerSymbol}`,
+    };
+
+    delete result.user;
+
+    return result;
+  }
+
+  async function validUserOrder() {
+    const user = getItems(await getUser(reqBody.user));
+
+    if (!user) {
+      console.info('User does not exist');
+      throw new HttpError('Could not get user');
+    }
+
+    if (orderAttributes.orderType === orderTypes.buy) {
+      return user.cashOnHand >= orderAttributes.total;
+    }
+
+    if (orderAttributes.orderType === orderTypes.sell) {
+      return (
+        user.stocks[orderAttributes.tickerSymbol].quantityOnHand >=
+        orderAttributes.quantity
+      );
+    }
+
+    return false;
+  }
+}
+
+function createOrderTransaction(orderAttributes) {
   const { orderType, userPkSk, companyPkSk, total, quantity, tickerSymbol } =
     orderAttributes;
   const created = new Date().toISOString();
@@ -61,18 +105,6 @@ function createOrderTransaction(reqBody) {
       },
     ],
   };
-
-  return result;
-}
-
-function createOrderAttributes(reqBody) {
-  const result = {
-    ...reqBody,
-    userPkSk: `${pkPrefixes.user}#${reqBody.user}`,
-    companyPkSk: `${pkPrefixes.company}#${reqBody.tickerSymbol}`,
-  };
-
-  delete result.user;
 
   return result;
 }
