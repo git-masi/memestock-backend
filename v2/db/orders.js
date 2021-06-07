@@ -1,6 +1,10 @@
 import { DynamoDB } from 'aws-sdk';
 import { nanoid } from 'nanoid';
-import { validOrderAttributes } from '../schema/orders';
+import {
+  orderStatuses,
+  orderTypes,
+  validOrderAttributes,
+} from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
 
 const { MAIN_TABLE_NAME } = process.env;
@@ -32,11 +36,11 @@ function createOrderTransaction(reqBody) {
             companyPkSk,
             total,
             quantity,
-            buyer: orderType === 'buy' ? userPkSk : '',
-            seller: orderType === 'sell' ? userPkSk : '',
+            buyer: orderType === orderTypes.buy ? userPkSk : '',
+            seller: orderType === orderTypes.sell ? userPkSk : '',
             originatingUser: userPkSk,
             orderType,
-            orderStatus: 'open',
+            orderStatus: orderStatuses.open,
             tickerSymbol,
           },
         },
@@ -49,7 +53,7 @@ function createOrderTransaction(reqBody) {
             sk: `${userPkSk}#${pkPrefixes.order}#${sk}`,
             orderPkSk: `${pkPrefixes.order}#${sk}`,
             userPkSk: userPkSk,
-            orderStatus: 'open', // use this as a filter
+            orderStatus: orderStatuses.open, // use this as a filter
             orderType, // use this as a filter
             tickerSymbol,
           },

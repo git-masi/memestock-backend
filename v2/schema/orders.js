@@ -6,9 +6,15 @@ import { userPkSkPattern, userSkPattern } from './users';
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
 
-const orderTypes = Object.freeze({
+export const orderTypes = Object.freeze({
   buy: 'buy',
   sell: 'sell',
+});
+
+export const orderStatuses = Object.freeze({
+  open: 'open',
+  cancelled: 'cancelled',
+  fulfilled: 'fulfilled',
 });
 
 const httpSchemas = Object.freeze({
