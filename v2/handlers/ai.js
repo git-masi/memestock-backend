@@ -10,6 +10,7 @@ import {
 import { getFirstItem, getItems } from '../db/shared';
 import { getCompanies } from '../db/companies';
 import { getRecentOrders, getRecentUserOrders } from '../db/orders';
+import { orderStatuses, orderTypes } from '../schema/orders';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -84,25 +85,32 @@ async function getDataForUtilityScores() {
 
   const dataFetchResults = await Promise.all([
     getCompanies(),
-    getRecentOrders('open', 'buy', numOrdersToGet),
-    getRecentOrders('open', 'sell', numOrdersToGet),
+    getRecentOrders(orderStatuses.open, orderTypes.buy, numOrdersToGet),
+    getRecentOrders(orderStatuses.open, orderTypes.sell, numOrdersToGet),
+    getRecentOrders(orderStatuses.fulfilled, orderTypes.sell, numOrdersToGet),
     getRecentUserOrders(
       `${nextAiProfile.pk}#${nextAiProfile.sk}`,
       numOrdersToGet
     ),
   ]);
 
-  const [companies, openBuyOrders, openSellOrders, userOrders] =
-    dataFetchResults.map((res) => getItems(res));
-
-  // todo: delete
-  console.log(
-    nextAiProfile,
+  const [
     companies,
     openBuyOrders,
     openSellOrders,
-    userOrders
-  );
+    fulfilledOrders,
+    userOrders,
+  ] = dataFetchResults.map((res) => getItems(res));
+
+  // todo: delete
+  // console.log(
+  //   nextAiProfile,
+  //   companies,
+  //   openBuyOrders,
+  //   openSellOrders,
+  //   userOrders,
+  //   fulfilledOrders
+  // );
 
   return {
     aiProfile: nextAiProfile,
@@ -110,6 +118,7 @@ async function getDataForUtilityScores() {
     openBuyOrders,
     openSellOrders,
     userOrders,
+    fulfilledOrders,
   };
 }
 
