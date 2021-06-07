@@ -55,7 +55,7 @@ function routeGetRequest(event) {
 }
 
 export async function executeAiAction() {
-  // data: { aiProfile, companies, openBuyOrders, openSellOrders, userOrders }
+  // data: { aiProfile, companies, openBuyOrders, openSellOrders, fulfilledOrders, userOrders }
   const data = await getDataForUtilityScores();
 
   // userStockValues: {
@@ -70,7 +70,8 @@ export async function executeAiAction() {
     data.aiProfile,
     userStockValues,
     data.openBuyOrders,
-    data.openSellOrders
+    data.openSellOrders,
+    data.fulfilledOrders
   );
 
   // todo: delete
@@ -161,7 +162,13 @@ function getValueOfUserStocks(user, companies) {
   }
 }
 
-function getBoosts(aiProfile, userStockValues, openBuyOrders, openSellOrders) {
+function getBoosts(
+  aiProfile,
+  userStockValues,
+  openBuyOrders,
+  openSellOrders,
+  fulfilledOrders
+) {
   const lowHighCashBoosts = getHighLowCashBoosts(
     aiProfile,
     userStockValues.totalStockValue
@@ -170,8 +177,12 @@ function getBoosts(aiProfile, userStockValues, openBuyOrders, openSellOrders) {
     openBuyOrders,
     openSellOrders
   );
-  // const changeInPricePerShare = calculateChangeInPricePerShare(copy);
-  const result = { ...lowHighCashBoosts, ...mostFreqBoosts };
+  const changeInPricePerShare = calculateChangeInPricePerShare(fulfilledOrders);
+  const result = {
+    ...lowHighCashBoosts,
+    ...mostFreqBoosts,
+    ...changeInPricePerShare,
+  };
   return result;
 }
 
@@ -201,7 +212,6 @@ function calculateBoostForMostFrequentOrders(openBuyOrders, openSellOrders) {
 function getMostFrequentStock(orders) {
   if (orders.length < 1) return '';
   const numPerStock = getNumOrdersPerStock();
-  console.log(numPerStock);
   const entries = Object.entries(numPerStock);
   const sorted = entries.sort((entryA, entryB) => entryB[1] - entryA[1]);
   const firstEntry = sorted[0];
@@ -214,6 +224,44 @@ function getMostFrequentStock(orders) {
       const symbol = order?.tickerSymbol;
       if (!(symbol in acc)) acc[symbol] = 0;
       acc[symbol] += 1;
+      return acc;
+    }, {});
+
+    return result;
+  }
+}
+
+function calculateChangeInPricePerShare(fulfilledOrders) {
+  const sortedByStock = sortByStock();
+  const result = calculatePriceChange(sortedByStock);
+
+  return result;
+
+  function sortByStock() {
+    const result = fulfilledOrders.reduce((acc, order) => {
+      const { tickerSymbol } = order;
+      if (!(tickerSymbol in acc)) acc[tickerSymbol] = [];
+      acc[tickerSymbol].push(order);
+    }, {});
+
+    return result;
+  }
+
+  function calculatePriceChange(orders) {
+    const entries = Object.entries(orders);
+
+    if (entries.length === 0) return {};
+
+    const result = entries.reduce((acc, entry) => {
+      const [tickerSymbol, transactions] = entry;
+      const pricePerShare = transactions.map((t) => t.total / t.quantity);
+      const priceChanges = pricePerShare.map((price, i) =>
+        i === pricePerShare.length - 1 ? 0 : price - pricePerShare[i + 1]
+      );
+      const change = priceChanges.reduce(
+        (sum, priceChange) => sum + priceChange
+      );
+      acc[tickerSymbol] = change; // cents
       return acc;
     }, {});
 
