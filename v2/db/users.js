@@ -79,3 +79,15 @@ async function createStartingStocks(minStartingCash, maxStartingCash) {
 
   return stocks;
 }
+
+export function getUser(sk) {
+  const params = {
+    TableName: MAIN_TABLE_NAME,
+    Key: {
+      pk: pkPrefixes.user,
+      sk: sk,
+    },
+  };
+
+  return dynamoDb.get(params).promise();
+}
