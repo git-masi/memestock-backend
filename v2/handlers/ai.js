@@ -242,6 +242,7 @@ function calculateChangeInPricePerShare(fulfilledOrders) {
       const { tickerSymbol } = order;
       if (!(tickerSymbol in acc)) acc[tickerSymbol] = [];
       acc[tickerSymbol].push(order);
+      return acc;
     }, {});
 
     return result;
