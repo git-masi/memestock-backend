@@ -19,13 +19,20 @@ export async function createOrder(reqBody) {
   if (!validOrderAttributes(orderAttributes))
     throw HttpError.BadRequest('Order attributes are invalid');
 
+  const user = getItems(await getUser(reqBody.user));
+
+  if (!user) {
+    console.info('User does not exist');
+    throw new HttpError('Could not get user');
+  }
+
   const isValidUserOrder = await validUserOrder(orderAttributes);
 
   if (!isValidUserOrder)
     throw HttpError.BadRequest('User cannot create this order');
 
   return dynamoDb
-    .transactWrite(createOrderTransaction(orderAttributes))
+    .transactWrite(createOrderTransaction(orderAttributes, user))
     .promise();
 
   function createOrderAttributes() {
@@ -41,20 +48,13 @@ export async function createOrder(reqBody) {
   }
 
   async function validUserOrder() {
-    const user = getItems(await getUser(reqBody.user));
-
-    if (!user) {
-      console.info('User does not exist');
-      throw new HttpError('Could not get user');
-    }
-
     if (orderAttributes.orderType === orderTypes.buy) {
       return user.cashOnHand >= orderAttributes.total;
     }
 
     if (orderAttributes.orderType === orderTypes.sell) {
       return (
-        user.stocks[orderAttributes.tickerSymbol].quantityOnHand >=
+        (user.stocks?.[orderAttributes.tickerSymbol]?.quantityOnHand ?? 0) >=
         orderAttributes.quantity
       );
     }
@@ -63,7 +63,8 @@ export async function createOrder(reqBody) {
   }
 }
 
-function createOrderTransaction(orderAttributes) {
+// todo: decrease user cash or stocks depending on orderType
+function createOrderTransaction(orderAttributes, user) {
   const { orderType, userPkSk, companyPkSk, total, quantity, tickerSymbol } =
     orderAttributes;
   const created = new Date().toISOString();
@@ -103,10 +104,50 @@ function createOrderTransaction(orderAttributes) {
           },
         },
       },
+      {
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.user,
+            sk: userPkSk.replace(`${pkPrefixes.user}#`, ''),
+          },
+          ...createUserUpdateExpression(),
+        },
+      },
     ],
   };
 
   return result;
+
+  function createUserUpdateExpression() {
+    if (orderType === orderTypes.buy) {
+      return {
+        UpdateExpression: 'SET #coh = :coh',
+        ExpressionAttributeNames: {
+          '#coh': 'cashOnHand',
+        },
+        ExpressionAttributeValues: {
+          ':coh': user.cashOnHand - total,
+        },
+      };
+    }
+
+    if (orderType === orderTypes.sell) {
+      return {
+        UpdateExpression: 'SET #stocks.#s.#qoh = :qoh',
+        ExpressionAttributeNames: {
+          '#stocks': 'stocks',
+          '#s': tickerSymbol,
+          '#qh': 'quantityOnHand',
+        },
+        ExpressionAttributeValues: {
+          ':qoh': user.stocks[tickerSymbol].quantityOnHand - quantity,
+        },
+      };
+    }
+
+    return {};
+  }
 }
 
 export function getRecentOrders(orderStatus, orderType, limit = 10) {
