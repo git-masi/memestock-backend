@@ -296,9 +296,10 @@ function createFulfillOrderActions(
 ) {
   const fillableBuyOrders = getFillableBuyOrders();
   const possibleBuyOrderActions = fillableBuyOrders.map(mapFulfillBuyOrders);
-  // const fillableSellOrders = getFillableSellOrders();
+  const fillableSellOrders = getFillableSellOrders();
+  const possibleSellOrderActions = fillableSellOrders.map(mapFulfillSellOrders);
 
-  return [...possibleBuyOrderActions];
+  return [...possibleBuyOrderActions, ...possibleSellOrderActions];
 
   function getFillableBuyOrders() {
     const notOwnOrders = filterOutUserOrders(buyOrders, aiProfile.sk);
@@ -314,17 +315,17 @@ function createFulfillOrderActions(
     }
   }
 
-  // function getFillableSellOrders() {
-  //   const notOwnOrders = filterOutUserOrders(sellOrders, aiProfile.sk);
-  //   const result = notOwnOrders.filter(orderCanBeFilled);
+  function getFillableSellOrders() {
+    const notOwnOrders = filterOutUserOrders(sellOrders, aiProfile.sk);
+    const result = notOwnOrders.filter(orderCanBeFilled);
 
-  //   return result;
+    return result;
 
-  //   function orderCanBeFilled(order) {
-  //     const { total } = order;
-  //     return aiProfile.cashOnHand >= total;
-  //   }
-  // }
+    function orderCanBeFilled(order) {
+      const { total } = order;
+      return aiProfile.cashOnHand >= total;
+    }
+  }
 
   function mapFulfillBuyOrders(order) {
     const { tickerSymbol } = order;
@@ -332,8 +333,8 @@ function createFulfillOrderActions(
     const pricePressureBoost =
       tickerSymbol in boosts && boosts[tickerSymbol] > 0
         ? Math.ceil(
-            (companies[tickerSymbol].currentPricePerShare /
-              boosts[tickerSymbol]) *
+            (boosts[tickerSymbol] /
+              companies[tickerSymbol].currentPricePerShare) *
               ((aiProfile.fomo + aiProfile.wildcard) / 2)
           )
         : 0;
@@ -348,8 +349,33 @@ function createFulfillOrderActions(
         baseUtilityScores.fulfillBuyOrder +
         freqBoost +
         pricePressureBoost +
-        boosts.highCashBoost +
-        collectorBoost,
+        collectorBoost +
+        boosts.lowCashBoost,
+    };
+
+    return result;
+  }
+
+  function mapFulfillSellOrders(order) {
+    const { tickerSymbol } = order;
+    const freqBoost =
+      boosts.mostFreqSell === tickerSymbol ? aiProfile.lossAversion : 0;
+    const pricePressureBoost =
+      tickerSymbol in boosts && boosts[tickerSymbol] < 0
+        ? Math.ceil(
+            (boosts[tickerSymbol] /
+              companies[tickerSymbol].currentPricePerShare) *
+              ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+          )
+        : 0;
+    const result = {
+      action: possibleActions.fulfillSellOrder,
+      data: order,
+      utilityScore:
+        baseUtilityScores.fulfillSellOrder +
+        freqBoost +
+        pricePressureBoost +
+        boosts.highCashBoost,
     };
 
     return result;
