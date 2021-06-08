@@ -13,6 +13,7 @@ import { getRecentOrders, getRecentUserOrders } from '../db/orders';
 import { orderStatuses, orderTypes } from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
 import { baseUtilityScores, possibleActions } from '../utils/ai';
+import { getRandomInt } from '../utils/dynamicValues';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -276,15 +277,23 @@ function calculateChangeInPricePerShare(fulfilledOrders) {
 }
 
 function createActions(data, userStockValues, boosts) {
+  const { companies, aiProfile, openBuyOrders } = data;
   const fulfillOrderActions = createFulfillOrderActions(
-    data.aiProfile,
-    data.companies,
-    data.openBuyOrders,
+    aiProfile,
+    companies,
+    openBuyOrders,
     data.openSellOrders,
     boosts
   );
+  const newOrderActions = createNewOrderActions(
+    aiProfile,
+    companies,
+    boosts,
+    openBuyOrders
+  );
+  const result = [...fulfillOrderActions, ...newOrderActions];
 
-  return [...fulfillOrderActions];
+  return result;
 }
 
 function createFulfillOrderActions(
@@ -385,6 +394,58 @@ function createFulfillOrderActions(
 function filterOutUserOrders(orders, sk) {
   const result = orders.filter(
     (o) => o.originatingUser !== `${pkPrefixes.user}#${sk}`
+  );
+  return result;
+}
+
+function createNewOrderActions(aiProfile, companies, boosts, buyOrders) {
+  // todo: refactor to use reduce instead of map
+  const possibleBuyOrderActions = companies.map(mapCompaniesForBuyOrders);
+  const result = [...possibleBuyOrderActions];
+
+  return result;
+
+  function mapCompaniesForBuyOrders(company) {
+    const { tickerSymbol, currentPricePerShare } = company;
+
+    if (currentPricePerShare * 0.8 > aiProfile.cashOnHand) return; // if stock price too high return
+
+    const freqBoost = boosts.mostFreqBuy === tickerSymbol ? aiProfile.fomo : 0;
+    const pricePressureBoost =
+      tickerSymbol in boosts && boosts[tickerSymbol] < 0 // want to buy if stock price is falling
+        ? Math.ceil(
+            (boosts[tickerSymbol] /
+              companies[tickerSymbol].currentPricePerShare) *
+              ((aiProfile.fomo + aiProfile.wildcard) / 2)
+          )
+        : 0;
+    const collectorBoost =
+      tickerSymbol in aiProfile.stocks
+        ? Math.ceil((aiProfile.collector + aiProfile.wildcard) / 2)
+        : 0;
+    const userOrders = filterOutNonUserOrders(buyOrders, aiProfile.sk);
+    const existingOrdersDecrease = Math.ceil(
+      userOrders.length * getRandomInt(0, aiProfile.wildcard)
+    );
+    const result = {
+      action: possibleActions.createBuyOrder,
+      data: { company, aiProfile },
+      utilityScore:
+        baseUtilityScores.createBuyOrder +
+        freqBoost +
+        pricePressureBoost +
+        collectorBoost +
+        boosts.lowCashBoost -
+        existingOrdersDecrease,
+    };
+
+    return result;
+  }
+}
+
+function filterOutNonUserOrders(orders, sk) {
+  const result = orders.filter(
+    (o) => o.originatingUser === `${pkPrefixes.user}#${sk}`
   );
   return result;
 }
