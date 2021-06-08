@@ -254,9 +254,9 @@ function calculateChangeInPricePerShare(fulfilledOrders) {
 
     const result = entries.reduce((acc, entry) => {
       const [tickerSymbol, transactions] = entry;
-      const pricePerShare = transactions.map((t) => t.total / t.quantity);
-      const priceChanges = pricePerShare.map((price, i) =>
-        i === pricePerShare.length - 1 ? 0 : price - pricePerShare[i + 1]
+      const pps = transactions.map((t) => t.total / t.quantity);
+      const priceChanges = pps.map((price, i) =>
+        i === pps.length - 1 ? 0 : price - pps[i + 1]
       );
       const change = priceChanges.reduce(
         (sum, priceChange) => sum + priceChange

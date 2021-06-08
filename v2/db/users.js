@@ -63,11 +63,11 @@ async function createStartingStocks(minStartingCash, maxStartingCash) {
   let totalStockValue = getRandomInt(minStartingCash, maxStartingCash);
 
   for (let i = 0; i < numStocks; i++) {
-    const { tickerSymbol, pk, pricePerShare } =
+    const { tickerSymbol, pk, currentPricePerShare } =
       getRandomValueFromArray(companies);
     const valueHeld =
       i === numStocks - 1 ? totalStockValue : getRandomInt(0, totalStockValue);
-    const amountHeld = Math.floor(valueHeld / pricePerShare);
+    const amountHeld = Math.floor(valueHeld / currentPricePerShare);
     const quantityHeld = amountHeld > 0 ? amountHeld : 1;
 
     stocks[tickerSymbol] = {
