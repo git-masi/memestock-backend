@@ -11,6 +11,8 @@ import { getFirstItem, getItems } from '../db/shared';
 import { getCompanies } from '../db/companies';
 import { getRecentOrders, getRecentUserOrders } from '../db/orders';
 import { orderStatuses, orderTypes } from '../schema/orders';
+import { pkPrefixes } from '../schema/pkPrefixes';
+import { baseUtilityScores, possibleActions } from '../utils/ai';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -74,8 +76,11 @@ export async function executeAiAction() {
     data.fulfilledOrders
   );
 
+  const actions = createActions(data, userStockValues, boosts);
+
   // todo: delete
   console.log(boosts);
+  console.log(actions);
 }
 
 async function getDataForUtilityScores() {
@@ -268,4 +273,92 @@ function calculateChangeInPricePerShare(fulfilledOrders) {
 
     return result;
   }
+}
+
+function createActions(data, userStockValues, boosts) {
+  const fulfillOrderActions = createFulfillOrderActions(
+    data.aiProfile,
+    data.companies,
+    data.openBuyOrders,
+    data.openSellOrders,
+    boosts
+  );
+
+  return [...fulfillOrderActions];
+}
+
+function createFulfillOrderActions(
+  aiProfile,
+  companies,
+  buyOrders,
+  sellOrders,
+  boosts
+) {
+  const fillableBuyOrders = getFillableBuyOrders();
+  const possibleBuyOrderActions = fillableBuyOrders.map(mapFulfillBuyOrders);
+  // const fillableSellOrders = getFillableSellOrders();
+
+  return [...possibleBuyOrderActions];
+
+  function getFillableBuyOrders() {
+    const notOwnOrders = filterOutUserOrders(buyOrders, aiProfile.sk);
+    const result = notOwnOrders.filter(orderCanBeFilled);
+
+    return result;
+
+    function orderCanBeFilled(order) {
+      const { tickerSymbol, quantity } = order;
+      const hasStock = tickerSymbol in aiProfile.stocks;
+      if (!hasStock) return false;
+      return aiProfile.stocks[tickerSymbol].quantityOnHand >= quantity;
+    }
+  }
+
+  // function getFillableSellOrders() {
+  //   const notOwnOrders = filterOutUserOrders(sellOrders, aiProfile.sk);
+  //   const result = notOwnOrders.filter(orderCanBeFilled);
+
+  //   return result;
+
+  //   function orderCanBeFilled(order) {
+  //     const { total } = order;
+  //     return aiProfile.cashOnHand >= total;
+  //   }
+  // }
+
+  function mapFulfillBuyOrders(order) {
+    const { tickerSymbol } = order;
+    const freqBoost = boosts.mostFreqBuy === tickerSymbol ? aiProfile.fomo : 0;
+    const pricePressureBoost =
+      tickerSymbol in boosts && boosts[tickerSymbol] > 0
+        ? Math.ceil(
+            (companies[tickerSymbol].currentPricePerShare /
+              boosts[tickerSymbol]) *
+              ((aiProfile.fomo + aiProfile.wildcard) / 2)
+          )
+        : 0;
+    const collectorBoost =
+      tickerSymbol in aiProfile.stocks
+        ? Math.ceil((aiProfile.collector + aiProfile.wildcard) / 2)
+        : 0;
+    const result = {
+      action: possibleActions.fulfillBuyOrder,
+      data: order,
+      utilityScore:
+        baseUtilityScores.fulfillBuyOrder +
+        freqBoost +
+        pricePressureBoost +
+        boosts.highCashBoost +
+        collectorBoost,
+    };
+
+    return result;
+  }
+}
+
+function filterOutUserOrders(orders, sk) {
+  const result = orders.filter(
+    (o) => o.originatingUser !== `${pkPrefixes.user}#${sk}`
+  );
+  return result;
 }
