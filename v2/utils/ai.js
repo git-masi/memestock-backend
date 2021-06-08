@@ -26,20 +26,20 @@ export const baseAiProfiles = Object.freeze([
 ]);
 
 export const possibleActions = Object.freeze({
-  buyOrder: 'buyOrder',
-  sellOrder: 'sellOrder',
-  newBuyOrder: 'newBuyOrder',
-  newSellOrder: 'newSellOrder',
+  fulfillBuyOrder: 'fulfillBuyOrder',
+  fulfillSellOrder: 'fulfillSellOrder',
+  createBuyOrder: 'createBuyOrder',
+  createSellOrder: 'createSellOrder',
   cancelBuyOrder: 'cancelBuyOrder',
   cancelSellOrder: 'cancelSellOrder',
   doNothing: 'doNothing',
 });
 
 export const baseUtilityScores = Object.freeze({
-  [possibleActions.buyOrder]: 20,
-  [possibleActions.sellOrder]: 20,
-  [possibleActions.newBuyOrder]: 20,
-  [possibleActions.newSellOrder]: 20,
+  [possibleActions.fulfillBuyOrder]: 20,
+  [possibleActions.fulfillSellOrder]: 20,
+  [possibleActions.createBuyOrder]: 20,
+  [possibleActions.createSellOrder]: 20,
   [possibleActions.cancelBuyOrder]: 20,
   [possibleActions.cancelSellOrder]: 20,
   [possibleActions.doNothing]: 10,
