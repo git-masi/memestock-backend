@@ -138,7 +138,7 @@ function createOrderTransaction(orderAttributes, user) {
         ExpressionAttributeNames: {
           '#stocks': 'stocks',
           '#s': tickerSymbol,
-          '#qh': 'quantityOnHand',
+          '#qoh': 'quantityOnHand',
         },
         ExpressionAttributeValues: {
           ':qoh': user.stocks[tickerSymbol].quantityOnHand - quantity,
