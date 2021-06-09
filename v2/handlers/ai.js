@@ -13,7 +13,7 @@ import { getRecentOrders, getRecentUserOrders } from '../db/orders';
 import { orderStatuses, orderTypes } from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
 import { baseUtilityScores, possibleActions } from '../utils/ai';
-import { getRandomInt } from '../utils/dynamicValues';
+import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -277,19 +277,20 @@ function calculateChangeInPricePerShare(fulfilledOrders) {
 }
 
 function createActions(data, userStockValues, boosts) {
-  const { companies, aiProfile, openBuyOrders } = data;
+  const { companies, aiProfile, openBuyOrders, openSellOrders } = data;
   const fulfillOrderActions = createFulfillOrderActions(
     aiProfile,
     companies,
     openBuyOrders,
-    data.openSellOrders,
+    openSellOrders,
     boosts
   );
   const newOrderActions = createNewOrderActions(
     aiProfile,
     companies,
     boosts,
-    openBuyOrders
+    openBuyOrders,
+    openSellOrders
   );
   const result = [...fulfillOrderActions, ...newOrderActions];
 
@@ -398,10 +399,17 @@ function filterOutUserOrders(orders, sk) {
   return result;
 }
 
-function createNewOrderActions(aiProfile, companies, boosts, buyOrders) {
+function createNewOrderActions(
+  aiProfile,
+  companies,
+  boosts,
+  buyOrders,
+  sellOrders
+) {
   // todo: refactor to use reduce instead of map
   const possibleBuyOrderActions = companies.map(mapCompaniesForBuyOrders);
-  const result = [...possibleBuyOrderActions];
+  const possibleSellOrderActions = companies.map(mapCompaniesForSellOrders);
+  const result = [...possibleBuyOrderActions, ...possibleSellOrderActions];
 
   return result;
 
@@ -414,8 +422,7 @@ function createNewOrderActions(aiProfile, companies, boosts, buyOrders) {
     const pricePressureBoost =
       tickerSymbol in boosts && boosts[tickerSymbol] < 0 // want to buy if stock price is falling
         ? Math.ceil(
-            (boosts[tickerSymbol] /
-              companies[tickerSymbol].currentPricePerShare) *
+            (boosts[tickerSymbol] / currentPricePerShare) *
               ((aiProfile.fomo + aiProfile.wildcard) / 2)
           )
         : 0;
@@ -435,6 +442,44 @@ function createNewOrderActions(aiProfile, companies, boosts, buyOrders) {
         freqBoost +
         pricePressureBoost +
         collectorBoost +
+        boosts.highCashBoost -
+        existingOrdersDecrease,
+    };
+
+    return result;
+  }
+
+  function mapCompaniesForSellOrders(company) {
+    const { tickerSymbol, currentPricePerShare } = company;
+
+    const freqBoost = boosts.mostFreqSell === tickerSymbol ? aiProfile.fomo : 0;
+    const boostVal = Math.ceil(
+      (boosts[tickerSymbol] / currentPricePerShare) *
+        ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+    );
+    const pricePressureBoost =
+      tickerSymbol in boosts && boosts[tickerSymbol] > 0 // want to sell if price is rising
+        ? boostVal
+        : 0;
+    const lossAversionBoost =
+      tickerSymbol in boosts && boosts[tickerSymbol] < 0 // want to sell if price is falling, fear of loss
+        ? boostVal
+        : 0;
+    const randomBoost = getRandomValueFromArray([
+      pricePressureBoost,
+      lossAversionBoost,
+    ]);
+    const userOrders = filterOutNonUserOrders(sellOrders, aiProfile.sk);
+    const existingOrdersDecrease = Math.ceil(
+      userOrders.length * getRandomInt(0, aiProfile.wildcard)
+    );
+    const result = {
+      action: possibleActions.createSellOrder,
+      data: { company, aiProfile },
+      utilityScore:
+        baseUtilityScores.createSellOrder +
+        freqBoost +
+        randomBoost +
         boosts.lowCashBoost -
         existingOrdersDecrease,
     };
