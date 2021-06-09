@@ -280,21 +280,8 @@ function calculateChangeInPricePerShare(fulfilledOrders) {
 }
 
 function createActions(data, boosts) {
-  const { companies, aiProfile, openBuyOrders, openSellOrders } = data;
-  const fulfillOrderActions = createFulfillOrderActions(
-    aiProfile,
-    companies,
-    openBuyOrders,
-    openSellOrders,
-    boosts
-  );
-  const newOrderActions = createNewOrderActions(
-    aiProfile,
-    companies,
-    openBuyOrders,
-    openSellOrders,
-    boosts
-  );
+  const fulfillOrderActions = createFulfillOrderActions(data, boosts);
+  const newOrderActions = createNewOrderActions(data, boosts);
   const cancelOrderActions = createCancelOrderActions(data, boosts);
   const result = [
     ...fulfillOrderActions,
@@ -305,13 +292,13 @@ function createActions(data, boosts) {
   return result;
 }
 
-function createFulfillOrderActions(
-  aiProfile,
-  companies,
-  buyOrders,
-  sellOrders,
-  boosts
-) {
+function createFulfillOrderActions(data, boosts) {
+  const {
+    companies,
+    aiProfile,
+    openBuyOrders: buyOrders,
+    openSellOrders: sellOrders,
+  } = data;
   const fillableBuyOrders = getFillableBuyOrders();
   const possibleBuyOrderActions = fillableBuyOrders.map(mapFulfillBuyOrders);
   const fillableSellOrders = getFillableSellOrders();
@@ -400,14 +387,13 @@ function createFulfillOrderActions(
   }
 }
 
-function createNewOrderActions(
-  aiProfile,
-  companies,
-  buyOrders,
-  sellOrders,
-  boosts
-) {
-  // todo: refactor to use reduce instead of map
+function createNewOrderActions(data, boosts) {
+  const {
+    companies,
+    aiProfile,
+    openBuyOrders: buyOrders,
+    openSellOrders: sellOrders,
+  } = data;
   const possibleBuyOrderActions = companies.map(mapCompaniesForBuyOrders);
   const possibleSellOrderActions = companies.map(mapCompaniesForSellOrders);
   const result = [...possibleBuyOrderActions, ...possibleSellOrderActions];
