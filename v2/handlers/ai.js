@@ -492,9 +492,10 @@ function createNewOrderActions(
 function createCancelOrderActions(data, boosts) {
   const { companies, aiProfile, userOrders } = data;
   const buyOrders = filterByOrderType(userOrders, 'buy');
-  // const sellOrders = filterByOrderType(userOrders, 'sell');
+  const sellOrders = filterByOrderType(userOrders, 'sell');
   const buyOrderActions = buyOrders.reduce(reduceBuyOrders, []);
-  const result = [...buyOrderActions];
+  const sellOrderActions = sellOrders.reduce(reduceSellOrders, []);
+  const result = [...buyOrderActions, ...sellOrderActions];
 
   return result;
 
@@ -514,6 +515,23 @@ function createCancelOrderActions(data, boosts) {
         pricePressureUpBoost -
         pricePressureDownBoost +
         boosts.lowCashBoost,
+    };
+
+    return [...acc, action];
+  }
+
+  function reduceSellOrders(acc, order) {
+    const { pricePressureDownBoost, pricePressureUpBoost } =
+      getPriceUpDownBoosts(order);
+
+    const action = {
+      action: possibleActions.cancelSellOrder,
+      data: order,
+      utilityScore:
+        baseUtilityScores.cancelSellOrder +
+        pricePressureDownBoost -
+        pricePressureUpBoost +
+        boosts.highCashBoost,
     };
 
     return [...acc, action];
