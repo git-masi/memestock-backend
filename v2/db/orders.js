@@ -5,7 +5,7 @@ import {
   orderTypes,
   validOrderAttributes,
 } from '../schema/orders';
-import { pkPrefixes } from '../schema/pkPrefixes';
+import { pkPrefixes, stripPk } from '../schema/pkPrefixes';
 import { HttpError } from '../utils/http';
 import { getItems } from './shared';
 import { getUser } from './users';
@@ -222,4 +222,124 @@ export function getRecentUserOrders(userPkSk, limit = 10) {
       Limit: limit,
     })
     .promise();
+}
+
+export async function fulfillOrder(orderSk, completingUserSk) {
+  const order = await getOrder(orderSk);
+  const originatingUser = await getUser(stripPk(order.originatingUser));
+  const completingUser = getUser(completingUserSk);
+  const buyer =
+    order.orderType === orderTypes.buy ? originatingUser : completingUser;
+  const seller =
+    order.orderType === orderTypes.sell ? originatingUser : completingUser;
+
+  const params = {
+    TransactItems: [
+      {
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.order,
+            sk: orderSk,
+          },
+          ...createOrderUpdateExpression(),
+        },
+      },
+      {
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.userOrder,
+            sk: `${originatingUser.pk}#${originatingUser.sk}#${order.pk}#${order.sk}`,
+          },
+          UpdateExpression: 'SET orderStatus = :orderStatus',
+          ExpressionAttributeValues: {
+            ':orderStatus': orderStatuses.fulfilled,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.userOrder,
+            sk: `${completingUser.pk}#${completingUser.sk}#${order.pk}#${order.sk}`,
+            orderPkSk: `${order.pk}#${order.sk}`,
+            userPkSk: `${completingUser.pk}#${completingUser.sk}`,
+            orderStatus: orderStatuses.fulfilled,
+            orderType: order.orderType,
+            tickerSymbol: order.tickerSymbol,
+          },
+        },
+      },
+      {
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.user,
+            sk: buyer.sk,
+          },
+          ...createUserUpdateExpression('buyer'),
+        },
+      },
+      {
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.user,
+            sk: seller.sk,
+          },
+          ...createUserUpdateExpression('seller'),
+        },
+      },
+    ],
+  };
+
+  return dynamoDb.transactWrite(params).promise();
+
+  function createOrderUpdateExpression() {
+    switch (order.orderType) {
+      case orderTypes.buy:
+        return {};
+
+      case orderTypes.sell:
+        return {
+          UpdateExpression: 'SET buyer = :buyer, orderStatus = :orderStatus',
+          ExpressionAttributeValues: {
+            ':buyer': `${completingUser.pk}#${completingUser.sk}`,
+            ':orderStatus': orderStatuses.fulfilled,
+          },
+        };
+
+      default:
+        return {};
+    }
+  }
+
+  function createUserUpdateExpression(userRole) {
+    switch (userRole) {
+      case 'buyer':
+        return {
+          UpdateExpression: 'SET totalCash = :tc',
+          ExpressionAttributeValues: {
+            ':tc': buyer.totalCash - order.total,
+          },
+        };
+
+      case 'seller':
+        return {
+          UpdateExpression: 'SET stocks.#ts.quantityHeld = :qh',
+          ExpressionAttributeNames: {
+            '#ts': order.tickerSymbol,
+          },
+          ExpressionAttributeValues: {
+            ':qh':
+              seller.stocks[order.tickerSymbol].quantityHeld - order.quantity,
+          },
+        };
+
+      default:
+        return {};
+    }
+  }
 }
