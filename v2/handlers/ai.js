@@ -295,10 +295,16 @@ function createActions(data, boosts) {
   const fulfillOrderActions = createFulfillOrderActions(data, boosts);
   const newOrderActions = createNewOrderActions(data, boosts);
   const cancelOrderActions = createCancelOrderActions(data, boosts);
+  const doNothing = {
+    action: possibleActions.doNothing,
+    data: {},
+    utilityScore: baseUtilityScores.doNothing,
+  };
   const result = [
     ...fulfillOrderActions,
     ...newOrderActions,
     ...cancelOrderActions,
+    doNothing,
   ];
 
   return result;
