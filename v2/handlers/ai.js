@@ -79,9 +79,21 @@ export async function executeAiAction() {
 
   const actions = createActions(data, boosts);
 
+  const aiAction = getOneAction();
+
   // todo: delete
-  console.log(boosts);
-  console.log(actions);
+  console.log(aiAction);
+
+  function getOneAction() {
+    const actionsSortedByUtilityScore = actions.sort(
+      (a, b) => b.utilityScore - a.utilityScore
+    );
+    const result = getRandomValueFromArray(
+      actionsSortedByUtilityScore.slice(0, 5)
+    );
+
+    return result;
+  }
 }
 
 async function getDataForUtilityScores() {
