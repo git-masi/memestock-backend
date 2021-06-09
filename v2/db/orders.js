@@ -150,6 +150,18 @@ function createOrderTransaction(orderAttributes, user) {
   }
 }
 
+export function getOrder(sk) {
+  return dynamoDb
+    .get({
+      TableName: MAIN_TABLE_NAME,
+      Key: {
+        pk: pkPrefixes.order,
+        sk,
+      },
+    })
+    .promise();
+}
+
 export function getRecentOrders(orderStatus, orderType, limit = 10) {
   const params = {
     TableName: MAIN_TABLE_NAME,
@@ -203,7 +215,7 @@ export function getRecentUserOrders(userPkSk, limit = 10) {
         '#sk': 'sk',
       },
       ExpressionAttributeValues: {
-        ':pk': pkPrefixes.aiAction,
+        ':pk': pkPrefixes.userOrder,
         ':sk': userPkSk,
       },
       ScanIndexForward: false,
