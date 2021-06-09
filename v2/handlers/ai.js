@@ -9,7 +9,7 @@ import {
 } from '../db/ai';
 import { getFirstItem, getItems } from '../db/shared';
 import { getCompanies } from '../db/companies';
-import { getRecentOrders, getRecentUserOrders } from '../db/orders';
+import { getOrder, getRecentOrders, getRecentUserOrders } from '../db/orders';
 import { orderStatuses, orderTypes } from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
 import { baseUtilityScores, possibleActions } from '../utils/ai';
@@ -95,10 +95,7 @@ async function getDataForUtilityScores() {
     getRecentOrders(orderStatuses.open, orderTypes.buy, numOrdersToGet),
     getRecentOrders(orderStatuses.open, orderTypes.sell, numOrdersToGet),
     getRecentOrders(orderStatuses.fulfilled, orderTypes.sell, numOrdersToGet),
-    getRecentUserOrders(
-      `${nextAiProfile.pk}#${nextAiProfile.sk}`,
-      numOrdersToGet
-    ),
+    getUserOrders(),
   ]);
 
   const [
@@ -109,16 +106,6 @@ async function getDataForUtilityScores() {
     userOrders,
   ] = dataFetchResults.map((res) => getItems(res));
 
-  // todo: delete
-  // console.log(
-  //   nextAiProfile,
-  //   companies,
-  //   openBuyOrders,
-  //   openSellOrders,
-  //   userOrders,
-  //   fulfilledOrders
-  // );
-
   return {
     aiProfile: nextAiProfile,
     companies,
@@ -127,6 +114,22 @@ async function getDataForUtilityScores() {
     userOrders,
     fulfilledOrders,
   };
+
+  // todo: refactor so this is a function in the orders db file
+  async function getUserOrders() {
+    const userOrders = await getRecentUserOrders(
+      `${nextAiProfile.pk}#${nextAiProfile.sk}`,
+      numOrdersToGet
+    );
+
+    const orders = await Promise.all(
+      getItems(userOrders).map((uo) =>
+        getOrder(uo.orderPkSk.replace(`${pkPrefixes.order}#`, ''))
+      )
+    );
+
+    return { Items: orders.map((o) => o.Item) };
+  }
 }
 
 async function getNextAiProfile() {
@@ -288,11 +291,16 @@ function createActions(data, userStockValues, boosts) {
   const newOrderActions = createNewOrderActions(
     aiProfile,
     companies,
-    boosts,
     openBuyOrders,
-    openSellOrders
+    openSellOrders,
+    boosts
   );
-  const result = [...fulfillOrderActions, ...newOrderActions];
+  const cancelOrderActions = createCancelOrderActions(data, boosts);
+  const result = [
+    ...fulfillOrderActions,
+    ...newOrderActions,
+    ...cancelOrderActions,
+  ];
 
   return result;
 }
@@ -395,9 +403,9 @@ function createFulfillOrderActions(
 function createNewOrderActions(
   aiProfile,
   companies,
-  boosts,
   buyOrders,
-  sellOrders
+  sellOrders,
+  boosts
 ) {
   // todo: refactor to use reduce instead of map
   const possibleBuyOrderActions = companies.map(mapCompaniesForBuyOrders);
@@ -478,6 +486,57 @@ function createNewOrderActions(
     };
 
     return result;
+  }
+}
+
+function createCancelOrderActions(data, boosts) {
+  const { companies, aiProfile, userOrders } = data;
+  const buyOrders = filterByOrderType(userOrders, 'buy');
+  // const sellOrders = filterByOrderType(userOrders, 'sell');
+  const buyOrderActions = buyOrders.reduce(reduceBuyOrders, []);
+  const result = [...buyOrderActions];
+
+  return result;
+
+  function filterByOrderType(orders, type) {
+    return orders.filter((order) => order?.orderType === type);
+  }
+
+  function reduceBuyOrders(acc, order) {
+    const { tickerSymbol } = order;
+
+    const { currentPricePerShare } = companies.find(
+      (c) => c.tickerSymbol === tickerSymbol
+    );
+
+    const percentChange =
+      tickerSymbol in boosts ? boosts[tickerSymbol] / currentPricePerShare : 0;
+
+    // price is falling
+    const pricePressureDownBoost =
+      boosts[tickerSymbol] < 0
+        ? Math.ceil(
+            percentChange * ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
+          )
+        : 0;
+
+    // price is rising
+    const pricePressureUpBoost =
+      boosts[tickerSymbol] < 0
+        ? Math.ceil(percentChange * ((aiProfile.fomo + aiProfile.wildcard) / 2))
+        : 0;
+
+    const action = {
+      action: possibleActions.cancelBuyOrder,
+      data: order,
+      utilityScore:
+        baseUtilityScores.cancelBuyOrder +
+        pricePressureDownBoost -
+        pricePressureUpBoost +
+        boosts.lowCashBoost,
+    };
+
+    return [...acc, action];
   }
 }
 
