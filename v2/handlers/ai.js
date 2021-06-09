@@ -77,7 +77,7 @@ export async function executeAiAction() {
     data.fulfilledOrders
   );
 
-  const actions = createActions(data, userStockValues, boosts);
+  const actions = createActions(data, boosts);
 
   // todo: delete
   console.log(boosts);
@@ -279,7 +279,7 @@ function calculateChangeInPricePerShare(fulfilledOrders) {
   }
 }
 
-function createActions(data, userStockValues, boosts) {
+function createActions(data, boosts) {
   const { companies, aiProfile, openBuyOrders, openSellOrders } = data;
   const fulfillOrderActions = createFulfillOrderActions(
     aiProfile,
