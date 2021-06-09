@@ -503,6 +503,23 @@ function createCancelOrderActions(data, boosts) {
   }
 
   function reduceBuyOrders(acc, order) {
+    const { pricePressureDownBoost, pricePressureUpBoost } =
+      getPriceUpDownBoosts(order);
+
+    const action = {
+      action: possibleActions.cancelBuyOrder,
+      data: order,
+      utilityScore:
+        baseUtilityScores.cancelBuyOrder +
+        pricePressureUpBoost -
+        pricePressureDownBoost +
+        boosts.lowCashBoost,
+    };
+
+    return [...acc, action];
+  }
+
+  function getPriceUpDownBoosts(order) {
     const { tickerSymbol } = order;
 
     const { currentPricePerShare } = companies.find(
@@ -526,17 +543,9 @@ function createCancelOrderActions(data, boosts) {
         ? Math.ceil(percentChange * ((aiProfile.fomo + aiProfile.wildcard) / 2))
         : 0;
 
-    const action = {
-      action: possibleActions.cancelBuyOrder,
-      data: order,
-      utilityScore:
-        baseUtilityScores.cancelBuyOrder +
-        pricePressureDownBoost -
-        pricePressureUpBoost +
-        boosts.lowCashBoost,
-    };
+    const result = { pricePressureDownBoost, pricePressureUpBoost };
 
-    return [...acc, action];
+    return result;
   }
 }
 
