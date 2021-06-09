@@ -392,13 +392,6 @@ function createFulfillOrderActions(
   }
 }
 
-function filterOutUserOrders(orders, sk) {
-  const result = orders.filter(
-    (o) => o.originatingUser !== `${pkPrefixes.user}#${sk}`
-  );
-  return result;
-}
-
 function createNewOrderActions(
   aiProfile,
   companies,
@@ -486,6 +479,13 @@ function createNewOrderActions(
 
     return result;
   }
+}
+
+function filterOutUserOrders(orders, sk) {
+  const result = orders.filter(
+    (o) => o.originatingUser !== `${pkPrefixes.user}#${sk}`
+  );
+  return result;
 }
 
 function filterOutNonUserOrders(orders, sk) {
