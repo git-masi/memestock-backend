@@ -9,3 +9,12 @@ export const pkPrefixes = Object.freeze({
   tickerSymbol: 'TICKER_SYMBOL',
   aiAction: 'AI_ACTION',
 });
+
+export function stripPk(pkSk) {
+  if (typeof pkSk !== 'string') return null;
+
+  const pkPrefixRegex = new Regexp(`(${Object.values(pkPrefixes).join('|')})#`);
+  const result = pkSk.replace(pkPrefixRegex, '');
+
+  return result;
+}
