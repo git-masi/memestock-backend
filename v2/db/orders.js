@@ -226,6 +226,12 @@ export function getRecentUserOrders(userPkSk, limit = 10) {
 
 export async function fulfillOrder(orderSk, completingUserSk) {
   const order = getItems(await getOrder(orderSk));
+
+  if (order.orderStatus !== orderStatuses.open)
+    throw HttpError.BadRequest(
+      'Cannot fulfill order that is not currently open'
+    );
+
   const originatingUser = getItems(
     await getUser(stripPk(order.originatingUser))
   );
@@ -238,6 +244,15 @@ export async function fulfillOrder(orderSk, completingUserSk) {
     order.orderType === orderTypes.buy ? originatingUser : completingUser;
   const seller =
     order.orderType === orderTypes.sell ? originatingUser : completingUser;
+
+  if (
+    (order.orderType === orderTypes.buy &&
+      (completingUser.stocks?.[order.tickerSymbol]?.quantityOnHand ?? 0) <
+        order.quantity) ||
+    (order.orderType === orderTypes.sell &&
+      completingUser.totalCash < order.total)
+  )
+    throw HttpError.BadRequest('Cannot fulfill order');
 
   const params = {
     TransactItems: [
