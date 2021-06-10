@@ -228,9 +228,7 @@ export async function fulfillOrder(orderSk, completingUserSk) {
   const order = getItems(await getOrder(orderSk));
 
   if (order.orderStatus !== orderStatuses.open)
-    throw HttpError.BadRequest(
-      'Cannot fulfill order that is not currently open'
-    );
+    throw HttpError.BadRequest('Cannot fulfill order that is not open');
 
   const originatingUser = getItems(
     await getUser(stripPk(order.originatingUser))
@@ -282,7 +280,7 @@ export async function fulfillOrder(orderSk, completingUserSk) {
       {
         Put: {
           TableName: MAIN_TABLE_NAME,
-          Key: {
+          Item: {
             pk: pkPrefixes.userOrder,
             sk: `${completingUser.pk}#${completingUser.sk}#${order.pk}#${order.sk}`,
             orderPkSk: `${order.pk}#${order.sk}`,
@@ -321,7 +319,13 @@ export async function fulfillOrder(orderSk, completingUserSk) {
   function createOrderUpdateExpression() {
     switch (order.orderType) {
       case orderTypes.buy:
-        return {};
+        return {
+          UpdateExpression: 'SET seller = :seller, orderStatus = :orderStatus',
+          ExpressionAttributeValues: {
+            ':seller': `${completingUser.pk}#${completingUser.sk}`,
+            ':orderStatus': orderStatuses.fulfilled,
+          },
+        };
 
       case orderTypes.sell:
         return {
