@@ -16,6 +16,7 @@ import {
   getOrder,
   getRecentOrders,
   getRecentUserOrders,
+  cancelOrder,
 } from '../db/orders';
 import { orderStatuses, orderTypes } from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
@@ -110,26 +111,25 @@ export async function executeAiAction() {
 
   function execute() {
     const { action: type, data } = aiAction;
-    const { aiProfile, company } = data;
 
     switch (type) {
       case possibleActions.fulfillBuyOrder:
-        return fulfillOrder(aiAction.data.sk, aiProfile.sk);
+        return fulfillOrder(data.sk, aiProfile.sk);
 
       case possibleActions.fulfillSellOrder:
-        return fulfillOrder(aiAction.data.sk, aiProfile.sk);
+        return fulfillOrder(data.sk, aiProfile.sk);
 
       case possibleActions.createBuyOrder:
-        return createNewBuyOrder(company, aiProfile);
+        return createNewBuyOrder(data.company, data.aiProfile);
 
       case possibleActions.createSellOrder:
-        return createNewSellOrder(company, aiProfile);
+        return createNewSellOrder(data.company, data.aiProfile);
 
-      // case possibleActions.cancelBuyOrder:
-      //   return cancelOrder(aiAction);
+      case possibleActions.cancelBuyOrder:
+        return cancelOrder(data.sk);
 
-      // case possibleActions.cancelSellOrder:
-      //   return cancelOrder(aiAction);
+      case possibleActions.cancelSellOrder:
+        return cancelOrder(data.sk);
 
       case possibleActions.doNothing:
         break;
