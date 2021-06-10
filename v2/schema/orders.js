@@ -81,8 +81,6 @@ const httpSchemas = Object.freeze({
 });
 
 export function validOrdersHttpEvent(event) {
-  console.log(event.httpMethod);
-  console.log(httpSchemas[event.httpMethod]);
   return validateHttpSchema(event.httpMethod);
 
   function validateHttpSchema(method) {
