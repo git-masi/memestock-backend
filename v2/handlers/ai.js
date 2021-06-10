@@ -11,6 +11,7 @@ import {
 import { getFirstItem, getItems } from '../db/shared';
 import { getCompanies } from '../db/companies';
 import {
+  createOrder,
   fulfillOrder,
   getOrder,
   getRecentOrders,
@@ -19,7 +20,11 @@ import {
 import { orderStatuses, orderTypes } from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
 import { baseUtilityScores, possibleActions } from '../utils/ai';
-import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
+import {
+  getRandomInt,
+  getRandomValueFromArray,
+  getRandomFloat,
+} from '../utils/dynamicValues';
 
 export const handler = commonMiddleware(handleAiGateway);
 
@@ -86,11 +91,11 @@ export async function executeAiAction() {
   const actions = createActions(data, boosts);
 
   const aiAction = getOneAction();
+  console.info(aiAction);
 
   await execute();
 
-  // todo: delete
-  console.log(aiAction);
+  return createAiAction(aiAction);
 
   function getOneAction() {
     const actionsSortedByUtilityScore = actions.sort(
@@ -103,24 +108,22 @@ export async function executeAiAction() {
     return result;
   }
 
-  async function execute() {
-    const { action: type } = aiAction;
-    const { aiProfile } = data;
+  function execute() {
+    const { action: type, data } = aiAction;
+    const { aiProfile, company } = data;
 
     switch (type) {
       case possibleActions.fulfillBuyOrder:
-        await fulfillOrder(aiAction.data.sk, aiProfile.sk);
-        break;
+        return fulfillOrder(aiAction.data.sk, aiProfile.sk);
 
       case possibleActions.fulfillSellOrder:
-        await fulfillOrder(aiAction.data.sk, aiProfile.sk);
-        break;
+        return fulfillOrder(aiAction.data.sk, aiProfile.sk);
 
-      // case possibleActions.createBuyOrder:
-      //   return createNewBuyOrder(aiAction, aiProfile);
+      case possibleActions.createBuyOrder:
+        return createNewBuyOrder(company, aiProfile);
 
-      // case possibleActions.createSellOrder:
-      //   return createNewSellOrder(aiAction, aiProfile);
+      case possibleActions.createSellOrder:
+        return createNewSellOrder(company, aiProfile);
 
       // case possibleActions.cancelBuyOrder:
       //   return cancelOrder(aiAction);
@@ -136,8 +139,44 @@ export async function executeAiAction() {
           `Could not take action, ${type} is not a valid action type.`
         );
     }
+  }
 
-    return createAiAction(aiAction);
+  function createNewBuyOrder(company, user) {
+    const { currentPricePerShare, tickerSymbol } = company;
+    const { cashOnHand, sk: userSk } = user;
+    const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
+    const newPricePerShare = Math.round(
+      deviationFromPPS * currentPricePerShare
+    );
+    const maxQuantity = Math.floor(cashOnHand / newPricePerShare);
+    const quantity = getRandomInt(1, maxQuantity);
+
+    return createOrder({
+      user: userSk,
+      orderType: orderTypes.buy,
+      total: quantity * newPricePerShare,
+      quantity,
+      tickerSymbol,
+    });
+  }
+
+  function createNewSellOrder(company, user) {
+    const { currentPricePerShare, tickerSymbol } = company;
+    const { stocks, sk: userSk } = user;
+    const deviationFromPPS = 1 + getRandomFloat(-0.1, 0.1);
+    const newPricePerShare = Math.round(
+      deviationFromPPS * currentPricePerShare
+    );
+    const maxQuantity = stocks[tickerSymbol].quantityOnHand;
+    const quantity = getRandomIntMinToMax(1, maxQuantity);
+
+    return createOrder({
+      user: userSk,
+      orderType: orderTypes.sell,
+      total: quantity * newPricePerShare,
+      quantity,
+      tickerSymbol,
+    });
   }
 }
 
