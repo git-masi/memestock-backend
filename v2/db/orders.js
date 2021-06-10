@@ -389,6 +389,8 @@ export async function cancelOrder(orderSk) {
             ':orderStatus': orderStatuses.cancelled,
           },
         },
+      },
+      {
         Update: {
           TableName: MAIN_TABLE_NAME,
           Key: {
