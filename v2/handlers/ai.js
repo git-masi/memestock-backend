@@ -6,10 +6,16 @@ import {
   getAiByPkSk,
   getMostRecentAiAction,
   getFirstOrLastAi,
+  createAiAction,
 } from '../db/ai';
 import { getFirstItem, getItems } from '../db/shared';
 import { getCompanies } from '../db/companies';
-import { getOrder, getRecentOrders, getRecentUserOrders } from '../db/orders';
+import {
+  fulfillOrder,
+  getOrder,
+  getRecentOrders,
+  getRecentUserOrders,
+} from '../db/orders';
 import { orderStatuses, orderTypes } from '../schema/orders';
 import { pkPrefixes } from '../schema/pkPrefixes';
 import { baseUtilityScores, possibleActions } from '../utils/ai';
@@ -81,6 +87,8 @@ export async function executeAiAction() {
 
   const aiAction = getOneAction();
 
+  await execute();
+
   // todo: delete
   console.log(aiAction);
 
@@ -93,6 +101,43 @@ export async function executeAiAction() {
     );
 
     return result;
+  }
+
+  async function execute() {
+    const { action: type } = aiAction;
+    const { aiProfile } = data;
+
+    switch (type) {
+      case possibleActions.fulfillBuyOrder:
+        await fulfillOrder(aiAction.data.sk, aiProfile.sk);
+        break;
+
+      case possibleActions.fulfillSellOrder:
+        await fulfillOrder(aiAction.data.sk, aiProfile.sk);
+        break;
+
+      // case possibleActions.createBuyOrder:
+      //   return createNewBuyOrder(aiAction, aiProfile);
+
+      // case possibleActions.createSellOrder:
+      //   return createNewSellOrder(aiAction, aiProfile);
+
+      // case possibleActions.cancelBuyOrder:
+      //   return cancelOrder(aiAction);
+
+      // case possibleActions.cancelSellOrder:
+      //   return cancelOrder(aiAction);
+
+      case possibleActions.doNothing:
+        break;
+
+      default:
+        throw new Error(
+          `Could not take action, ${type} is not a valid action type.`
+        );
+    }
+
+    return createAiAction(aiAction);
   }
 }
 
