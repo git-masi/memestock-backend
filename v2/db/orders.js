@@ -228,6 +228,10 @@ export async function fulfillOrder(orderSk, completingUserSk) {
   const order = await getOrder(orderSk);
   const originatingUser = await getUser(stripPk(order.originatingUser));
   const completingUser = getUser(completingUserSk);
+
+  if (originatingUser.sk === completingUser.sk)
+    throw HttpError.BadRequest('Buyer and seller cannot be the same user');
+
   const buyer =
     order.orderType === orderTypes.buy ? originatingUser : completingUser;
   const seller =
