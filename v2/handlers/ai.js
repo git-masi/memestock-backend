@@ -96,7 +96,7 @@ export async function executeAiAction() {
 
   await execute();
 
-  return createAiAction(aiAction);
+  return createAiAction(aiAction, data.aiProfile);
 
   function getOneAction() {
     const actionsSortedByUtilityScore = actions.sort(

@@ -152,13 +152,15 @@ export function getAiByPkSk(pk, sk) {
     .promise();
 }
 
-export function createAiAction(aiAction) {
+export function createAiAction(aiAction, aiProfile) {
   return dynamoDb
     .put({
       TableName: MAIN_TABLE_NAME,
       Item: {
         pk: pkPrefixes.aiAction,
         sk: new Date().toISOString(),
+        aiTakingAction: `${aiProfile.pk}#${aiProfile.sk}`,
+        nextAi: aiProfile.nextAi,
         ...aiAction,
       },
     })
