@@ -151,3 +151,16 @@ export function getAiByPkSk(pk, sk) {
     })
     .promise();
 }
+
+export function createAiAction(aiAction) {
+  return dynamoDb
+    .put({
+      TableName: MAIN_TABLE_NAME,
+      Item: {
+        pk: pkPrefixes.aiAction,
+        sk: new Date().toISOString(),
+        ...aiAction,
+      },
+    })
+    .promise();
+}
