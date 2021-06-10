@@ -110,26 +110,26 @@ export async function executeAiAction() {
   }
 
   function execute() {
-    const { action: type, data } = aiAction;
+    const { action: type, data: actionData } = aiAction;
 
     switch (type) {
       case possibleActions.fulfillBuyOrder:
-        return fulfillOrder(data.sk, aiProfile.sk);
+        return fulfillOrder(actionData.sk, data.aiProfile.sk);
 
       case possibleActions.fulfillSellOrder:
-        return fulfillOrder(data.sk, aiProfile.sk);
+        return fulfillOrder(actionData.sk, data.aiProfile.sk);
 
       case possibleActions.createBuyOrder:
-        return createNewBuyOrder(data.company, data.aiProfile);
+        return createNewBuyOrder(actionData.company, data.aiProfile);
 
       case possibleActions.createSellOrder:
-        return createNewSellOrder(data.company, data.aiProfile);
+        return createNewSellOrder(actionData.company, data.aiProfile);
 
       case possibleActions.cancelBuyOrder:
-        return cancelOrder(data.sk);
+        return cancelOrder(actionData.sk);
 
       case possibleActions.cancelSellOrder:
-        return cancelOrder(data.sk);
+        return cancelOrder(actionData.sk);
 
       case possibleActions.doNothing:
         break;
@@ -168,7 +168,7 @@ export async function executeAiAction() {
       deviationFromPPS * currentPricePerShare
     );
     const maxQuantity = stocks[tickerSymbol].quantityOnHand;
-    const quantity = getRandomIntMinToMax(1, maxQuantity);
+    const quantity = getRandomInt(1, maxQuantity);
 
     return createOrder({
       user: userSk,
