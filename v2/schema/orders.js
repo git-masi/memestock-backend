@@ -1,10 +1,16 @@
 import Ajv from 'ajv';
 import { httpMethods } from '../utils/http';
-import { createRegexGroup } from '../utils/regex';
+import {
+  createRegexGroup,
+  startAndEndPattern,
+  utcIsoStringPattern,
+} from '../utils/regex';
 import { companyPkSkPattern, companySkPattern } from './companies';
 import { userPkSkPattern, userSkPattern } from './users';
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
+
+const orderSkPattern = `${utcIsoStringPattern}#[\\w\\-_]{8}`;
 
 export const orderTypes = Object.freeze({
   buy: 'buy',
@@ -41,15 +47,28 @@ const httpSchemas = Object.freeze({
             pattern: `^${createRegexGroup(orderTypes)}$`,
           },
           tickerSymbol: { type: 'string', pattern: `^${companySkPattern}$` },
-          total: { type: 'integer', min: 1 },
-          quantity: { type: 'integer', min: 1 },
+          total: { type: 'integer', minimum: 1 },
+          quantity: { type: 'integer', minimum: 1 },
         },
-        required: [],
+        required: ['user', 'orderType', 'tickerSymbol', 'total', 'quantity'],
       },
     },
     required: ['body'],
   },
-  [httpMethods.PUT]: {},
+  [httpMethods.PUT]: {
+    type: 'object',
+    properties: {
+      order: {
+        type: 'string',
+        pattern: startAndEndPattern(orderSkPattern),
+      },
+      user: {
+        type: 'string',
+        pattern: startAndEndPattern(userSkPattern),
+      },
+    },
+    required: ['order', 'user'],
+  },
   [httpMethods.DELETE]: {},
 });
 
