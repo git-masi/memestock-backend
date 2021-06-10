@@ -13,7 +13,7 @@ export const pkPrefixes = Object.freeze({
 export function stripPk(pkSk) {
   if (typeof pkSk !== 'string') return null;
 
-  const pkPrefixRegex = new Regexp(`(${Object.values(pkPrefixes).join('|')})#`);
+  const pkPrefixRegex = new RegExp(`(${Object.values(pkPrefixes).join('|')})#`);
   const result = pkSk.replace(pkPrefixRegex, '');
 
   return result;
