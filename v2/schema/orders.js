@@ -41,12 +41,15 @@ const httpSchemas = Object.freeze({
       body: {
         type: 'object',
         properties: {
-          user: { type: 'string', pattern: `^${userSkPattern}$` },
+          user: { type: 'string', pattern: startAndEndPattern(userSkPattern) },
           orderType: {
             type: 'string',
-            pattern: `^${createRegexGroup(orderTypes)}$`,
+            pattern: startAndEndPattern(createRegexGroup(orderTypes)),
           },
-          tickerSymbol: { type: 'string', pattern: `^${companySkPattern}$` },
+          tickerSymbol: {
+            type: 'string',
+            pattern: startAndEndPattern(companySkPattern),
+          },
           total: { type: 'integer', minimum: 1 },
           quantity: { type: 'integer', minimum: 1 },
         },
@@ -86,19 +89,19 @@ export function validOrderAttributes(orderAttributes) {
     properties: {
       orderType: {
         type: 'string',
-        pattern: `^${createRegexGroup(orderTypes)}$`,
+        pattern: startAndEndPattern(createRegexGroup(orderTypes)),
       },
       userPkSk: {
         type: 'string',
-        pattern: `^${userPkSkPattern}$`,
+        pattern: startAndEndPattern(userPkSkPattern),
       },
       companyPkSk: {
         type: 'string',
-        pattern: `^${companyPkSkPattern}$`,
+        pattern: startAndEndPattern(companyPkSkPattern),
       },
       tickerSymbol: {
         type: 'string',
-        pattern: `^${companySkPattern}$`,
+        pattern: startAndEndPattern(companySkPattern),
       },
       total: {
         type: 'integer',
