@@ -17,3 +17,7 @@ export const utcIsoStringPattern = utcIsoStringRegex
 export function createRegexGroup(obj) {
   return `(${Object.values(obj).join('|')})`;
 }
+
+export function startAndEndPattern(str) {
+  return `^${str}$`;
+}
