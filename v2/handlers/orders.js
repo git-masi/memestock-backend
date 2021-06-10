@@ -1,14 +1,14 @@
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-// import { validOrdersHttpEvent } from '../schema/orders';
-import { createOrder } from '../db/orders';
+import { validOrdersHttpEvent } from '../schema/orders';
+import { createOrder, fulfillOrder } from '../db/orders';
 import { isEmpty } from '../utils/dataChecks';
 
 export const handler = commonMiddleware(lambdaForOrders);
 
 async function lambdaForOrders(event) {
   try {
-    // if (!validOrdersHttpEvent(event)) throw HttpError.BadRequest();
+    if (!validOrdersHttpEvent(event)) throw HttpError.BadRequest();
     const result = await route(event);
     if (isEmpty(result)) return apiResponse();
     return apiResponse({ body: result });
@@ -28,6 +28,9 @@ function route(event) {
     case httpMethods.POST:
       return createOrderFromHttpEvent(event);
 
+    case httpMethods.PUT:
+      return fulfillOrderFromHttpEvent(event);
+
     default:
       throw HttpError.BadRequest();
   }
@@ -36,4 +39,9 @@ function route(event) {
 function createOrderFromHttpEvent(event) {
   const { body } = event;
   return createOrder(body);
+}
+
+function fulfillOrderFromHttpEvent(event) {
+  const { body } = event;
+  return fulfillOrder(body.order, body.user);
 }
