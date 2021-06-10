@@ -61,21 +61,28 @@ const httpSchemas = Object.freeze({
   [httpMethods.PUT]: {
     type: 'object',
     properties: {
-      order: {
-        type: 'string',
-        pattern: startAndEndPattern(orderSkPattern),
-      },
-      user: {
-        type: 'string',
-        pattern: startAndEndPattern(userSkPattern),
+      body: {
+        type: 'object',
+
+        order: {
+          type: 'string',
+          pattern: startAndEndPattern(orderSkPattern),
+        },
+        user: {
+          type: 'string',
+          pattern: startAndEndPattern(userSkPattern),
+        },
+        required: ['order', 'user'],
       },
     },
-    required: ['order', 'user'],
+    required: ['body'],
   },
   [httpMethods.DELETE]: {},
 });
 
 export function validOrdersHttpEvent(event) {
+  console.log(event.httpMethod);
+  console.log(httpSchemas[event.httpMethod]);
   return validateHttpSchema(event.httpMethod);
 
   function validateHttpSchema(method) {
