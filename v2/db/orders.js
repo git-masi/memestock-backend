@@ -368,3 +368,39 @@ export async function fulfillOrder(orderSk, completingUserSk) {
     }
   }
 }
+
+export async function cancelOrder(orderSk) {
+  const order = getItems(await getOrder(orderSk));
+
+  if (order.orderStatus !== orderStatuses.open)
+    throw HttpError.BadRequest('Cannot fulfill order that is not open');
+
+  return dynamoDb
+    .transactWrite([
+      {
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: `${pkPrefixes.order}#${order.sk}`,
+            sk: order.sk,
+          },
+          UpdateExpression: 'set orderStatus = :orderStatus',
+          ExpressionAttributeValues: {
+            ':orderStatus': orderStatuses.cancelled,
+          },
+        },
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.userOrder,
+            sk: `${order.originatingUser}#${order.pk}#${order.sk}`,
+          },
+          UpdateExpression: 'set orderStatus = :orderStatus',
+          ExpressionAttributeValues: {
+            ':orderStatus': orderStatuses.cancelled,
+          },
+        },
+      },
+    ])
+    .promise();
+}
