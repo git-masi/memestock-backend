@@ -63,14 +63,15 @@ const httpSchemas = Object.freeze({
     properties: {
       body: {
         type: 'object',
-
-        order: {
-          type: 'string',
-          pattern: startAndEndPattern(orderSkPattern),
-        },
-        user: {
-          type: 'string',
-          pattern: startAndEndPattern(userSkPattern),
+        properties: {
+          order: {
+            type: 'string',
+            pattern: startAndEndPattern(orderSkPattern),
+          },
+          user: {
+            type: 'string',
+            pattern: startAndEndPattern(userSkPattern),
+          },
         },
         required: ['order', 'user'],
       },
