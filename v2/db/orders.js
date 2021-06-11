@@ -257,6 +257,20 @@ export async function fulfillOrder(orderSk, completingUserSk) {
         Update: {
           TableName: MAIN_TABLE_NAME,
           Key: {
+            pk: pkPrefixes.company,
+            sk: order.tickerSymbol,
+          },
+          UpdateExpression:
+            'SET currentPricePerShare = :cpps, previousPricePerShare = currentPricePerShare',
+          ExpressionAttributeValues: {
+            ':cpps': +(order.total / order.quantity).toFixed(2), // there may be a more accurate way to do this
+          },
+        },
+      },
+      {
+        Update: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
             pk: pkPrefixes.order,
             sk: orderSk,
           },
