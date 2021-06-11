@@ -150,7 +150,7 @@ export async function executeAiAction() {
       deviationFromPPS * currentPricePerShare
     );
     const maxQuantity = Math.floor(cashOnHand / newPricePerShare);
-    const quantity = getRandomInt(1, maxQuantity);
+    const quantity = maxQuantity > 1 ? getRandomInt(1, maxQuantity) : 1;
 
     return createOrder({
       user: userSk,
@@ -169,7 +169,7 @@ export async function executeAiAction() {
       deviationFromPPS * currentPricePerShare
     );
     const maxQuantity = stocks[tickerSymbol].quantityOnHand;
-    const quantity = getRandomInt(1, maxQuantity);
+    const quantity = maxQuantity > 1 ? getRandomInt(1, maxQuantity) : 1;
 
     return createOrder({
       user: userSk,
@@ -431,7 +431,7 @@ function createFulfillOrderActions(data, boosts) {
 
     function orderCanBeFilled(order) {
       const { total } = order;
-      return aiProfile.cashOnHand >= total;
+      return aiProfile.cashOnHand >= total * 1.5; // Ensure there is enough cash
     }
   }
 
