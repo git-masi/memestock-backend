@@ -111,9 +111,11 @@ export function validOrderAttributes(orderAttributes) {
       },
       total: {
         type: 'integer',
+        minimum: 1,
       },
       quantity: {
         type: 'integer',
+        minimum: 1,
       },
     },
     required: ['orderType', 'userPkSk', 'companyPkSk', 'total', 'quantity'],
