@@ -112,6 +112,12 @@ functions:
       - http:
           method: get
           path: ai/action
+  executeAiAction:
+    handler: handlers/ai.executeAiAction
+    events:
+      - schedule:
+          rate: rate(1 minute)
+          enabled: true
   orders:
     handler: handlers/orders.handler
     events:
