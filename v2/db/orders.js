@@ -63,7 +63,6 @@ export async function createOrder(reqBody) {
   }
 }
 
-// todo: decrease user cash or stocks depending on orderType
 function createOrderTransaction(orderAttributes, user) {
   const { orderType, userPkSk, companyPkSk, total, quantity, tickerSymbol } =
     orderAttributes;
