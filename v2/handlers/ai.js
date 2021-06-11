@@ -496,8 +496,14 @@ function createNewOrderActions(data, boosts) {
     openBuyOrders: buyOrders,
     openSellOrders: sellOrders,
   } = data;
-  const possibleBuyOrderActions = companies.map(mapCompaniesForBuyOrders);
-  const possibleSellOrderActions = companies.map(mapCompaniesForSellOrders);
+  // todo: refactor this so that we don't have to filter out null values
+  // possibly use the reduce method or filter out companies first
+  const possibleBuyOrderActions = companies
+    .map(mapCompaniesForBuyOrders)
+    .filter((res) => res !== null);
+  const possibleSellOrderActions = companies
+    .map(mapCompaniesForSellOrders)
+    .filter((res) => res !== null);
   const result = [...possibleBuyOrderActions, ...possibleSellOrderActions];
 
   return result;
@@ -505,7 +511,7 @@ function createNewOrderActions(data, boosts) {
   function mapCompaniesForBuyOrders(company) {
     const { tickerSymbol, currentPricePerShare } = company;
 
-    if (currentPricePerShare * 0.8 > aiProfile.cashOnHand) return; // if stock price too high return
+    if (currentPricePerShare * 0.8 > aiProfile.cashOnHand) return null; // if stock price too high return
 
     const freqBoost = boosts.mostFreqBuy === tickerSymbol ? aiProfile.fomo : 0;
     const pricePressureBoost =
@@ -540,6 +546,8 @@ function createNewOrderActions(data, boosts) {
 
   function mapCompaniesForSellOrders(company) {
     const { tickerSymbol, currentPricePerShare } = company;
+
+    if (!(tickerSymbol in aiProfile.stocks)) return null; // if ai doesn't own stock return
 
     const freqBoost = boosts.mostFreqSell === tickerSymbol ? aiProfile.fomo : 0;
     const boostVal = Math.ceil(
