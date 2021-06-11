@@ -588,8 +588,11 @@ function createNewOrderActions(data, boosts) {
 
 function createCancelOrderActions(data, boosts) {
   const { companies, aiProfile, userOrders } = data;
-  const buyOrders = filterByOrderType(userOrders, 'buy');
-  const sellOrders = filterByOrderType(userOrders, 'sell');
+  const openOrders = userOrders.filter(
+    (o) => o.orderStatus === orderStatuses.open
+  );
+  const buyOrders = filterByOrderType(openOrders, 'buy');
+  const sellOrders = filterByOrderType(openOrders, 'sell');
   const buyOrderActions = buyOrders.reduce(reduceBuyOrders, []);
   const sellOrderActions = sellOrders.reduce(reduceSellOrders, []);
   const result = [...buyOrderActions, ...sellOrderActions];
