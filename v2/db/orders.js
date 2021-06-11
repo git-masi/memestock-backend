@@ -375,33 +375,35 @@ export async function cancelOrder(orderSk) {
     throw HttpError.BadRequest('Cannot fulfill order that is not open');
 
   return dynamoDb
-    .transactWrite([
-      {
-        Update: {
-          TableName: MAIN_TABLE_NAME,
-          Key: {
-            pk: `${pkPrefixes.order}#${order.sk}`,
-            sk: order.sk,
-          },
-          UpdateExpression: 'set orderStatus = :orderStatus',
-          ExpressionAttributeValues: {
-            ':orderStatus': orderStatuses.cancelled,
-          },
-        },
-      },
-      {
-        Update: {
-          TableName: MAIN_TABLE_NAME,
-          Key: {
-            pk: pkPrefixes.userOrder,
-            sk: `${order.originatingUser}#${order.pk}#${order.sk}`,
-          },
-          UpdateExpression: 'set orderStatus = :orderStatus',
-          ExpressionAttributeValues: {
-            ':orderStatus': orderStatuses.cancelled,
+    .transactWrite({
+      TransactItems: [
+        {
+          Update: {
+            TableName: MAIN_TABLE_NAME,
+            Key: {
+              pk: `${pkPrefixes.order}#${order.sk}`,
+              sk: order.sk,
+            },
+            UpdateExpression: 'set orderStatus = :orderStatus',
+            ExpressionAttributeValues: {
+              ':orderStatus': orderStatuses.cancelled,
+            },
           },
         },
-      },
-    ])
+        {
+          Update: {
+            TableName: MAIN_TABLE_NAME,
+            Key: {
+              pk: pkPrefixes.userOrder,
+              sk: `${order.originatingUser}#${order.pk}#${order.sk}`,
+            },
+            UpdateExpression: 'set orderStatus = :orderStatus',
+            ExpressionAttributeValues: {
+              ':orderStatus': orderStatuses.cancelled,
+            },
+          },
+        },
+      ],
+    })
     .promise();
 }
