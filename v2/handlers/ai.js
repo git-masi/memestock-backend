@@ -72,6 +72,7 @@ function routeGetRequest(event) {
 export async function executeAiAction() {
   // data: { aiProfile, companies, openBuyOrders, openSellOrders, fulfilledOrders, userOrders }
   const data = await getDataForUtilityScores();
+  console.info('data for aiAction', JSON.stringify(data));
 
   // userStockValues: {
   //    FRD: { currentPricePerShare, totalValueHeld },
@@ -436,12 +437,12 @@ function createFulfillOrderActions(data, boosts) {
 
   function mapFulfillBuyOrders(order) {
     const { tickerSymbol } = order;
+    const company = companies.find((c) => c.tickerSymbol === tickerSymbol);
     const freqBoost = boosts.mostFreqBuy === tickerSymbol ? aiProfile.fomo : 0;
     const pricePressureBoost =
       tickerSymbol in boosts && boosts[tickerSymbol] > 0
         ? Math.ceil(
-            (boosts[tickerSymbol] /
-              companies[tickerSymbol].currentPricePerShare) *
+            (boosts[tickerSymbol] / company.currentPricePerShare) *
               ((aiProfile.fomo + aiProfile.wildcard) / 2)
           )
         : 0;
@@ -465,13 +466,13 @@ function createFulfillOrderActions(data, boosts) {
 
   function mapFulfillSellOrders(order) {
     const { tickerSymbol } = order;
+    const company = companies.find((c) => c.tickerSymbol === tickerSymbol);
     const freqBoost =
       boosts.mostFreqSell === tickerSymbol ? aiProfile.lossAversion : 0;
     const pricePressureBoost =
       tickerSymbol in boosts && boosts[tickerSymbol] < 0
         ? Math.ceil(
-            (boosts[tickerSymbol] /
-              companies[tickerSymbol].currentPricePerShare) *
+            (boosts[tickerSymbol] / company.currentPricePerShare) *
               ((aiProfile.lossAversion + aiProfile.wildcard) / 2)
           )
         : 0;
