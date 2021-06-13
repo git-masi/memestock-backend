@@ -116,3 +116,27 @@ function validateApiResponseConfig(config) {
   )
     throw new Error('event config must be api gateway event');
 }
+
+export function methodRouter(routeHandlers) {
+  return function (event) {
+    const { httpMethod } = event;
+
+    if (routeHandlers[httpMethod] instanceof Function) {
+      return routeHandlers[httpMethod](event);
+    }
+
+    throw HttpError.BadRequest();
+  };
+}
+
+export function pathRouter(pathHandlers) {
+  return function (event) {
+    const { path } = event;
+
+    if (pathHandlers[path] instanceof Function) {
+      return pathHandlers[path](event);
+    }
+
+    throw HttpError.BadRequest();
+  };
+}
