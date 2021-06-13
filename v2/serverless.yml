@@ -62,6 +62,53 @@ resources:
             KeyType: HASH
           - AttributeName: sk
             KeyType: RANGE
+    GenericUserAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: generic-user-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt: [GenericUserPool, Arn]
+    GenericUserClient:
+      Type: 'AWS::Cognito::UserPoolClient'
+      Properties:
+        ClientName: memestock-generic-user-client
+        GenerateSecret: False
+        UserPoolId:
+          Ref: GenericUserPool
+    GenericUserPool:
+      Type: 'AWS::Cognito::UserPool'
+      Properties:
+        UserPoolName: memestock-generic-user
+        MfaConfiguration: 'OFF'
+        # AccountRecoverySetting:
+        #   - email
+        AliasAttributes:
+          - email
+          - preferred_username
+        # UsernameAttributes:
+        #   - email
+        #   - 'userId'
+        #   - 'username'
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+          - Name: 'userId'
+            Mutable: false
+            AttributeDataType: String
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: False
+            RequireNumbers: True
+            RequireSymbols: False
+            RequireUppercase: True
 
 functions:
   users:
