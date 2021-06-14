@@ -90,7 +90,6 @@ export function getUser(sk) {
 
 export async function removeUser(sk) {
   const user = getItems(await getUser(sk));
-  console.log(user);
   const params = {
     TransactItems: [
       {
