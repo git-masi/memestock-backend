@@ -1,7 +1,7 @@
 import { DynamoDB } from 'aws-sdk';
 import { getCompanies } from './companies';
 import { validUserAttributes } from '../schema/users';
-import { guardItem } from './shared';
+import { getItems, guardItem } from './shared';
 import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
 import { pkPrefixes } from '../schema/pkPrefixes';
 
@@ -86,4 +86,42 @@ export function getUser(sk) {
   };
 
   return dynamoDb.get(params).promise();
+}
+
+export async function removeUser(sk) {
+  const user = getItems(await getUser(sk));
+  console.log(user);
+  const params = {
+    TransactItems: [
+      {
+        Delete: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: pkPrefixes.user,
+            sk,
+          },
+        },
+      },
+      {
+        Delete: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: `${pkPrefixes.email}#${user.email}`,
+            sk: user.email,
+          },
+        },
+      },
+      {
+        Delete: {
+          TableName: MAIN_TABLE_NAME,
+          Key: {
+            pk: `${pkPrefixes.displayName}#${user.displayName}`,
+            sk: user.displayName,
+          },
+        },
+      },
+    ],
+  };
+
+  return dynamoDb.transactWrite(params).promise();
 }
