@@ -1,16 +1,29 @@
-import { apiResponse, HttpError, httpMethods } from '../utils/http';
+import {
+  apiResponse,
+  HttpError,
+  httpMethods,
+  methodRouter,
+  pathRouter,
+} from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { validUsersHttpEvent } from '../schema/users';
+// todo: rewrite this to validate events for a given path
+// import { validUsersHttpEvent } from '../schema/users';
 import { createUser } from '../db/users';
 import { isEmpty } from '../utils/dataChecks';
 
 export const handler = commonMiddleware(lambdaForUsers);
 
 async function lambdaForUsers(event) {
+  const methodRoutes = {
+    [httpMethods.POST]: handlePostMethods,
+  };
+  const router = methodRouter(methodRoutes);
+
   try {
-    if (!validUsersHttpEvent(event)) throw HttpError.BadRequest();
-    const result = await route(event);
+    const result = await router(event);
+
     if (isEmpty(result)) return apiResponse();
+
     return apiResponse({ body: result });
   } catch (error) {
     console.info(error);
@@ -23,24 +36,16 @@ async function lambdaForUsers(event) {
   }
 }
 
-function route(event) {
-  switch (event.httpMethod) {
-    case httpMethods.GET:
-      return getUserFromHttpEvent(event);
+function handlePostMethods(event) {
+  const paths = {
+    '/users': createUserFromHttpEvent,
+  };
+  const result = pathRouter(paths)(event);
 
-    case httpMethods.POST:
-      return createUserFromHttpEvent(event);
+  return result;
 
-    default:
-      throw HttpError.BadRequest();
+  function createUserFromHttpEvent(event) {
+    const { body } = event;
+    return createUser(body);
   }
-}
-
-async function getUserFromHttpEvent(event) {
-  return { id: 1, username: 'bob' };
-}
-
-function createUserFromHttpEvent(event) {
-  const { body } = event;
-  return createUser(body);
 }
