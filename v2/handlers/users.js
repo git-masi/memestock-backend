@@ -10,7 +10,7 @@ import {
 import { commonMiddleware } from '../utils/middleware';
 // todo: rewrite this to validate events for a given path
 // import { validUsersHttpEvent } from '../schema/users';
-import { createUser } from '../db/users';
+import { createUser, removeUser } from '../db/users';
 import { userTypes } from '../schema/users';
 import { isEmpty } from '../utils/dataChecks';
 
@@ -22,6 +22,7 @@ export const handler = commonMiddleware(lambdaForUsers);
 async function lambdaForUsers(event) {
   const methodRoutes = {
     [httpMethods.POST]: handlePostMethods,
+    [httpMethods.DELETE]: handleDeleteMethods,
   };
   const router = methodRouter(methodRoutes);
 
@@ -80,7 +81,7 @@ function handlePostMethods(event) {
 function createCognitoUserParams(displayName, email, userSk) {
   return {
     UserPoolId: COGNITO_GENERIC_USER_POOL_ID,
-    Username: nanoid(),
+    Username: userSk,
     TemporaryPassword: 'NewpasS!23',
     UserAttributes: [
       { Name: 'preferred_username', Value: displayName },
@@ -100,4 +101,29 @@ function createCognitoUserParams(displayName, email, userSk) {
     DesiredDeliveryMediums: ['EMAIL'],
     MessageAction: 'SUPPRESS',
   };
+}
+
+function handleDeleteMethods(event) {
+  const paths = {
+    '/users': deleteUser,
+  };
+  const router = pathRouter(paths);
+  const result = router(event);
+
+  return result;
+
+  async function deleteUser(event) {
+    const {
+      body: { userId },
+    } = event;
+
+    await removeUser(userId);
+
+    return cognito
+      .adminDeleteUser({
+        Username: userId,
+        UserPoolId: COGNITO_GENERIC_USER_POOL_ID,
+      })
+      .promise();
+  }
 }
