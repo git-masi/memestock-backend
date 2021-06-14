@@ -19,6 +19,8 @@ provider:
   lambdaHashingVersion: '20201221'
   environment:
     MAIN_TABLE_NAME: !Ref MemeStockMainTable
+    COGNITO_GENERIC_USER_POOL_ID: !Ref GenericUserPool
+    COGNITO_GENERIC_USER_CLIENT_ID: !Ref GenericUserClient
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -120,6 +122,9 @@ functions:
       - http:
           method: post
           path: users
+      - http:
+          method: post
+          path: users/signup
       - http:
           method: put
           path: users

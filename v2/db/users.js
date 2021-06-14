@@ -1,7 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
-import { nanoid } from 'nanoid';
 import { getCompanies } from './companies';
-import { validUserAttributes, userTypes } from '../schema/users';
+import { validUserAttributes } from '../schema/users';
 import { guardItem } from './shared';
 import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
 import { pkPrefixes } from '../schema/pkPrefixes';
@@ -19,10 +18,7 @@ async function humanUser(userAttributes) {
   const result = {
     TransactItems: [
       {
-        Put: await createUserItem({
-          sk: `${userTypes.human}#${new Date().toISOString()}#${nanoid(8)}`,
-          ...userAttributes,
-        }),
+        Put: await createUserItem(userAttributes),
       },
       {
         Put: guardItem(pkPrefixes.displayName, displayName),
