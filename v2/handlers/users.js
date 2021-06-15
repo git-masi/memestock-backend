@@ -115,7 +115,8 @@ function handlePostMethods(event) {
 
     if (canChangePassword) {
       const newPasswordRes = await setNewPassword({
-        ...initAuthRes,
+        challengeName: initAuthRes.ChallengeName,
+        session: initAuthRes.Session,
         ...body,
       });
 
