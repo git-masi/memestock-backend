@@ -32,6 +32,16 @@ provider:
       Resource:
         - !GetAtt MemeStockMainTable.Arn
         - !Join ['/', [!GetAtt MemeStockMainTable.Arn, 'index', '*']]
+    - Effect: Allow
+      Action:
+        - 'cognito-idp:AdminConfirmSignUp'
+        - 'cognito-idp:AdminCreateUser'
+        - 'cognito-idp:AdminGetUser'
+        - 'cognito-idp:AdminSetUserPassword'
+        - 'cognito-idp:AdminUpdateUserAttributes'
+        - 'cognito-idp:DescribeUserPool'
+      Resource:
+        - !GetAtt GenericUserPool.Arn
 
 custom:
   serverless-offline:
@@ -83,6 +93,10 @@ resources:
         GenerateSecret: False
         UserPoolId:
           Ref: GenericUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_ADMIN_USER_PASSWORD_AUTH
     GenericUserPool:
       Type: 'AWS::Cognito::UserPool'
       Properties:
@@ -125,6 +139,9 @@ functions:
       - http:
           method: post
           path: users/signup
+      - http:
+          method: post
+          path: users/login
       - http:
           method: put
           path: users
