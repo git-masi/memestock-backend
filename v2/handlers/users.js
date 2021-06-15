@@ -77,6 +77,31 @@ function handlePostMethods(event) {
       accountStatus: createUserRes?.User?.UserStatus,
       email: body.email,
     };
+
+    function createCognitoUserParams(displayName, email, userSk) {
+      return {
+        UserPoolId: COGNITO_GENERIC_USER_POOL_ID,
+        Username: userSk,
+        TemporaryPassword: 'NewpasS!23',
+        UserAttributes: [
+          { Name: 'preferred_username', Value: displayName },
+          { Name: 'email', Value: email },
+          {
+            // This is probably not the best practice in the real world
+            // By doing this we are assuming the email is valid and that
+            // the new user has access to the email address
+            Name: 'email_verified',
+            Value: 'true',
+          },
+          {
+            Name: 'custom:userId',
+            Value: userSk,
+          },
+        ],
+        DesiredDeliveryMediums: ['EMAIL'],
+        MessageAction: 'SUPPRESS',
+      };
+    }
   }
 
   async function handleLogin(event) {
@@ -126,31 +151,6 @@ function handlePostMethods(event) {
       return cognito.respondToAuthChallenge(params).promise();
     }
   }
-}
-
-function createCognitoUserParams(displayName, email, userSk) {
-  return {
-    UserPoolId: COGNITO_GENERIC_USER_POOL_ID,
-    Username: userSk,
-    TemporaryPassword: 'NewpasS!23',
-    UserAttributes: [
-      { Name: 'preferred_username', Value: displayName },
-      { Name: 'email', Value: email },
-      {
-        // This is probably not the best practice in the real world
-        // By doing this we are assuming the email is valid and that
-        // the new user has access to the email address
-        Name: 'email_verified',
-        Value: 'true',
-      },
-      {
-        Name: 'custom:userId',
-        Value: userSk,
-      },
-    ],
-    DesiredDeliveryMediums: ['EMAIL'],
-    MessageAction: 'SUPPRESS',
-  };
 }
 
 function handleDeleteMethods(event) {
