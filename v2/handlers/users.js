@@ -14,7 +14,8 @@ import { createUser, removeUser } from '../db/users';
 import { userTypes } from '../schema/users';
 import { isEmpty } from '../utils/dataChecks';
 
-const { COGNITO_GENERIC_USER_POOL_ID } = process.env;
+const { COGNITO_GENERIC_USER_POOL_ID, COGNITO_GENERIC_USER_CLIENT_ID } =
+  process.env;
 const cognito = new CognitoIdentityServiceProvider();
 
 export const handler = commonMiddleware(lambdaForUsers);
@@ -47,6 +48,7 @@ function handlePostMethods(event) {
   const paths = {
     '/users': createUserFromHttpEvent,
     '/users/signup': handleSignup,
+    '/users/login': handleLogin,
   };
   const router = pathRouter(paths);
   const result = router(event);
@@ -75,6 +77,54 @@ function handlePostMethods(event) {
       accountStatus: createUserRes?.User?.UserStatus,
       email: body.email,
     };
+  }
+
+  async function handleLogin(event) {
+    const { body } = event;
+    const initAuthRes = await cognito
+      .initiateAuth(createInitAuthParams(body.username, body.password))
+      .promise();
+    const canChangePassword =
+      body.newPassword &&
+      initAuthRes?.ChallengeName === 'NEW_PASSWORD_REQUIRED';
+
+    if (canChangePassword) {
+      const newPasswordRes = await setNewPassword({
+        ...initAuthRes,
+        ...body,
+      });
+
+      return newPasswordRes?.AuthenticationResult;
+    }
+
+    return initAuthRes?.AuthenticationResult;
+
+    function createInitAuthParams(username, password) {
+      return {
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        ClientId: COGNITO_GENERIC_USER_CLIENT_ID,
+        AuthParameters: {
+          USERNAME: username,
+          PASSWORD: password,
+        },
+      };
+    }
+
+    function setNewPassword(newPasswordConfig) {
+      const { challengeName, session, newPassword, username } =
+        newPasswordConfig;
+      const params = {
+        ChallengeName: challengeName,
+        Session: session,
+        ClientId: COGNITO_GENERIC_USER_CLIENT_ID,
+        ChallengeResponses: {
+          NEW_PASSWORD: newPassword,
+          USERNAME: username,
+        },
+      };
+
+      return cognito.respondToAuthChallenge(params).promise();
+    }
   }
 }
 
