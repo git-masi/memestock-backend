@@ -8,11 +8,14 @@ import {
 import { commonMiddleware } from '../utils/middleware';
 import { createOrder, fulfillOrder } from '../db/orders';
 import { isEmpty } from '../utils/dataChecks';
+import { orderStatuses } from '../schema/orders';
+import { createRegexGroup } from '../utils/regex';
 
-export const handler = commonMiddleware(lambdaForOrders);
+export const handler = commonMiddleware(ordersLambda);
 
-async function lambdaForOrders(event) {
+async function ordersLambda(event) {
   const methodRoutes = {
+    [httpMethods.GET]: handleGetMethods,
     [httpMethods.POST]: handlePostMethods,
     [httpMethods.PUT]: handlePutMethods,
   };
@@ -32,6 +35,19 @@ async function lambdaForOrders(event) {
     return apiResponse({
       statusCode: 500,
     });
+  }
+}
+
+function handleGetMethods(event) {
+  const paths = {
+    [`/orders/count/${createRegexGroup(orderStatuses)}`]: handleCount,
+  };
+  const router = pathRouter(paths);
+  return router(event);
+
+  function handleCount(event) {
+    const { queryStringParameters, pathParameters } = event;
+    return { queryStringParameters, pathParameters };
   }
 }
 

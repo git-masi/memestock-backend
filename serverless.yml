@@ -194,6 +194,9 @@ functions:
           method: get
           path: orders
       - http:
+          method: get
+          path: orders/count/{orderStatus}
+      - http:
           method: post
           path: orders
       - http:
