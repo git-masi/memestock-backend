@@ -1,5 +1,11 @@
 import { commonMiddleware } from '../utils/middleware';
-import { apiResponse, HttpError, httpMethods } from '../utils/http';
+import {
+  apiResponse,
+  HttpError,
+  httpMethods,
+  methodRouter,
+  pathRouter,
+} from '../utils/http';
 import { isEmpty } from '../utils/dataChecks';
 import {
   createAi,
@@ -27,13 +33,20 @@ import {
   getRandomFloat,
 } from '../utils/dynamicValues';
 
-export const handler = commonMiddleware(handleAiGateway);
+export const handler = commonMiddleware(aiLambda);
 
-async function handleAiGateway(event) {
+async function aiLambda(event) {
+  const methodRoutes = {
+    [httpMethods.GET]: handleGetMethods,
+    [httpMethods.POST]: handlePostMethods,
+  };
+  const router = methodRouter(methodRoutes);
+
   try {
-    // if (!validAiHttpEvent(event)) throw HttpError.BadRequest();
-    const result = await route(event);
+    const result = await router(event);
+
     if (!result || isEmpty(result)) return apiResponse();
+
     return apiResponse({ body: result });
   } catch (error) {
     console.info(error);
@@ -46,26 +59,31 @@ async function handleAiGateway(event) {
   }
 }
 
-function route(event) {
-  switch (event.httpMethod) {
-    case httpMethods.POST:
-      return createAi();
+function handleGetMethods(event) {
+  const paths = {
+    '/ai/action': handleExecuteAction,
+  };
+  const router = pathRouter(paths);
+  const result = router(event);
 
-    case httpMethods.GET:
-      return routeGetRequest(event);
+  return result;
 
-    default:
-      throw HttpError.BadRequest();
+  function handleExecuteAction() {
+    return executeAiAction();
   }
 }
 
-function routeGetRequest(event) {
-  switch (event.path) {
-    case '/ai/action':
-      return executeAiAction();
+function handlePostMethods(event) {
+  const paths = {
+    '/ai': handleCreateAi,
+  };
+  const router = pathRouter(paths);
+  const result = router(event);
 
-    default:
-      throw HttpError.BadRequest();
+  return result;
+
+  function handleCreateAi() {
+    return createAi();
   }
 }
 
