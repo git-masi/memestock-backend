@@ -137,6 +137,17 @@ export function pathRouter(pathHandlers) {
       return pathHandlers[path](event);
     }
 
+    const regexMap = Object.keys(pathHandlers).map((key) => [
+      key,
+      new RegExp(key),
+    ]);
+
+    const match = regexMap.find(([key, regex]) => regex.test(path));
+
+    if (match instanceof Array && pathHandlers[match[0]] instanceof Function) {
+      return pathHandlers[match[0]](event);
+    }
+
     throw HttpError.BadRequest();
   };
 }
