@@ -70,6 +70,11 @@ function handleGetMethods(event) {
             case 'asc':
               acc[key] = value !== 'false';
               break;
+              break;
+
+            case 'startSk':
+              acc[key] = decodeURIComponent(value);
+              break;
 
             default:
               acc[key] = value;

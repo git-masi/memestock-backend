@@ -163,7 +163,7 @@ export function getOrder(sk) {
 
 export function getOrders(config) {
   // todo: validate config with schema
-  const { asc = true, limit, orderStatus } = config;
+  const { asc = true, limit, orderStatus, startSk } = config;
   const params = {
     TableName: MAIN_TABLE_NAME,
     KeyConditionExpression: 'pk = :pk',
@@ -201,6 +201,13 @@ export function getOrders(config) {
       ...params.ExpressionAttributeValues,
       ':orderStatus': orderStatus,
       ':sk': '2',
+    };
+  }
+
+  if (startSk) {
+    params.ExclusiveStartKey = {
+      pk: pkPrefixes.order,
+      sk: startSk,
     };
   }
 
