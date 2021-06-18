@@ -46,7 +46,7 @@ async function lambdaForUsers(event) {
 
 function handlePostMethods(event) {
   const paths = {
-    '/users': createUserFromHttpEvent,
+    '/users': handleCreateUser,
     '/users/signup': handleSignup,
     '/users/login': handleLogin,
   };
@@ -55,7 +55,7 @@ function handlePostMethods(event) {
 
   return result;
 
-  function createUserFromHttpEvent(event) {
+  function handleCreateUser(event) {
     const { body } = event;
 
     return createUser(body);
