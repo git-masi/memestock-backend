@@ -1,6 +1,5 @@
 import { apiResponse, HttpError, httpMethods } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { validOrdersHttpEvent } from '../schema/orders';
 import { createOrder, fulfillOrder } from '../db/orders';
 import { isEmpty } from '../utils/dataChecks';
 
@@ -8,8 +7,6 @@ export const handler = commonMiddleware(lambdaForOrders);
 
 async function lambdaForOrders(event) {
   try {
-    if (!validOrdersHttpEvent(event))
-      throw HttpError.BadRequest('Invalid request body');
     const result = await route(event);
     if (isEmpty(result)) return apiResponse();
     return apiResponse({ body: result });
