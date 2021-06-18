@@ -43,6 +43,7 @@ function handleGetMethods(event) {
     [`/orders/count/${createRegexGroup(orderStatuses)}`]: handleCount,
   };
   const router = pathRouter(paths);
+
   return router(event);
 
   async function handleCount(event) {
