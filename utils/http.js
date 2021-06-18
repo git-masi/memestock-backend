@@ -129,6 +129,9 @@ export function methodRouter(routeHandlers) {
   };
 }
 
+// todo: it would be good if pathHandlers could be a Map
+//       that way we could use a regex as a key and simplify
+//       the regex testing against paths
 export function pathRouter(pathHandlers) {
   return function (event) {
     const path = getPath();
