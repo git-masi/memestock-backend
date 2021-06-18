@@ -6,7 +6,7 @@ import {
   pathRouter,
 } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { createOrder, fulfillOrder } from '../db/orders';
+import { createOrder, fulfillOrder, getCountOfOrders } from '../db/orders';
 import { isEmpty } from '../utils/dataChecks';
 import { orderStatuses } from '../schema/orders';
 import { createRegexGroup } from '../utils/regex';
@@ -45,9 +45,22 @@ function handleGetMethods(event) {
   const router = pathRouter(paths);
   return router(event);
 
-  function handleCount(event) {
-    const { queryStringParameters, pathParameters } = event;
-    return { queryStringParameters, pathParameters };
+  async function handleCount(event) {
+    const {
+      pathParameters: { orderStatus },
+    } = event;
+
+    return { count: await countAllOrdersInStatus() };
+
+    async function countAllOrdersInStatus(total = 0) {
+      const { Count, LastEvaluatedKey } = await getCountOfOrders(orderStatus);
+
+      if (LastEvaluatedKey) {
+        return await countAllOrdersInStatus(total + Count);
+      }
+
+      return total + Count;
+    }
   }
 }
 

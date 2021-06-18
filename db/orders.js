@@ -161,6 +161,25 @@ export function getOrder(sk) {
     .promise();
 }
 
+export function getCountOfOrders(orderStatus, lastEvaluatedKey) {
+  const params = {
+    TableName: MAIN_TABLE_NAME,
+    KeyConditionExpression: 'pk = :pk ',
+    FilterExpression: 'orderStatus = :orderStatus',
+    ExpressionAttributeValues: {
+      ':pk': pkPrefixes.order,
+      ':orderStatus': orderStatus,
+    },
+    Select: 'COUNT',
+  };
+
+  if (lastEvaluatedKey) {
+    params.ExclusiveStartKey = lastEvaluatedKey;
+  }
+
+  return dynamoDb.query(params).promise();
+}
+
 export function getRecentOrders(orderStatus, orderType, limit = 10) {
   const params = {
     TableName: MAIN_TABLE_NAME,
