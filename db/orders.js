@@ -10,7 +10,7 @@ import { HttpError } from '../utils/http';
 import { getItems } from './shared';
 import { getUser } from './users';
 
-const { MAIN_TABLE_NAME } = process.env;
+const { MAIN_TABLE_NAME, ORDER_STATUS_AND_SK_GSI } = process.env;
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export async function createOrder(reqBody) {
@@ -177,9 +177,31 @@ export function getOrders(config) {
     params.Limit = limit;
   }
 
+  // Because this represents a branch in how the query is executed
+  // this entire function could probably be refactored
+  //
+  // Using this index and setting the sk like this is a little hacky
+  // but it's the result of some unintended single table design choices
+  //
+  // We use the index because a FilterExpression does not work as
+  // expected with a Limit
+  // For example if you have a FilterExpression and Limit you don't
+  // results matching the FilterExpression up to the Limit, instead
+  // you get query results up to the Limit which are then filtered
+  //
+  // And because both ORDER and USER_ORDER have orderStatus attributes
+  // We need to specify that an sk starts with "2" because that is the
+  // first number of the year (e.g. 2021) at least for the next 900+ years
   if (orderStatus) {
-    params.FilterExpression = 'orderStatus = :orderStatus';
-    params.ExpressionAttributeValues[':orderStatus'] = orderStatus;
+    delete params.ExpressionAttributeValues[':pk'];
+    params.IndexName = ORDER_STATUS_AND_SK_GSI;
+    params.KeyConditionExpression =
+      'orderStatus = :orderStatus AND begins_with(sk, :sk)';
+    params.ExpressionAttributeValues = {
+      ...params.ExpressionAttributeValues,
+      ':orderStatus': orderStatus,
+      ':sk': '2',
+    };
   }
 
   return dynamoDb.query(params).promise();
