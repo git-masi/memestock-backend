@@ -6,13 +6,22 @@ import {
   pathRouter,
 } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { createOrder, fulfillOrder } from '../db/orders';
+import {
+  createOrder,
+  fulfillOrder,
+  getCountOfOrders,
+  getOrders,
+} from '../db/orders';
 import { isEmpty } from '../utils/dataChecks';
+import { orderStatuses } from '../schema/orders';
+import { createRegexGroup } from '../utils/regex';
+import { getItems } from '../db/shared';
 
-export const handler = commonMiddleware(lambdaForOrders);
+export const handler = commonMiddleware(ordersLambda);
 
-async function lambdaForOrders(event) {
+async function ordersLambda(event) {
   const methodRoutes = {
+    [httpMethods.GET]: handleGetMethods,
     [httpMethods.POST]: handlePostMethods,
     [httpMethods.PUT]: handlePutMethods,
   };
@@ -32,6 +41,69 @@ async function lambdaForOrders(event) {
     return apiResponse({
       statusCode: 500,
     });
+  }
+}
+
+function handleGetMethods(event) {
+  const paths = {
+    '/orders': handleGetOrders,
+    [`/orders/count/${createRegexGroup(orderStatuses)}`]: handleCount,
+  };
+  const router = pathRouter(paths);
+
+  return router(event);
+
+  async function handleGetOrders(event) {
+    const { queryStringParameters } = event;
+    const dbResults = await getOrders(parseQueryParams(queryStringParameters));
+
+    return getItems(dbResults);
+
+    function parseQueryParams() {
+      return Object.entries(queryStringParameters).reduce(
+        (acc, [key, value]) => {
+          switch (key) {
+            case 'limit':
+              acc[key] = +value;
+              break;
+
+            case 'asc':
+              acc[key] = value !== 'false';
+              break;
+              break;
+
+            case 'startSk':
+              acc[key] = decodeURIComponent(value);
+              break;
+
+            default:
+              acc[key] = value;
+              break;
+          }
+
+          return acc;
+        },
+        {}
+      );
+    }
+  }
+
+  async function handleCount(event) {
+    const {
+      pathParameters: { orderStatus },
+    } = event;
+
+    return { count: await countAllOrdersInStatus() };
+
+    async function countAllOrdersInStatus(total = 0) {
+      const { Count, LastEvaluatedKey } = await getCountOfOrders(orderStatus);
+
+      if (LastEvaluatedKey) {
+        return await countAllOrdersInStatus(total + Count);
+      }
+
+      return total + Count;
+    }
   }
 }
 

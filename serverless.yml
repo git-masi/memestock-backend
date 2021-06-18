@@ -21,6 +21,7 @@ provider:
     MAIN_TABLE_NAME: !Ref MemeStockMainTable
     COGNITO_GENERIC_USER_POOL_ID: !Ref GenericUserPool
     COGNITO_GENERIC_USER_CLIENT_ID: !Ref GenericUserClient
+    ORDER_STATUS_AND_SK_GSI: orderStatusAndSk
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -69,11 +70,22 @@ resources:
             AttributeType: S
           - AttributeName: sk
             AttributeType: S
+          - AttributeName: orderStatus
+            AttributeType: S
         KeySchema:
           - AttributeName: pk
             KeyType: HASH
           - AttributeName: sk
             KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: orderStatusAndSk
+            KeySchema:
+              - AttributeName: orderStatus
+                KeyType: HASH
+              - AttributeName: sk
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
     GenericUserAuthorizer:
       DependsOn:
         - ApiGatewayRestApi
@@ -193,6 +205,12 @@ functions:
       - http:
           method: get
           path: orders
+      - http:
+          method: get
+          path: orders/{id}
+      - http:
+          method: get
+          path: orders/count/{orderStatus}
       - http:
           method: post
           path: orders
