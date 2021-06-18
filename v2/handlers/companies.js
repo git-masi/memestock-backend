@@ -1,16 +1,28 @@
 import { commonMiddleware } from '../utils/middleware';
-import { apiResponse, HttpError, httpMethods } from '../utils/http';
-import { validCompaniesHttpEvent } from '../schema/companies';
+import {
+  apiResponse,
+  HttpError,
+  httpMethods,
+  methodRouter,
+  pathRouter,
+} from '../utils/http';
 import { createCompany, getCompanies } from '../db/companies';
 import { isEmpty } from '../utils/dataChecks';
 
 export const handler = commonMiddleware(lambdaForCompanies);
 
 async function lambdaForCompanies(event) {
+  const methodRoutes = {
+    [httpMethods.GET]: handleGetMethods,
+    [httpMethods.POST]: handlePostMethods,
+  };
+  const router = methodRouter(methodRoutes);
+
   try {
-    if (!validCompaniesHttpEvent(event)) throw HttpError.BadRequest();
-    const result = await route(event);
+    const result = await router(event);
+
     if (isEmpty(result)) return apiResponse();
+
     return apiResponse({ body: result });
   } catch (error) {
     console.info(error);
@@ -23,23 +35,30 @@ async function lambdaForCompanies(event) {
   }
 }
 
-function route(event) {
-  switch (event.httpMethod) {
-    case httpMethods.GET:
-      return getCompaniesFromHttpEvent(event);
+function handleGetMethods(event) {
+  const paths = {
+    '/companies': handleRetrieveCompanies,
+  };
+  const router = pathRouter(paths);
+  const result = router(event);
 
-    case httpMethods.POST:
-      return createCompanyFromHttpEvent(event);
+  return result;
 
-    default:
-      throw HttpError.BadRequest();
+  function handleRetrieveCompanies() {
+    return getCompanies();
   }
 }
 
-function getCompaniesFromHttpEvent(event) {
-  return getCompanies();
-}
+function handlePostMethods(event) {
+  const paths = {
+    '/companies': handleCreateCompany,
+  };
+  const router = pathRouter(paths);
+  const result = router(event);
 
-function createCompanyFromHttpEvent(event) {
-  return createCompany(event.body);
+  return result;
+
+  function handleCreateCompany(event) {
+    return createCompany(event.body);
+  }
 }
