@@ -6,10 +6,16 @@ import {
   pathRouter,
 } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { createOrder, fulfillOrder, getCountOfOrders } from '../db/orders';
+import {
+  createOrder,
+  fulfillOrder,
+  getCountOfOrders,
+  getOrders,
+} from '../db/orders';
 import { isEmpty } from '../utils/dataChecks';
 import { orderStatuses } from '../schema/orders';
 import { createRegexGroup } from '../utils/regex';
+import { getItems } from '../db/shared';
 
 export const handler = commonMiddleware(ordersLambda);
 
@@ -40,11 +46,42 @@ async function ordersLambda(event) {
 
 function handleGetMethods(event) {
   const paths = {
+    '/orders': handleGetOrders,
     [`/orders/count/${createRegexGroup(orderStatuses)}`]: handleCount,
   };
   const router = pathRouter(paths);
 
   return router(event);
+
+  async function handleGetOrders(event) {
+    const { queryStringParameters } = event;
+    const dbResults = await getOrders(parseQueryParams(queryStringParameters));
+
+    return getItems(dbResults);
+
+    function parseQueryParams() {
+      return Object.entries(queryStringParameters).reduce(
+        (acc, [key, value]) => {
+          switch (key) {
+            case 'limit':
+              acc[key] = +value;
+              break;
+
+            case 'asc':
+              acc[key] = value !== 'false';
+              break;
+
+            default:
+              acc[key] = value;
+              break;
+          }
+
+          return acc;
+        },
+        {}
+      );
+    }
+  }
 
   async function handleCount(event) {
     const {

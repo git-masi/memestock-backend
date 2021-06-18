@@ -161,6 +161,30 @@ export function getOrder(sk) {
     .promise();
 }
 
+export function getOrders(config) {
+  // todo: validate config with schema
+  const { asc = true, limit, orderStatus } = config;
+  const params = {
+    TableName: MAIN_TABLE_NAME,
+    KeyConditionExpression: 'pk = :pk',
+    ExpressionAttributeValues: {
+      ':pk': pkPrefixes.order,
+    },
+    ScanIndexForward: asc,
+  };
+
+  if (Number.isInteger(limit) && limit > 0) {
+    params.Limit = limit;
+  }
+
+  if (orderStatus) {
+    params.FilterExpression = 'orderStatus = :orderStatus';
+    params.ExpressionAttributeValues[':orderStatus'] = orderStatus;
+  }
+
+  return dynamoDb.query(params).promise();
+}
+
 export function getCountOfOrders(orderStatus, lastEvaluatedKey) {
   const params = {
     TableName: MAIN_TABLE_NAME,
