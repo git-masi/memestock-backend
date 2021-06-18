@@ -1,16 +1,15 @@
 import Ajv from 'ajv';
-import { httpMethods } from '../utils/http';
 import {
   createRegexGroup,
   startAndEndPattern,
   utcIsoStringPattern,
 } from '../utils/regex';
 import { companyPkSkPattern, companySkPattern } from './companies';
-import { userPkSkPattern, userSkPattern } from './users';
+import { userPkSkPattern } from './users';
 
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
 
-const orderSkPattern = `${utcIsoStringPattern}#[\\w\\-_]{8}`;
+export const orderSkPattern = `${utcIsoStringPattern}#[\\w\\-_]{8}`;
 
 export const orderTypes = Object.freeze({
   buy: 'buy',

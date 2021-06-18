@@ -1,5 +1,4 @@
 import Ajv from 'ajv';
-import { httpMethods } from '../utils/http';
 import {
   emailPattern,
   utcIsoStringPattern,
