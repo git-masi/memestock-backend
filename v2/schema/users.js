@@ -20,52 +20,6 @@ export const userSkPattern = `${createRegexGroup(
 
 export const userPkSkPattern = `${pkPrefixes.user}#${userSkPattern}`;
 
-const httpSchemas = Object.freeze({
-  [httpMethods.GET]: {
-    type: 'object',
-    properties: {
-      queryStringParameters: {
-        type: 'object',
-        // properties: {},
-        // required: [],
-      },
-    },
-    required: ['body'],
-  },
-  [httpMethods.POST]: {
-    type: 'object',
-    properties: {
-      body: {
-        type: 'object',
-        properties: {
-          displayName: {
-            type: 'string',
-            minLength: 5,
-            maxLength: 36,
-            pattern: '^\\S*$',
-          },
-          email: {
-            type: 'string',
-            pattern: emailPattern,
-          },
-        },
-        required: ['displayName', 'email'],
-      },
-    },
-    required: ['body'],
-  },
-  [httpMethods.PUT]: {},
-  [httpMethods.DELETE]: {},
-});
-
-export function validUsersHttpEvent(event) {
-  return validateHttpSchema(event.httpMethod);
-
-  function validateHttpSchema(method) {
-    return ajv.compile(httpSchemas[method])(event);
-  }
-}
-
 export function validUserAttributes(userAttributes) {
   const userAttributesSechma = {
     type: 'object',

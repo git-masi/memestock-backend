@@ -8,8 +8,6 @@ import {
   pathRouter,
 } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-// todo: rewrite this to validate events for a given path
-// import { validUsersHttpEvent } from '../schema/users';
 import { createUser, removeUser } from '../db/users';
 import { userTypes } from '../schema/users';
 import { isEmpty } from '../utils/dataChecks';
