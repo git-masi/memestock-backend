@@ -131,7 +131,7 @@ export function methodRouter(routeHandlers) {
 
 export function pathRouter(pathHandlers) {
   return function (event) {
-    const { path } = event;
+    const path = getPath();
 
     if (pathHandlers[path] instanceof Function) {
       return pathHandlers[path](event);
@@ -149,5 +149,10 @@ export function pathRouter(pathHandlers) {
     }
 
     throw HttpError.BadRequest();
+
+    function getPath() {
+      const { path } = event;
+      return path?.split('?')?.[0];
+    }
   };
 }
