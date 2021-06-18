@@ -1,9 +1,8 @@
 import { DynamoDB } from 'aws-sdk';
 import { nanoid } from 'nanoid';
 import { internet } from 'faker';
-import { getRandomValueFromArray } from '../../services/ai-service/node_modules/libs';
 import { baseAiProfiles } from '../utils/ai';
-import { getRandomInt } from '../utils/dynamicValues';
+import { getRandomInt, getRandomValueFromArray } from '../utils/dynamicValues';
 import { userTypes } from '../schema/users';
 import { createUserItem as _createUserItem } from './users';
 import { getFirstItem, guardItem } from './shared';
