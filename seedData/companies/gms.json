@@ -1,0 +1,11 @@
+{
+  "resource": "/",
+  "path": "/companies",
+  "httpMethod": "POST",
+  "body": {
+    "name": "GameStonk",
+    "tickerSymbol": "GMS",
+    "description": "This is an online gaming platform designed for competitive Twitter battles for most likes and shares.",
+    "pricePerShare": 18784
+  }
+}
