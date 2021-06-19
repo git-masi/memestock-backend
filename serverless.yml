@@ -151,9 +151,11 @@ functions:
       - http:
           method: post
           path: users/signup
+          cors: true
       - http:
           method: post
           path: users/login
+          cors: true
       - http:
           method: put
           path: users

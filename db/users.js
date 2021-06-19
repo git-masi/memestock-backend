@@ -33,6 +33,8 @@ async function humanUser(userAttributes) {
 }
 
 export async function createUserItem(userAttributes) {
+  console.info('Attempting to create user: ', userAttributes);
+
   if (!validUserAttributes(userAttributes))
     throw new Error('Invalid user attributes');
 
