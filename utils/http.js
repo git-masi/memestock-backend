@@ -1,4 +1,5 @@
 import cloneDeep from 'lodash.clonedeep';
+import { startAndEndPattern } from './regex';
 
 export const httpMethods = Object.freeze({
   GET: 'GET',
@@ -142,7 +143,7 @@ export function pathRouter(pathHandlers) {
 
     const regexMap = Object.keys(pathHandlers).map((key) => [
       key,
-      new RegExp(key),
+      new RegExp(startAndEndPattern(key)),
     ]);
 
     const match = regexMap.find(([key, regex]) => regex.test(path));
