@@ -212,10 +212,11 @@ export function getOrders(config) {
   }
 
   if (startSk) {
-    params.ExclusiveStartKey = {
-      pk: pkPrefixes.order,
-      sk: startSk,
-    };
+    params.KeyConditionExpression = params.KeyConditionExpression.replace(
+      'begins_with(sk, :sk)',
+      'sk < :sk'
+    );
+    params.ExpressionAttributeValues[':sk'] = startSk;
   }
 
   return dynamoDb.query(params).promise();
