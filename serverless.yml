@@ -151,9 +151,11 @@ functions:
       - http:
           method: post
           path: users/signup
+          cors: true
       - http:
           method: post
           path: users/login
+          cors: true
       - http:
           method: put
           path: users
@@ -166,6 +168,10 @@ functions:
       - http:
           method: get
           path: companies
+      - http:
+          method: get
+          path: companies/stock-price
+          cors: true
       - http:
           method: post
           path: companies
@@ -205,15 +211,24 @@ functions:
       - http:
           method: get
           path: orders
+          cors: true
       - http:
           method: get
           path: orders/{id}
+          cors: true
+      - http:
+          method: get
+          path: orders/feed
+          cors: true
       - http:
           method: get
           path: orders/count/{orderStatus}
+          cors: true
       - http:
           method: post
           path: orders
+          cors: true
       - http:
           method: put
           path: orders
+          cors: true

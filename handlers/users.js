@@ -28,16 +28,18 @@ async function lambdaForUsers(event) {
   try {
     const result = await router(event);
 
-    if (isEmpty(result)) return apiResponse();
+    if (isEmpty(result)) return apiResponse({ cors: true });
 
-    return apiResponse({ body: result });
+    return apiResponse({ body: result, cors: true });
   } catch (error) {
     console.info(error);
 
-    if (error instanceof HttpError) return apiResponse({ ...error });
+    if (error instanceof HttpError)
+      return apiResponse({ ...error, cors: true });
 
     return apiResponse({
       statusCode: 500,
+      cors: true,
     });
   }
 }
@@ -61,6 +63,16 @@ function handlePostMethods(event) {
 
   async function handleSignup(event) {
     const { body } = event;
+
+    // Allow frontend to send a "username"
+    // Really the frontend should be refactored
+    // to send displayName, but in the interest of time
+    // this is faster
+    if (body.username && !body.displayName) {
+      body.displayName = body.username;
+      delete body.username;
+    }
+
     const sk = `${userTypes.human}#${new Date().toISOString()}#${nanoid(8)}`;
     await createUser({ ...body, sk });
 

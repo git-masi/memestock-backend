@@ -163,7 +163,7 @@ export function getOrder(sk) {
 
 export function getOrders(config) {
   // todo: validate config with schema
-  const { asc = true, limit, orderStatus, startSk } = config;
+  const { asc = true, limit, orderStatus, startSk, tickerSymbol } = config;
   const params = {
     TableName: MAIN_TABLE_NAME,
     KeyConditionExpression: 'pk = :pk',
@@ -175,6 +175,13 @@ export function getOrders(config) {
 
   if (Number.isInteger(limit) && limit > 0) {
     params.Limit = limit;
+  }
+
+  if (tickerSymbol) {
+    params.FilterExpression = params.FilterExpression
+      ? ', tickerSymbol = :tickerSymbol'
+      : 'tickerSymbol = :tickerSymbol';
+    params.ExpressionAttributeValues[':tickerSymbol'] = tickerSymbol;
   }
 
   // Because this represents a branch in how the query is executed
@@ -205,10 +212,11 @@ export function getOrders(config) {
   }
 
   if (startSk) {
-    params.ExclusiveStartKey = {
-      pk: pkPrefixes.order,
-      sk: startSk,
-    };
+    params.KeyConditionExpression = params.KeyConditionExpression.replace(
+      'begins_with(sk, :sk)',
+      'sk < :sk'
+    );
+    params.ExpressionAttributeValues[':sk'] = startSk;
   }
 
   return dynamoDb.query(params).promise();
@@ -295,7 +303,11 @@ export function getRecentUserOrders(userPkSk, limit = 10) {
     .promise();
 }
 
-export async function fulfillOrder(orderSk, completingUserSk) {
+export async function fulfillOrder(
+  orderSk,
+  completingUserSk,
+  fulfillmentMessage
+) {
   const order = getItems(await getOrder(orderSk));
 
   if (order.orderStatus !== orderStatuses.open)
@@ -405,19 +417,23 @@ export async function fulfillOrder(orderSk, completingUserSk) {
     switch (order.orderType) {
       case orderTypes.buy:
         return {
-          UpdateExpression: 'SET seller = :seller, orderStatus = :orderStatus',
+          UpdateExpression:
+            'SET seller = :seller, orderStatus = :orderStatus, fulfillmentMessage = :fulfillmentMessage',
           ExpressionAttributeValues: {
             ':seller': `${completingUser.pk}#${completingUser.sk}`,
             ':orderStatus': orderStatuses.fulfilled,
+            ':fulfillmentMessage': fulfillmentMessage,
           },
         };
 
       case orderTypes.sell:
         return {
-          UpdateExpression: 'SET buyer = :buyer, orderStatus = :orderStatus',
+          UpdateExpression:
+            'SET buyer = :buyer, orderStatus = :orderStatus, fulfillmentMessage = :fulfillmentMessage',
           ExpressionAttributeValues: {
             ':buyer': `${completingUser.pk}#${completingUser.sk}`,
             ':orderStatus': orderStatuses.fulfilled,
+            ':fulfillmentMessage': fulfillmentMessage,
           },
         };
 

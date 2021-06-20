@@ -133,10 +133,18 @@ export async function executeAiAction() {
 
     switch (type) {
       case possibleActions.fulfillBuyOrder:
-        return fulfillOrder(actionData.sk, data.aiProfile.sk);
+        return fulfillOrder(
+          actionData.sk,
+          data.aiProfile.sk,
+          createFulfillmentMessage()
+        );
 
       case possibleActions.fulfillSellOrder:
-        return fulfillOrder(actionData.sk, data.aiProfile.sk);
+        return fulfillOrder(
+          actionData.sk,
+          data.aiProfile.sk,
+          createFulfillmentMessage()
+        );
 
       case possibleActions.createBuyOrder:
         return createNewBuyOrder(actionData.company, data.aiProfile);
@@ -157,6 +165,19 @@ export async function executeAiAction() {
         throw new Error(
           `Could not take action, ${type} is not a valid action type.`
         );
+    }
+
+    function createFulfillmentMessage() {
+      const emoji = ['💩', '💰', '💸', '🤑', '🚀', '💎'];
+      const messages = [
+        'To the moon!',
+        'HODL GANG!',
+        'I like the stock!',
+        "Mo' money mo' problems",
+      ];
+      return `${messages[getRandomValueFromArray(messages)]} ${
+        emoji[getRandomValueFromArray(emoji)]
+      }`;
     }
   }
 

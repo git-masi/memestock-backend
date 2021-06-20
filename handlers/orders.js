@@ -16,6 +16,8 @@ import { isEmpty } from '../utils/dataChecks';
 import { orderStatuses } from '../schema/orders';
 import { createRegexGroup } from '../utils/regex';
 import { getItems } from '../db/shared';
+import { getUser } from '../db/users';
+import { stripPk } from '../schema/pkPrefixes';
 
 export const handler = commonMiddleware(ordersLambda);
 
@@ -30,16 +32,18 @@ async function ordersLambda(event) {
   try {
     const result = await router(event);
 
-    if (isEmpty(result)) return apiResponse();
+    if (isEmpty(result)) return apiResponse({ cors: true });
 
-    return apiResponse({ body: result });
+    return apiResponse({ body: result, cors: true });
   } catch (error) {
     console.info(error);
 
-    if (error instanceof HttpError) return apiResponse({ ...error });
+    if (error instanceof HttpError)
+      return apiResponse({ ...error, cors: true });
 
     return apiResponse({
       statusCode: 500,
+      cors: true,
     });
   }
 }
@@ -47,6 +51,7 @@ async function ordersLambda(event) {
 function handleGetMethods(event) {
   const paths = {
     '/orders': handleGetOrders,
+    '/orders/feed': handleOrdersFeed,
     [`/orders/count/${createRegexGroup(orderStatuses)}`]: handleCount,
   };
   const router = pathRouter(paths);
@@ -58,34 +63,42 @@ function handleGetMethods(event) {
     const dbResults = await getOrders(parseQueryParams(queryStringParameters));
 
     return getItems(dbResults);
+  }
 
-    function parseQueryParams() {
-      return Object.entries(queryStringParameters).reduce(
-        (acc, [key, value]) => {
-          switch (key) {
-            case 'limit':
-              acc[key] = +value;
-              break;
+  // todo: refactor
+  async function handleOrdersFeed(event) {
+    const { queryStringParameters } = event;
+    const orders = getItems(
+      await getOrders(parseQueryParams(queryStringParameters))
+    );
+    const uniqueUsers = orders.reduce((acc, order) => {
+      const { buyer, seller, originatingUser } = order;
 
-            case 'asc':
-              acc[key] = value !== 'false';
-              break;
-              break;
+      if (!(buyer in acc)) acc[buyer] = true;
 
-            case 'startSk':
-              acc[key] = decodeURIComponent(value);
-              break;
+      if (!(seller in acc)) acc[seller] = true;
 
-            default:
-              acc[key] = value;
-              break;
-          }
+      if (!(originatingUser in acc)) acc[originatingUser] = true;
 
-          return acc;
-        },
-        {}
-      );
+      return acc;
+    }, {});
+    const userDbPromises = Object.keys(uniqueUsers).map((userPkSk) =>
+      getUser(stripPk(userPkSk))
+    );
+    const userDbsResults = await Promise.all(userDbPromises);
+    const userItems = userDbsResults.map((res) => getItems(res));
+
+    for (const item of userItems) {
+      uniqueUsers[`${item.pk}#${item.sk}`] = item;
     }
+
+    return orders.map((order) => {
+      order.buyerDisplayName = uniqueUsers[order.buyer].displayName;
+      order.sellerDisplayName = uniqueUsers[order.seller].displayName;
+      order.originatingUserDisplayName =
+        uniqueUsers[order.originatingUser].displayName;
+      return order;
+    });
   }
 
   async function handleCount(event) {
@@ -135,4 +148,29 @@ function handlePutMethods(event) {
     const { body } = event;
     return fulfillOrder(body.order, body.user);
   }
+}
+
+function parseQueryParams(queryStringParameters) {
+  return Object.entries(queryStringParameters).reduce((acc, [key, value]) => {
+    switch (key) {
+      case 'limit':
+        acc[key] = +value;
+        break;
+
+      case 'asc':
+        acc[key] = value !== 'false';
+        break;
+        break;
+
+      case 'startSk':
+        acc[key] = decodeURIComponent(value);
+        break;
+
+      default:
+        acc[key] = value;
+        break;
+    }
+
+    return acc;
+  }, {});
 }
