@@ -163,7 +163,7 @@ export function getOrder(sk) {
 
 export function getOrders(config) {
   // todo: validate config with schema
-  const { asc = true, limit, orderStatus, startSk } = config;
+  const { asc = true, limit, orderStatus, startSk, tickerSymbol } = config;
   const params = {
     TableName: MAIN_TABLE_NAME,
     KeyConditionExpression: 'pk = :pk',
@@ -175,6 +175,13 @@ export function getOrders(config) {
 
   if (Number.isInteger(limit) && limit > 0) {
     params.Limit = limit;
+  }
+
+  if (tickerSymbol) {
+    params.FilterExpression = params.FilterExpression
+      ? ', tickerSymbol = :tickerSymbol'
+      : 'tickerSymbol = :tickerSymbol';
+    params.ExpressionAttributeValues[':tickerSymbol'] = tickerSymbol;
   }
 
   // Because this represents a branch in how the query is executed

@@ -169,6 +169,10 @@ functions:
           method: get
           path: companies
       - http:
+          method: get
+          path: companies/stock-price
+          cors: true
+      - http:
           method: post
           path: companies
       - http:

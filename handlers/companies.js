@@ -8,6 +8,9 @@ import {
 } from '../utils/http';
 import { createCompany, getCompanies } from '../db/companies';
 import { isEmpty } from '../utils/dataChecks';
+import { getOrders } from '../db/orders';
+import { getItems } from '../db/shared';
+import { orderStatuses } from '../schema/orders';
 
 export const handler = commonMiddleware(lambdaForCompanies);
 
@@ -38,6 +41,7 @@ async function lambdaForCompanies(event) {
 function handleGetMethods(event) {
   const paths = {
     '/companies': handleRetrieveCompanies,
+    '/companies/stock-price': handleStockPrice,
   };
   const router = pathRouter(paths);
   const result = router(event);
@@ -46,6 +50,29 @@ function handleGetMethods(event) {
 
   function handleRetrieveCompanies() {
     return getCompanies();
+  }
+
+  async function handleStockPrice() {
+    const companies = getItems(await getCompanies());
+    const orderQueryResults = await Promise.all(
+      companies.map((c) =>
+        getOrders({
+          tickerSymbol: c.tickerSymbol,
+          orderStatus: orderStatuses.fulfilled,
+          asc: false,
+        })
+      )
+    );
+    const orders = orderQueryResults.map((oqr) => getItems(oqr)[0]);
+    const result = companies.map((c) => {
+      const recentOrder = orders.find((o) => o.tickerSymbol === c.tickerSymbol);
+      if (recentOrder) {
+        c.fulfillmentMessage = recentOrder.fulfillmentMessage;
+      }
+      return c;
+    });
+
+    return result;
   }
 }
 
