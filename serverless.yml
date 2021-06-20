@@ -214,7 +214,7 @@ functions:
           cors: true
       - http:
           method: get
-          path: orders/{id}
+          path: orders/history
           cors: true
       - http:
           method: get
