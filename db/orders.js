@@ -284,23 +284,33 @@ export function getRecentOrders(orderStatus, orderType, limit = 10) {
   }
 }
 
-export function getRecentUserOrders(userPkSk, limit = 10) {
-  return dynamoDb
-    .query({
-      TableName: MAIN_TABLE_NAME,
-      KeyConditionExpression: '#pk = :pk AND begins_with(#sk, :sk)',
-      ExpressionAttributeNames: {
-        '#pk': 'pk',
-        '#sk': 'sk',
-      },
-      ExpressionAttributeValues: {
-        ':pk': pkPrefixes.userOrder,
-        ':sk': userPkSk,
-      },
-      ScanIndexForward: false,
-      Limit: limit,
-    })
-    .promise();
+export function getRecentUserOrders(userSk, limit, startSk) {
+  const params = {
+    TableName: MAIN_TABLE_NAME,
+    KeyConditionExpression: '#pk = :pk AND begins_with(#sk, :sk)',
+    ExpressionAttributeNames: {
+      '#pk': 'pk',
+      '#sk': 'sk',
+    },
+    ExpressionAttributeValues: {
+      ':pk': pkPrefixes.userOrder,
+      ':sk': userSk,
+    },
+    ScanIndexForward: false,
+  };
+
+  if (Number.isInteger(limit) && limit > 0) {
+    params.Limit = limit;
+  }
+
+  if (startSk) {
+    params.ExclusiveStartKey = {
+      pk: pkPrefixes.userOrder,
+      sk: startSk,
+    };
+  }
+
+  return dynamoDb.query(params).promise();
 }
 
 export async function fulfillOrder(

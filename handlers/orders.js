@@ -10,14 +10,16 @@ import {
   createOrder,
   fulfillOrder,
   getCountOfOrders,
+  getOrder,
   getOrders,
+  getRecentUserOrders,
 } from '../db/orders';
 import { isEmpty } from '../utils/dataChecks';
 import { orderStatuses } from '../schema/orders';
 import { createRegexGroup } from '../utils/regex';
 import { getItems } from '../db/shared';
 import { getUser } from '../db/users';
-import { stripPk } from '../schema/pkPrefixes';
+import { pkPrefixes, stripPk } from '../schema/pkPrefixes';
 
 export const handler = commonMiddleware(ordersLambda);
 
@@ -51,6 +53,7 @@ async function ordersLambda(event) {
 function handleGetMethods(event) {
   const paths = {
     '/orders': handleGetOrders,
+    '/orders/history': handleHistory,
     '/orders/feed': handleOrdersFeed,
     [`/orders/count/${createRegexGroup(orderStatuses)}`]: handleCount,
   };
@@ -63,6 +66,22 @@ function handleGetMethods(event) {
     const dbResults = await getOrders(parseQueryParams(queryStringParameters));
 
     return getItems(dbResults);
+  }
+
+  async function handleHistory(event) {
+    const { principalId: userSk } = event.requestContext.authorizer;
+
+    const userOrders = getItems(
+      await getRecentUserOrders(`${pkPrefixes.user}#${userSk}`)
+    );
+
+    if (!userOrders) return [];
+
+    const orderResults = await Promise.all(
+      userOrders.map((uo) => getOrder(stripPk(uo.orderPkSk)))
+    );
+
+    return orderResults.map((res) => getItems(res));
   }
 
   // todo: refactor
