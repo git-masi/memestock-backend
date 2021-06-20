@@ -24,16 +24,18 @@ async function lambdaForCompanies(event) {
   try {
     const result = await router(event);
 
-    if (isEmpty(result)) return apiResponse();
+    if (isEmpty(result)) return apiResponse({ cors: true });
 
-    return apiResponse({ body: result });
+    return apiResponse({ body: result, cors: true });
   } catch (error) {
     console.info(error);
 
-    if (error instanceof HttpError) return apiResponse({ ...error });
+    if (error instanceof HttpError)
+      return apiResponse({ ...error, cors: true });
 
     return apiResponse({
       statusCode: 500,
+      cors: true,
     });
   }
 }
