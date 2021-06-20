@@ -295,7 +295,11 @@ export function getRecentUserOrders(userPkSk, limit = 10) {
     .promise();
 }
 
-export async function fulfillOrder(orderSk, completingUserSk) {
+export async function fulfillOrder(
+  orderSk,
+  completingUserSk,
+  fulfillmentMessage
+) {
   const order = getItems(await getOrder(orderSk));
 
   if (order.orderStatus !== orderStatuses.open)
@@ -405,19 +409,23 @@ export async function fulfillOrder(orderSk, completingUserSk) {
     switch (order.orderType) {
       case orderTypes.buy:
         return {
-          UpdateExpression: 'SET seller = :seller, orderStatus = :orderStatus',
+          UpdateExpression:
+            'SET seller = :seller, orderStatus = :orderStatus, fulfillmentMessage = :fulfillmentMessage',
           ExpressionAttributeValues: {
             ':seller': `${completingUser.pk}#${completingUser.sk}`,
             ':orderStatus': orderStatuses.fulfilled,
+            ':fulfillmentMessage': fulfillmentMessage,
           },
         };
 
       case orderTypes.sell:
         return {
-          UpdateExpression: 'SET buyer = :buyer, orderStatus = :orderStatus',
+          UpdateExpression:
+            'SET buyer = :buyer, orderStatus = :orderStatus, fulfillmentMessage = :fulfillmentMessage',
           ExpressionAttributeValues: {
             ':buyer': `${completingUser.pk}#${completingUser.sk}`,
             ':orderStatus': orderStatuses.fulfilled,
+            ':fulfillmentMessage': fulfillmentMessage,
           },
         };
 
