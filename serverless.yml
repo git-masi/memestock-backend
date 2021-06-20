@@ -214,6 +214,10 @@ functions:
           cors: true
       - http:
           method: get
+          path: orders/feed
+          cors: true
+      - http:
+          method: get
           path: orders/count/{orderStatus}
           cors: true
       - http:
