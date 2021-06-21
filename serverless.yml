@@ -171,6 +171,7 @@ functions:
       - http:
           method: get
           path: companies
+          cors: true
       - http:
           method: get
           path: companies/stock-price

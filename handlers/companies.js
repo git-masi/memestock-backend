@@ -50,8 +50,8 @@ function handleGetMethods(event) {
 
   return result;
 
-  function handleRetrieveCompanies() {
-    return getCompanies();
+  async function handleRetrieveCompanies() {
+    return getItems(await getCompanies());
   }
 
   async function handleStockPrice() {
