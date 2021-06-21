@@ -145,6 +145,8 @@ functions:
       - http:
           method: get
           path: users
+          cors: true
+          authorizer: genericUserAuthorizer
       - http:
           method: post
           path: users

@@ -8,9 +8,10 @@ import {
   pathRouter,
 } from '../utils/http';
 import { commonMiddleware } from '../utils/middleware';
-import { createUser, removeUser } from '../db/users';
+import { createUser, getUser, removeUser } from '../db/users';
 import { userTypes } from '../schema/users';
 import { isEmpty } from '../utils/dataChecks';
+import { getItems } from '../db/shared';
 
 const { COGNITO_GENERIC_USER_POOL_ID, COGNITO_GENERIC_USER_CLIENT_ID } =
   process.env;
@@ -20,6 +21,7 @@ export const handler = commonMiddleware(lambdaForUsers);
 
 async function lambdaForUsers(event) {
   const methodRoutes = {
+    [httpMethods.GET]: handleGetMethods,
     [httpMethods.POST]: handlePostMethods,
     [httpMethods.DELETE]: handleDeleteMethods,
   };
@@ -41,6 +43,23 @@ async function lambdaForUsers(event) {
       statusCode: 500,
       cors: true,
     });
+  }
+}
+
+function handleGetMethods(event) {
+  const paths = {
+    '/users': handleGetUser,
+  };
+
+  const router = pathRouter(paths);
+  const result = router(event);
+
+  return result;
+
+  async function handleGetUser(event) {
+    const { principalId: userSk } = event.requestContext.authorizer;
+
+    return getItems(await getUser(userSk));
   }
 }
 
