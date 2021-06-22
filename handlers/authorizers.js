@@ -59,7 +59,9 @@ function createPolicy(principalId, effect, resource) {
     const statementOne = {
       Action: 'execute-api:Invoke',
       Effect: effect,
-      Resource: resource,
+      // Temp fix for caching issue
+      //    https://stackoverflow.com/questions/50331588/aws-api-gateway-custom-authorizer-strange-showing-error#answer-56119016
+      Resource: '*',
     };
 
     const policyDocument = {

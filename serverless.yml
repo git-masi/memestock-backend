@@ -93,6 +93,11 @@ resources:
       Properties:
         Name: generic-user-authorizer
         IdentitySource: method.request.header.Authorization
+        # AuthorizerResultTtlInSeconds is to solve a caching issue described here:
+        #     https://stackoverflow.com/questions/50331588/aws-api-gateway-custom-authorizer-strange-showing-error#answer-56119016
+        # Though, there may be more elegant ways of handling this in the authorizer
+        # allow policy
+        AuthorizerResultTtlInSeconds: 0
         RestApiId:
           Ref: ApiGatewayRestApi
         Type: COGNITO_USER_POOLS
@@ -236,6 +241,7 @@ functions:
           method: post
           path: orders
           cors: true
+          authorizer: genericUserAuthorizer
       - http:
           method: put
           path: orders

@@ -16,6 +16,8 @@ const dynamoDb = new DynamoDB.DocumentClient();
 export async function createOrder(reqBody) {
   const orderAttributes = createOrderAttributes();
 
+  console.info('orderAttributes: ', orderAttributes);
+
   if (!validOrderAttributes(orderAttributes))
     throw HttpError.BadRequest('Order attributes are invalid');
 
